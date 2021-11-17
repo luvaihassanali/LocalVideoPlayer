@@ -76,9 +76,10 @@ namespace LocalVideoPlayer
             Panel currentPanel = null;
             int count = 0;
             int panelCount = 0;
+
             for (int i = 0; i < media.Movies.Length; i++)
             {
-                if (count == 4) count = 0;
+                if (count == 6) count = 0;
                 if (count == 0)
                 {
                     currentPanel = new Panel();
@@ -90,25 +91,21 @@ namespace LocalVideoPlayer
                     this.Controls.Add(currentPanel);
                     this.Controls.SetChildIndex(currentPanel, 0);
                 }
+
                 PictureBox movieBox = new PictureBox();
-                movieBox.Width = currentPanel.Width / 4;
-                movieBox.Height = 275;
-                string imagePath = media.Movies[i].Backdrop;
+                movieBox.Width = currentPanel.Width / 6;
+                movieBox.Height = 450;
+                string imagePath = media.Movies[i].Poster;
                 movieBox.Image = Image.FromFile(imagePath);
                 movieBox.BackColor = Color.Transparent;
                 movieBox.Left = movieBox.Width * currentPanel.Controls.Count;
                 movieBox.Cursor = Cursors.Hand;
                 movieBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                Padding padding = new Padding(15);
-                movieBox.Padding = padding;
-
+                movieBox.Padding = new Padding(10, 10, 10, 10);
+                Console.WriteLine(movieBox.Size); //480 x 270, 3840 x 2160 poster 2000 x 3000
                 currentPanel.Controls.Add(movieBox);
                 count++;
             }
-
-            //Console.WriteLine("movieLabel: " + this.Controls.IndexOfKey("movieLabel"));
-            //Console.WriteLine("movie1: " + this.Controls.IndexOfKey("movie1"));
-            //Console.WriteLine("movie2: " + this.Controls.IndexOfKey("movie2"));
 
             movieLabel = new Label();
             movieLabel.Text = "Movies";
@@ -118,16 +115,12 @@ namespace LocalVideoPlayer
             movieLabel.Name = "movieLabel";
             this.Controls.Add(movieLabel);
 
-            //Console.WriteLine("movieLabel: " + this.Controls.IndexOfKey("movieLabel"));
-            //Console.WriteLine("movie1: " + this.Controls.IndexOfKey("movie1"));
-            //Console.WriteLine("movie2: " + this.Controls.IndexOfKey("movie2"));
-
             currentPanel = null;
             count = 0;
             panelCount = 0;
             for (int i = 0; i < media.TvShows.Length; i++)
             {
-                if (count == 4) count = 0;
+                if (count == 6) count = 0;
                 if (count == 0)
                 {
                     currentPanel = new Panel();
@@ -139,22 +132,22 @@ namespace LocalVideoPlayer
                     this.Controls.Add(currentPanel);
                     this.Controls.SetChildIndex(currentPanel, 3);
                 }
+
                 PictureBox tvShowBox = new PictureBox();
-                tvShowBox.Width = currentPanel.Width / 4;
-                tvShowBox.Height = 275;
-                string imagePath = media.TvShows[i].Backdrop;
+                tvShowBox.Width = currentPanel.Width / 6;
+                tvShowBox.Height = 450;
+                string imagePath = media.TvShows[i].Poster;
                 tvShowBox.Image = Image.FromFile(imagePath);
                 tvShowBox.BackColor = Color.Transparent;
                 tvShowBox.Left = tvShowBox.Width * currentPanel.Controls.Count;
                 tvShowBox.Cursor = Cursors.Hand;
                 tvShowBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                Padding padding = new Padding(15);
-                tvShowBox.Padding = padding;
-
+                tvShowBox.Padding = new Padding(10, 10, 10, 10);
+                Console.WriteLine(tvShowBox.Size);
                 currentPanel.Controls.Add(tvShowBox);
                 count++;
             }
-            
+
             tvLabel = new Label();
             tvLabel.Text = "TV Shows";
             tvLabel.Dock = DockStyle.Top;
@@ -162,13 +155,6 @@ namespace LocalVideoPlayer
             tvLabel.AutoSize = true;
             tvLabel.Name = "tvLabel";
             this.Controls.Add(tvLabel);
-
-            /*Console.WriteLine("tvLabel: " + this.Controls.IndexOfKey("tvLabel"));
-            Console.WriteLine("tv1: " + this.Controls.IndexOfKey("tv1"));
-            Console.WriteLine("tv2: " + this.Controls.IndexOfKey("tv2"));
-            Console.WriteLine("movieLabel: " + this.Controls.IndexOfKey("movieLabel"));
-            Console.WriteLine("movie1: " + this.Controls.IndexOfKey("movie1"));
-            Console.WriteLine("movie2: " + this.Controls.IndexOfKey("movie2"));*/
 
             //To-do: clean up dynamically created controls
 
@@ -312,23 +298,59 @@ namespace LocalVideoPlayer
                     string movieString = client.DownloadString(movieGet.Replace("{movie_id}", movie.Id.ToString()));
                     Console.WriteLine(movieString);
                     movieObject = JObject.Parse(movieString);
-                    //To-do: check if name same (ask to rename)
-                    movie.Backdrop = (string)movieObject["backdrop_path"];
-                    movie.Poster = (string)movieObject["poster_path"];
-                    movie.Overview = (string)movieObject["overview"];
-                    DateTime tempDate;
-                    movie.Date = DateTime.TryParse((string)movieObject["release_date"], out tempDate) ? tempDate : DateTime.MinValue.AddHours(9);
 
-                    if (movie.Backdrop != null)
+                    if (String.Compare(movie.Name.Replace(":", ""), ((string)movieObject["title"]).Replace(":", ""), System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0)
                     {
-                        await SaveImage(movie.Backdrop, movie.Name, true, token);
-                        movie.Backdrop = bufferString;
+                        movie.Backdrop = (string)movieObject["backdrop_path"];
+                        movie.Poster = (string)movieObject["poster_path"];
+                        movie.Overview = (string)movieObject["overview"];
+                        DateTime tempDate;
+                        movie.Date = DateTime.TryParse((string)movieObject["release_date"], out tempDate) ? tempDate : DateTime.MinValue.AddHours(9);
+                        
+                        if (movie.Backdrop != null)
+                        {
+                            await SaveImage(movie.Backdrop, movie.Name, true, token);
+                            movie.Backdrop = bufferString;
+                        }
+
+                        if (movie.Poster != null)
+                        {
+                            await SaveImage(movie.Poster, movie.Name, true, token);
+                            movie.Poster = bufferString;
+                        }
                     }
-
-                    if (movie.Poster != null)
+                    else
                     {
-                        await SaveImage(movie.Poster, movie.Name, true, token);
-                        movie.Poster = bufferString;
+                        string message = "Local movie name does not match retrieved data. Renaming file '" + movie.Name.Replace(":", "") + "' to '" + ((string)movieObject["title"]).Replace(":", "") + "'.";
+                        MessageBox.Show(message);
+
+                        string oldPath = movie.Path;
+                        string[] fileNamePath = oldPath.Split('\\');
+                        string fileName = fileNamePath[fileNamePath.Length - 1];
+                        string newFileName = ((string)movieObject["title"]).Replace(":", "");
+                        string newPath = oldPath.Replace(fileName, newFileName);
+                        File.Move(oldPath, newPath);
+
+                        movie.Path = newPath;
+                        movie.Name = newFileName;
+                        movie.Id = (int)movieObject["id"];
+                        movie.Backdrop = (string)movieObject["backdrop_path"];
+                        movie.Poster = (string)movieObject["poster_path"];
+                        movie.Overview = (string)movieObject["overview"];
+                        DateTime tempDate;
+                        movie.Date = DateTime.TryParse((string)movieObject["release_date"], out tempDate) ? tempDate : DateTime.MinValue.AddHours(9);
+
+                        if (movie.Backdrop != null)
+                        {
+                            await SaveImage(movie.Backdrop, movie.Name, true, token);
+                            movie.Backdrop = bufferString;
+                        }
+
+                        if (movie.Poster != null)
+                        {
+                            await SaveImage(movie.Poster, movie.Name, true, token);
+                            movie.Poster = bufferString;
+                        }
                     }
                 }
 
@@ -459,43 +481,26 @@ namespace LocalVideoPlayer
                             }
                             else
                             {
-                                string message = "Local episode name does not match retrieved data. Do you want to rename local file '" + episode.Name + "' to '" + (string)jEpisode["name"] + "'?";
-                                DialogResult dialogResult = MessageBox.Show(message, "Warning", MessageBoxButtons.YesNo);
-                                if (dialogResult == DialogResult.Yes)
+                                string message = "Local episode name does not match retrieved data. Renaming file '" + episode.Name + "' to '" + (string)jEpisode["name"] + "'.";
+                                MessageBox.Show(message);
+
+                                string oldPath = episode.Path;
+                                string newPath = oldPath.Replace(episode.Name, (string)jEpisode["name"]);
+                                File.Move(oldPath, newPath);
+
+                                episode.Path = newPath;
+                                episode.Name = (string)jEpisode["name"];
+                                episode.Id = (int)jEpisode["episode_number"];
+                                episode.Overview = (string)jEpisode["overview"];
+                                episode.Backdrop = (string)jEpisode["still_path"];
+                                DateTime tempDate;
+                                episode.Date = DateTime.TryParse((string)jEpisode["air_date"], out tempDate) ? tempDate : DateTime.MinValue.AddHours(9);
+
+                                //To-do: separate function
+                                if (episode.Backdrop != null)
                                 {
-                                    string oldPath = episode.Path;
-                                    string newPath = oldPath.Replace(episode.Name, (string)jEpisode["name"]);
-                                    File.Move(oldPath, newPath);
-
-                                    episode.Path = newPath;
-                                    episode.Name = (string)jEpisode["name"];
-                                    episode.Id = (int)jEpisode["episode_number"];
-                                    episode.Overview = (string)jEpisode["overview"];
-                                    episode.Backdrop = (string)jEpisode["still_path"];
-                                    DateTime tempDate;
-                                    episode.Date = DateTime.TryParse((string)jEpisode["air_date"], out tempDate) ? tempDate : DateTime.MinValue.AddHours(9);
-
-                                    //To-do: separate function
-                                    if (episode.Backdrop != null)
-                                    {
-                                        await SaveImage(episode.Backdrop, tvShow.Name, false, token);
-                                        episode.Backdrop = bufferString;
-                                    }
-                                }
-                                else if (dialogResult == DialogResult.No)
-                                {
-                                    //To-do: empty entry with video
-                                    episode.Id = (int)jEpisode["episode_number"];
-                                    episode.Overview = (string)jEpisode["overview"];
-                                    episode.Backdrop = (string)jEpisode["still_path"];
-                                    DateTime tempDate;
-                                    episode.Date = DateTime.TryParse((string)jEpisode["air_date"], out tempDate) ? tempDate : DateTime.MinValue.AddHours(9);
-
-                                    if (episode.Backdrop != null)
-                                    {
-                                        await SaveImage(episode.Backdrop, tvShow.Name, false, token);
-                                        episode.Backdrop = bufferString;
-                                    }
+                                    await SaveImage(episode.Backdrop, tvShow.Name, false, token);
+                                    episode.Backdrop = bufferString;
                                 }
                             }
                         }
@@ -612,9 +617,10 @@ namespace LocalVideoPlayer
         private Movie ProcessMovieDirectory(string targetDir)
         {
             Console.WriteLine("    " + targetDir);
-            string[] path = targetDir.Split('\\');
-            string name = path[path.Length - 1].Split('%')[0];
-            Movie movie = new Movie(name.Trim(), targetDir);
+            string[] movieEntry = Directory.GetFiles(targetDir);
+            string[] path = movieEntry[0].Split('\\');
+            string[] movieName = path[path.Length - 1].Split('.');
+            Movie movie = new Movie(movieName[0].Trim(), movieEntry[0]);
             return movie;
         }
 
@@ -656,7 +662,7 @@ namespace LocalVideoPlayer
         public static float NewHeaderFontSize(Graphics graphics, Size size, Font font, string str)
         {
             SizeF stringSize = graphics.MeasureString(str, font);
-            float ratio = (size.Height / stringSize.Height) / 8;
+            float ratio = (size.Height / stringSize.Height) / 10;
             return font.Size * ratio;
         }
     }

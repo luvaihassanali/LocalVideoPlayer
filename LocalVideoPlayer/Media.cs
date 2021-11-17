@@ -46,53 +46,59 @@ namespace LocalVideoPlayer
 
             return true;
         }
-        
+
         internal void Ingest(Media prevMedia)
         {
             for (int i = 0; i < prevMedia.Movies.Length; i++)
             {
-                if (this.movies[i].Name.Equals(prevMedia.movies[i].Name))
+                for (int j = 0; j < this.movies.Length; j++)
                 {
-                    this.movies[i].Name = prevMedia.movies[i].Name;
-                    this.movies[i].Overview = prevMedia.movies[i].Overview;
-                    this.movies[i].Path = prevMedia.movies[i].Path;
-                    this.movies[i].Poster = prevMedia.movies[i].Poster;
-                    this.movies[i].Id = prevMedia.movies[i].Id;
-                    this.movies[i].Date = prevMedia.movies[i].Date;
-                    this.movies[i].Backdrop = prevMedia.movies[i].Backdrop;
+                    if (this.movies[j].Name.Equals(prevMedia.movies[i].Name))
+                    {
+                        this.movies[j].Name = prevMedia.movies[i].Name;
+                        this.movies[j].Overview = prevMedia.movies[i].Overview;
+                        this.movies[j].Path = prevMedia.movies[i].Path;
+                        this.movies[j].Poster = prevMedia.movies[i].Poster;
+                        this.movies[j].Id = prevMedia.movies[i].Id;
+                        this.movies[j].Date = prevMedia.movies[i].Date;
+                        this.movies[j].Backdrop = prevMedia.movies[i].Backdrop;
+                    }
                 }
             }
 
             for (int i = 0; i < prevMedia.TvShows.Length; i++)
             {
-                if (this.tvShows[i].Name.Equals(prevMedia.TvShows[i].Name))
+                for (int l = 0; l < this.tvShows.Length; l++)
                 {
-                    this.tvShows[i].Name = prevMedia.tvShows[i].Name;
-                    this.tvShows[i].Id = prevMedia.tvShows[i].Id;
-                    this.tvShows[i].Overview = prevMedia.tvShows[i].Overview;
-                    this.tvShows[i].Poster = prevMedia.tvShows[i].Poster;
-                    this.tvShows[i].Date = prevMedia.tvShows[i].Date;
-                    this.tvShows[i].Backdrop = prevMedia.tvShows[i].Backdrop;
-
-                    for (int j = 0; j < prevMedia.TvShows[i].Seasons.Length; j++)
+                    if (this.tvShows[l].Name.Equals(prevMedia.TvShows[i].Name))
                     {
-                        this.tvShows[i].Seasons[j].Id = prevMedia.TvShows[j].Seasons[j].Id;
-                        this.tvShows[i].Seasons[j].Poster = prevMedia.TvShows[j].Seasons[j].Poster;
-                        this.tvShows[i].Seasons[j].Date = prevMedia.TvShows[j].Seasons[j].Date;
+                        this.tvShows[l].Name = prevMedia.tvShows[i].Name;
+                        this.tvShows[l].Id = prevMedia.tvShows[i].Id;
+                        this.tvShows[l].Overview = prevMedia.tvShows[i].Overview;
+                        this.tvShows[l].Poster = prevMedia.tvShows[i].Poster;
+                        this.tvShows[l].Date = prevMedia.tvShows[i].Date;
+                        this.tvShows[l].Backdrop = prevMedia.tvShows[i].Backdrop;
 
-                        for (int k = 0; k < prevMedia.TvShows[i].Seasons[j].Episodes.Length; k++)
+                        for (int j = 0; j < prevMedia.TvShows[i].Seasons.Length; j++)
                         {
-                            if (this.tvShows[i].Seasons[j].Episodes[k].Name.Equals(prevMedia.TvShows[i].Seasons[j].Episodes[k].Name))
-                            {
-                                this.tvShows[i].Seasons[j].Episodes[k].Id = prevMedia.TvShows[i].Seasons[j].Episodes[k].Id;
-                                this.tvShows[i].Seasons[j].Episodes[k].Name = prevMedia.TvShows[i].Seasons[j].Episodes[k].Name;
-                                this.tvShows[i].Seasons[j].Episodes[k].Backdrop = prevMedia.TvShows[i].Seasons[j].Episodes[k].Backdrop;
-                                this.tvShows[i].Seasons[j].Episodes[k].Date = prevMedia.TvShows[i].Seasons[j].Episodes[k].Date;
-                                this.tvShows[i].Seasons[j].Episodes[k].Overview = prevMedia.TvShows[i].Seasons[j].Episodes[k].Overview;
-                                this.tvShows[i].Seasons[j].Episodes[k].Path = prevMedia.TvShows[i].Seasons[j].Episodes[k].Path;
-                            }
-                        }
+                            this.tvShows[l].Seasons[j].Id = prevMedia.TvShows[i].Seasons[j].Id;
+                            this.tvShows[l].Seasons[j].Poster = prevMedia.TvShows[i].Seasons[j].Poster;
+                            this.tvShows[l].Seasons[j].Date = prevMedia.TvShows[i].Seasons[j].Date;
 
+                            for (int k = 0; k < prevMedia.TvShows[i].Seasons[j].Episodes.Length; k++)
+                            {
+                                if (this.tvShows[l].Seasons[j].Episodes[k].Name.Equals(prevMedia.TvShows[i].Seasons[j].Episodes[k].Name))
+                                {
+                                    this.tvShows[l].Seasons[j].Episodes[k].Id = prevMedia.TvShows[i].Seasons[j].Episodes[k].Id;
+                                    this.tvShows[l].Seasons[j].Episodes[k].Name = prevMedia.TvShows[i].Seasons[j].Episodes[k].Name;
+                                    this.tvShows[l].Seasons[j].Episodes[k].Backdrop = prevMedia.TvShows[i].Seasons[j].Episodes[k].Backdrop;
+                                    this.tvShows[l].Seasons[j].Episodes[k].Date = prevMedia.TvShows[i].Seasons[j].Episodes[k].Date;
+                                    this.tvShows[l].Seasons[j].Episodes[k].Overview = prevMedia.TvShows[i].Seasons[j].Episodes[k].Overview;
+                                    this.tvShows[l].Seasons[j].Episodes[k].Path = prevMedia.TvShows[i].Seasons[j].Episodes[k].Path;
+                                }
+                            }
+
+                        }
                     }
                 }
             }
