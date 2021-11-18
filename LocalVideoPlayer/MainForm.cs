@@ -32,22 +32,34 @@ namespace LocalVideoPlayer
         private Media media;
         private Label movieLabel;
         private Label tvLabel;
-
+        private Form dimmerForm;
         public MainForm()
         {
-            PlayerForm p = new PlayerForm(@"C:\zMedia\MOVIES\Harry Potter and the Chamber of Secrets\Harry potter and the chamber of secrets.avi");
-            p.Show();
-            /*
+            //PlayerForm p = new PlayerForm(@"C:\zMedia\MOVIES\Harry Potter and the Chamber of Secrets\Harry potter and the chamber of secrets.avi");
+            //p.Show();
+            
             InitializeComponent();
 
             backgroundWorker1.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorker1_RunWorkerCompleted);
             //backgroundWorker1.ProgressChanged += new ProgressChangedEventHandler( backgroundWorker1_ProgressChanged);
-            backgroundWorker1.RunWorkerAsync();*/
+            backgroundWorker1.RunWorkerAsync();
+
+            dimmerForm = new Form();
+            dimmerForm.ShowInTaskbar = false;
+            dimmerForm.FormBorderStyle = FormBorderStyle.None;
+            dimmerForm.BackColor = Color.Black;
+
+            this.DoubleBuffered = true;
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            //to-do: move vlc object here
+            //dispose everything
+            dimmerForm.Close();
+            tvLabel.Dispose();
+
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -167,7 +179,108 @@ namespace LocalVideoPlayer
 
         private void tvShowBox_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            Form tvForm = new Form();
+
+            PictureBox p = sender as PictureBox;
+            TvShow tvShow = GetTvShow(p.Name);
+
+            tvForm.Width = (int)(this.Width / 1.75);
+            tvForm.Height = this.Height;
+            //Size maxSize = new Size(800, 800);
+            //tvForm.MaximumSize = maxSize;
+            tvForm.AutoScroll = true;
+            tvForm.AutoSize = true;
+            //tvForm.Text = header;
+            tvForm.StartPosition = FormStartPosition.CenterScreen;
+            tvForm.BackColor = SystemColors.Desktop;
+            tvForm.ForeColor = SystemColors.Control;
+
+            Font f = new Font("Arial", 24, FontStyle.Bold);
+            Font f3 = new Font("Arial", 16, FontStyle.Bold);
+            Font f2 = new Font("Arial", 12, FontStyle.Regular);
+
+            Panel currentPanel = new Panel();
+            currentPanel.BackColor = Color.DarkGray;
+            currentPanel.Dock = DockStyle.Top;
+            currentPanel.AutoSize = true;
+            //currentPanel.Padding = new Padding(10);
+            tvForm.Controls.Add(currentPanel);
+
+            Label episodeHeaderLabel = new Label() { Text = "Episodes" };
+            episodeHeaderLabel.Location = new Point(currentPanel.Location.X, currentPanel.Height);
+            Console.WriteLine(episodeHeaderLabel.Location);
+            //episodeHeaderLabel.Dock = DockStyle.Left;
+            episodeHeaderLabel.Font = f3;
+            episodeHeaderLabel.AutoSize = true;
+            Padding p4 = new Padding(5, 20, 20, 0);
+            episodeHeaderLabel.Padding = p4;
+            currentPanel.Controls.Add(episodeHeaderLabel);
+
+            ComboBox comboBox1 = new ComboBox();
+            comboBox1.Location = new Point(currentPanel.Width - comboBox1.Width - 20, currentPanel.Height - (int)(comboBox1.Height * 1.75));
+            Console.WriteLine(comboBox1.Location);
+            comboBox1.Name = "comboBox1";
+            //comboBox1.Dock = DockStyle.Right;
+            comboBox1.AutoSize = true;
+            comboBox1.Font = f3;
+            comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
+            Padding p5 = new Padding(5, 20, 20, 0);
+            comboBox1.Padding = p5;
+            comboBox1.SelectedIndexChanged += new System.EventHandler(ComboBox1_SelectedIndexChanged);
+            comboBox1.Sorted = true;
+            for(int i = 0; i < tvShow.Seasons.Length; i++)
+            {
+                comboBox1.Items.Add("Season " + (i + 1));
+            }
+            comboBox1.SelectedIndex = 0;
+            currentPanel.Controls.Add(comboBox1);
+
+            Label textLabel = new Label() { Text = tvShow.Overview };
+            textLabel.Dock = DockStyle.Top;
+            textLabel.Font = f2;
+            textLabel.AutoSize = true;
+            Padding p2 = new Padding(5, 20, 10, 20);
+            textLabel.Padding = p2;
+            textLabel.MaximumSize = tvForm.Size;
+            tvForm.Controls.Add(textLabel);
+
+            Label headerLabel = new Label() { Text = tvShow.Name + " (" + tvShow.Date.GetValueOrDefault().Year + ")" };
+            headerLabel.Dock = DockStyle.Top;
+            headerLabel.Font = f;
+            headerLabel.AutoSize = true;
+            Padding p3 = new Padding(5, 20, 0, 0);
+            headerLabel.Padding = p3;
+            tvForm.Controls.Add(headerLabel);
+
+            PictureBox tvShowBackdropBox = new PictureBox();
+            //Console.WriteLine(tvForm.Width);
+            tvShowBackdropBox.Height = 622; //3840 x 2160 1920 x 1080
+            string imagePath = tvShow.Backdrop;
+            tvShowBackdropBox.Image = Image.FromFile(imagePath);
+            tvShowBackdropBox.BackColor = Color.Red;
+            tvShowBackdropBox.Dock = DockStyle.Top;
+            tvShowBackdropBox.Cursor = Cursors.Hand;
+            tvShowBackdropBox.SizeMode = PictureBoxSizeMode.StretchImage;
+            tvShowBackdropBox.Name = tvShow.Name;
+            //tvShowBackdropBox.Click += tvShowBackdropBox_Click;
+            tvForm.Controls.Add(tvShowBackdropBox);
+
+            tvForm.Deactivate += (s, ev) => { 
+                tvForm.Close();
+                //opacity adjusted to 0.8
+                Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Slow);
+            };
+
+            Form form1 = Application.OpenForms[0];
+            dimmerForm.Size = form1.Size;
+            Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Slow, 0.8);
+            dimmerForm.Location = form1.Location;
+            tvForm.Show();
+        }
+        private void ComboBox1_SelectedIndexChanged(object sender, System.EventArgs e)
+        {
+            ComboBox c = sender as ComboBox;
+            Console.WriteLine("index changed: " + c.SelectedIndex + " " + c.Text);
         }
 
         private void movieBox_Click(object sender, EventArgs e)
@@ -209,12 +322,11 @@ namespace LocalVideoPlayer
             movieForm.Controls.Add(headerLabel);
 
             PictureBox movieBackdropBox = new PictureBox();
-            Console.WriteLine(movieForm.Width);
+            //Console.WriteLine(movieForm.Width);
             movieBackdropBox.Height = 622; //3840 x 2160 1920 x 1080
             string imagePath = movie.Backdrop;
             movieBackdropBox.Image = Image.FromFile(imagePath);
             movieBackdropBox.BackColor = Color.Red;
-            //movieBackdropBox.Left = movieBackdropBox.Width * currentPanel.Controls.Count;
             movieBackdropBox.Dock = DockStyle.Top;
             movieBackdropBox.Cursor = Cursors.Hand;
             movieBackdropBox.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -222,7 +334,16 @@ namespace LocalVideoPlayer
             movieBackdropBox.Click += movieBackdropBox_Click;
             movieForm.Controls.Add(movieBackdropBox);
 
-            movieForm.Deactivate += (s, ev) => { movieForm.Close(); movieForm.Dispose(); };
+            movieForm.Deactivate += (s, ev) => { 
+                //opacity adjusted to 0.8
+                Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Slow);
+                movieForm.Close();
+            };
+
+            Form form1 = Application.OpenForms[0];
+            dimmerForm.Size = form1.Size;
+            Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Slow, 0.8);
+            dimmerForm.Location = form1.Location;
             movieForm.Show();
         }
 
@@ -246,6 +367,18 @@ namespace LocalVideoPlayer
                 if(media.Movies[i].Name.Equals(name))
                 {
                     return media.Movies[i];
+                }
+            }
+            return null;
+        }
+
+        private TvShow GetTvShow(string name)
+        {
+            for (int i = 0; i < media.TvShows.Length; i++)
+            {
+                if (media.TvShows[i].Name.Equals(name))
+                {
+                    return media.TvShows[i];
                 }
             }
             return null;
