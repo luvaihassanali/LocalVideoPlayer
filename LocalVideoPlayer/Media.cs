@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace LocalVideoPlayer
 {
@@ -53,7 +49,7 @@ namespace LocalVideoPlayer
             {
                 for (int j = 0; j < this.movies.Length; j++)
                 {
-                    if (this.movies[j].Name.Equals(prevMedia.movies[i].Name))
+                    if (String.Compare(this.movies[j].Name, prevMedia.movies[i].Name, System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0)
                     {
                         this.movies[j].Name = prevMedia.movies[i].Name;
                         this.movies[j].Overview = prevMedia.movies[i].Overview;
@@ -70,7 +66,7 @@ namespace LocalVideoPlayer
             {
                 for (int l = 0; l < this.tvShows.Length; l++)
                 {
-                    if (this.tvShows[l].Name.Equals(prevMedia.TvShows[i].Name))
+                    if (String.Compare(this.tvShows[l].Name, prevMedia.tvShows[i].Name, System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0)
                     {
                         this.tvShows[l].Name = prevMedia.tvShows[i].Name;
                         this.tvShows[l].Id = prevMedia.tvShows[i].Id;
@@ -105,7 +101,7 @@ namespace LocalVideoPlayer
         }
     }
 
-    class Movie
+    public class Movie
     {
         private int id;
         private string name;
@@ -170,7 +166,7 @@ namespace LocalVideoPlayer
         }
     }
 
-    class TvShow
+    public class TvShow
     {
         private int id;
         private string name;
@@ -239,7 +235,7 @@ namespace LocalVideoPlayer
         }
     }
 
-    class Season
+    public class Season
     {
         private int id;
         private Episode[] episodes;
@@ -287,7 +283,7 @@ namespace LocalVideoPlayer
         }
     }
 
-    class Episode
+    public class Episode
     {
         private int id;
         private string name;

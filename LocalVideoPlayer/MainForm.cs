@@ -35,12 +35,15 @@ namespace LocalVideoPlayer
 
         public MainForm()
         {
+            PlayerForm p = new PlayerForm(@"C:\zMedia\MOVIES\Harry Potter and the Chamber of Secrets\Harry potter and the chamber of secrets.avi");
+            p.Show();
+            /*
             InitializeComponent();
 
             backgroundWorker1.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorker1_RunWorkerCompleted);
             //backgroundWorker1.ProgressChanged += new ProgressChangedEventHandler( backgroundWorker1_ProgressChanged);
-            backgroundWorker1.RunWorkerAsync();
+            backgroundWorker1.RunWorkerAsync();*/
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -93,7 +96,7 @@ namespace LocalVideoPlayer
                 }
 
                 PictureBox movieBox = new PictureBox();
-                movieBox.Width = currentPanel.Width / 6;
+                movieBox.Width = this.Width / 6;
                 movieBox.Height = 450;
                 string imagePath = media.Movies[i].Poster;
                 movieBox.Image = Image.FromFile(imagePath);
@@ -101,8 +104,9 @@ namespace LocalVideoPlayer
                 movieBox.Left = movieBox.Width * currentPanel.Controls.Count;
                 movieBox.Cursor = Cursors.Hand;
                 movieBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                movieBox.Padding = new Padding(10, 10, 10, 10);
-                Console.WriteLine(movieBox.Size); //480 x 270, 3840 x 2160 poster 2000 x 3000
+                movieBox.Padding = new Padding(10, 10, 40, 10);
+                movieBox.Name = media.Movies[i].Name;
+                movieBox.Click += movieBox_Click;
                 currentPanel.Controls.Add(movieBox);
                 count++;
             }
@@ -134,7 +138,7 @@ namespace LocalVideoPlayer
                 }
 
                 PictureBox tvShowBox = new PictureBox();
-                tvShowBox.Width = currentPanel.Width / 6;
+                tvShowBox.Width = this.Width / 6;
                 tvShowBox.Height = 450;
                 string imagePath = media.TvShows[i].Poster;
                 tvShowBox.Image = Image.FromFile(imagePath);
@@ -142,8 +146,9 @@ namespace LocalVideoPlayer
                 tvShowBox.Left = tvShowBox.Width * currentPanel.Controls.Count;
                 tvShowBox.Cursor = Cursors.Hand;
                 tvShowBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                tvShowBox.Padding = new Padding(10, 10, 10, 10);
-                Console.WriteLine(tvShowBox.Size);
+                tvShowBox.Padding = new Padding(10, 10, 40, 10);
+                tvShowBox.Name = media.TvShows[i].Name;
+                tvShowBox.Click += tvShowBox_Click;
                 currentPanel.Controls.Add(tvShowBox);
                 count++;
             }
@@ -158,6 +163,138 @@ namespace LocalVideoPlayer
 
             //To-do: clean up dynamically created controls
 
+        }
+
+        private void tvShowBox_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void movieBox_Click(object sender, EventArgs e)
+        {
+            Form movieForm = new Form();
+
+            PictureBox p = sender as PictureBox;
+            Movie movie = GetMovie(p.Name);
+
+            movieForm.Width = (int)(this.Width / 1.75);
+            movieForm.Height = this.Height;
+            //Size maxSize = new Size(800, 800);
+            //movieForm.MaximumSize = maxSize;
+            movieForm.AutoScroll = true;
+            movieForm.AutoSize = true;
+            //movieForm.Text = header;
+            movieForm.StartPosition = FormStartPosition.CenterScreen;
+            movieForm.BackColor = SystemColors.Desktop;
+            movieForm.ForeColor = SystemColors.Control;
+
+            Font f = new Font("Arial", 14, FontStyle.Bold);
+            Font f2 = new Font("Arial", 12, FontStyle.Regular);
+
+            Label textLabel = new Label() { Text = movie.Overview };
+            textLabel.Dock = DockStyle.Top;
+            textLabel.Font = f2;
+            textLabel.AutoSize = true;
+            Padding p2 = new Padding(5, 20, 10, 0);
+            textLabel.Padding = p2;
+            textLabel.MaximumSize = movieForm.Size;
+            movieForm.Controls.Add(textLabel);
+
+            Label headerLabel = new Label() { Text = movie.Name + " (" + movie.Date.GetValueOrDefault().Year + ")" };
+            headerLabel.Dock = DockStyle.Top;
+            headerLabel.Font = f;
+            headerLabel.AutoSize = true;
+            Padding p3 = new Padding(5, 20, 0, 0);
+            headerLabel.Padding = p3;
+            movieForm.Controls.Add(headerLabel);
+
+            PictureBox movieBackdropBox = new PictureBox();
+            Console.WriteLine(movieForm.Width);
+            movieBackdropBox.Height = 622; //3840 x 2160 1920 x 1080
+            string imagePath = movie.Backdrop;
+            movieBackdropBox.Image = Image.FromFile(imagePath);
+            movieBackdropBox.BackColor = Color.Red;
+            //movieBackdropBox.Left = movieBackdropBox.Width * currentPanel.Controls.Count;
+            movieBackdropBox.Dock = DockStyle.Top;
+            movieBackdropBox.Cursor = Cursors.Hand;
+            movieBackdropBox.SizeMode = PictureBoxSizeMode.StretchImage;
+            movieBackdropBox.Name = movie.Path;
+            movieBackdropBox.Click += movieBackdropBox_Click;
+            movieForm.Controls.Add(movieBackdropBox);
+
+            movieForm.Deactivate += (s, ev) => { movieForm.Close(); movieForm.Dispose(); };
+            movieForm.Show();
+        }
+
+        private void movieBackdropBox_Click(object sender, EventArgs e)
+        {
+            PictureBox p = sender as PictureBox;
+            string path = p.Name;
+            LaunchVlc(path);
+        }
+
+        private void LaunchVlc(string path)
+        {
+            Form playerForm = new PlayerForm(path);
+            playerForm.Show();
+        }
+
+        private Movie GetMovie(object name)
+        {
+            for (int i = 0; i < media.Movies.Length; i++)
+            {
+                if(media.Movies[i].Name.Equals(name))
+                {
+                    return media.Movies[i];
+                }
+            }
+            return null;
+        }
+
+        private void CustomMessageForm(string header, string message)
+        {
+            Form prompt = new Form();
+            prompt.Width = 800;
+            prompt.Height = 100;
+            Size maxSize = new Size(this.Width, 800);
+            prompt.MaximumSize = maxSize;
+            prompt.AutoScroll = true;
+            prompt.AutoSize = true;
+            prompt.Text = header;
+            prompt.StartPosition = FormStartPosition.CenterScreen;
+            prompt.BackColor = SystemColors.Desktop;
+            prompt.ForeColor = SystemColors.Control;
+            
+            Font f = new Font("Arial", 14, FontStyle.Bold);
+            Font f2 = new Font("Arial", 12, FontStyle.Regular);
+
+            Label textLabel = new Label() { Text = message };
+            textLabel.Dock = DockStyle.Top;
+            textLabel.Font = f2;
+            textLabel.AutoSize = true;
+            Padding p2 = new Padding(10, 0, 0, 10);
+            textLabel.Padding = p2;
+            prompt.Controls.Add(textLabel);
+
+            Label headerLabel = new Label() { Text = header };
+            headerLabel.Dock = DockStyle.Top;
+            headerLabel.Font = f;
+            headerLabel.AutoSize = true;
+            Padding p = new Padding(0, 0, 0, 15);
+            headerLabel.Padding = p;
+            prompt.Controls.Add(headerLabel);
+
+            Button confirmation = new Button() { Text = "Ok" };
+            confirmation.AutoSize = true;
+            confirmation.Font = f2;
+            confirmation.Dock = DockStyle.Bottom;
+            confirmation.FlatStyle = FlatStyle.Flat;
+            confirmation.Cursor = Cursors.Hand;
+            confirmation.Click += (sender, e) => { prompt.Close(); };
+
+            prompt.Controls.Add(confirmation);
+            prompt.ShowDialog();
+            prompt.Dispose();
         }
 
         private int ShowOptionsForm(string item, string[][] info, DateTime?[] dates)
@@ -268,7 +405,7 @@ namespace LocalVideoPlayer
 
                     if (totalResults == 0)
                     {
-                        MessageBox.Show("No movie");
+                        CustomMessageForm("Error", "No movie found for: " + movie.Name);
                     }
                     else if (totalResults != 1)
                     {
@@ -322,13 +459,14 @@ namespace LocalVideoPlayer
                     else
                     {
                         string message = "Local movie name does not match retrieved data. Renaming file '" + movie.Name.Replace(":", "") + "' to '" + ((string)movieObject["title"]).Replace(":", "") + "'.";
-                        MessageBox.Show(message);
+                        CustomMessageForm("Warning", message);
 
                         string oldPath = movie.Path;
                         string[] fileNamePath = oldPath.Split('\\');
                         string fileName = fileNamePath[fileNamePath.Length - 1];
+                        string extension = fileName.Split('.')[1];
                         string newFileName = ((string)movieObject["title"]).Replace(":", "");
-                        string newPath = oldPath.Replace(fileName, newFileName);
+                        string newPath = oldPath.Replace(fileName, newFileName + "." + extension);
                         File.Move(oldPath, newPath);
 
                         movie.Path = newPath;
@@ -369,7 +507,7 @@ namespace LocalVideoPlayer
 
                         if (totalResults == 0)
                         {
-                            MessageBox.Show("No tv show");
+                            CustomMessageForm("Error", "No tv show for: " + tvShow.Name);
                         }
                         else if (totalResults != 1)
                         {
@@ -482,7 +620,7 @@ namespace LocalVideoPlayer
                             else
                             {
                                 string message = "Local episode name does not match retrieved data. Renaming file '" + episode.Name + "' to '" + (string)jEpisode["name"] + "'.";
-                                MessageBox.Show(message);
+                                CustomMessageForm("Warning", message);
 
                                 string oldPath = episode.Path;
                                 string newPath = oldPath.Replace(episode.Name, (string)jEpisode["name"]);
