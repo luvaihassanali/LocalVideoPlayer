@@ -53,7 +53,6 @@ namespace LocalVideoPlayer
         {
             FileInfo media = new FileInfo(path);
             vlcControl.Play(media);
-            Console.WriteLine(this.Width + " " + this.Height);
             closeButton.Location = new Point(this.Width - closeButton.Width * 2, closeButton.Width);
             playButton.Location = new Point(this.Width / 2, this.Height - 100);
         }
