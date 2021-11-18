@@ -117,6 +117,7 @@ namespace LocalVideoPlayer
                 movieBox.Cursor = Cursors.Hand;
                 movieBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 movieBox.Padding = new Padding(10, 10, 40, 10);
+                //movieBox.Padding = new Padding(20);
                 movieBox.Name = media.Movies[i].Name;
                 movieBox.Click += movieBox_Click;
                 currentPanel.Controls.Add(movieBox);
@@ -159,6 +160,7 @@ namespace LocalVideoPlayer
                 tvShowBox.Cursor = Cursors.Hand;
                 tvShowBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 tvShowBox.Padding = new Padding(10, 10, 40, 10);
+                //tvShowBox.Padding = new Padding(20);
                 tvShowBox.Name = media.TvShows[i].Name;
                 tvShowBox.Click += tvShowBox_Click;
                 currentPanel.Controls.Add(tvShowBox);
@@ -186,11 +188,8 @@ namespace LocalVideoPlayer
 
             tvForm.Width = (int)(this.Width / 1.75);
             tvForm.Height = this.Height;
-            //Size maxSize = new Size(800, 800);
-            //tvForm.MaximumSize = maxSize;
             tvForm.AutoScroll = true;
             tvForm.AutoSize = true;
-            //tvForm.Text = header;
             tvForm.StartPosition = FormStartPosition.CenterScreen;
             tvForm.BackColor = SystemColors.Desktop;
             tvForm.ForeColor = SystemColors.Control;
@@ -203,44 +202,55 @@ namespace LocalVideoPlayer
             currentPanel.BackColor = Color.DarkGray;
             currentPanel.Dock = DockStyle.Top;
             currentPanel.AutoSize = true;
-            //currentPanel.Padding = new Padding(10);
             tvForm.Controls.Add(currentPanel);
+
+            Panel episodePanel = new Panel();
+            episodePanel.BackColor = SystemColors.Control;
+            episodePanel.Dock = DockStyle.Top;
+            episodePanel.AutoSize = true;
+            currentPanel.Controls.Add(episodePanel);
+
+            PictureBox episodeBox = new PictureBox();
+            episodeBox.Width = 300;
+            episodeBox.Height = 200;
+            string eImagePath = tvShow.Seasons[0].Episodes[0].Backdrop;
+            episodeBox.Image = Image.FromFile(eImagePath);
+            episodeBox.BackColor = Color.Transparent;
+            episodeBox.Cursor = Cursors.Hand;
+            episodeBox.SizeMode = PictureBoxSizeMode.StretchImage;
+            episodePanel.Controls.Add(episodeBox);
+
+            ComboBox seasonComboBox = new ComboBox();
+            seasonComboBox.Location = new Point(currentPanel.Width, currentPanel.Height);
+            Console.WriteLine(seasonComboBox.Location);
+            seasonComboBox.Dock = DockStyle.Top;
+            seasonComboBox.AutoSize = true;
+            seasonComboBox.Font = f3;
+            seasonComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            seasonComboBox.Dock = DockStyle.Top;
+            seasonComboBox.SelectedIndexChanged += new System.EventHandler(ComboBox1_SelectedIndexChanged);
+            seasonComboBox.Sorted = true;
+            for (int i = 0; i < tvShow.Seasons.Length; i++)
+            {
+                seasonComboBox.Items.Add("Season " + (i + 1));
+            }
+            seasonComboBox.SelectedIndex = 0;
+            currentPanel.Controls.Add(seasonComboBox);
 
             Label episodeHeaderLabel = new Label() { Text = "Episodes" };
             episodeHeaderLabel.Location = new Point(currentPanel.Location.X, currentPanel.Height);
             Console.WriteLine(episodeHeaderLabel.Location);
-            //episodeHeaderLabel.Dock = DockStyle.Left;
+            episodeHeaderLabel.Dock = DockStyle.Top;
             episodeHeaderLabel.Font = f3;
             episodeHeaderLabel.AutoSize = true;
-            Padding p4 = new Padding(5, 20, 20, 0);
-            episodeHeaderLabel.Padding = p4;
+            episodeHeaderLabel.Padding = new Padding(20);
             currentPanel.Controls.Add(episodeHeaderLabel);
-
-            ComboBox comboBox1 = new ComboBox();
-            comboBox1.Location = new Point(currentPanel.Width - comboBox1.Width - 20, currentPanel.Height - (int)(comboBox1.Height * 1.75));
-            Console.WriteLine(comboBox1.Location);
-            comboBox1.Name = "comboBox1";
-            //comboBox1.Dock = DockStyle.Right;
-            comboBox1.AutoSize = true;
-            comboBox1.Font = f3;
-            comboBox1.DropDownStyle = ComboBoxStyle.DropDownList;
-            Padding p5 = new Padding(5, 20, 20, 0);
-            comboBox1.Padding = p5;
-            comboBox1.SelectedIndexChanged += new System.EventHandler(ComboBox1_SelectedIndexChanged);
-            comboBox1.Sorted = true;
-            for(int i = 0; i < tvShow.Seasons.Length; i++)
-            {
-                comboBox1.Items.Add("Season " + (i + 1));
-            }
-            comboBox1.SelectedIndex = 0;
-            currentPanel.Controls.Add(comboBox1);
 
             Label textLabel = new Label() { Text = tvShow.Overview };
             textLabel.Dock = DockStyle.Top;
             textLabel.Font = f2;
             textLabel.AutoSize = true;
-            Padding p2 = new Padding(5, 20, 10, 20);
-            textLabel.Padding = p2;
+            textLabel.Padding = new Padding(20);
             textLabel.MaximumSize = tvForm.Size;
             tvForm.Controls.Add(textLabel);
 
@@ -248,8 +258,7 @@ namespace LocalVideoPlayer
             headerLabel.Dock = DockStyle.Top;
             headerLabel.Font = f;
             headerLabel.AutoSize = true;
-            Padding p3 = new Padding(5, 20, 0, 0);
-            headerLabel.Padding = p3;
+            headerLabel.Padding = new Padding(20);
             tvForm.Controls.Add(headerLabel);
 
             PictureBox tvShowBackdropBox = new PictureBox();
@@ -268,12 +277,13 @@ namespace LocalVideoPlayer
             tvForm.Deactivate += (s, ev) => { 
                 tvForm.Close();
                 //opacity adjusted to 0.8
-                Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Slow);
+                Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
             };
 
             Form form1 = Application.OpenForms[0];
             dimmerForm.Size = form1.Size;
-            Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Slow, 0.8);
+            //calls form .show
+            Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Normal, 0.8);
             dimmerForm.Location = form1.Location;
             tvForm.Show();
         }
@@ -292,24 +302,21 @@ namespace LocalVideoPlayer
 
             movieForm.Width = (int)(this.Width / 1.75);
             movieForm.Height = this.Height;
-            //Size maxSize = new Size(800, 800);
-            //movieForm.MaximumSize = maxSize;
             movieForm.AutoScroll = true;
             movieForm.AutoSize = true;
-            //movieForm.Text = header;
             movieForm.StartPosition = FormStartPosition.CenterScreen;
             movieForm.BackColor = SystemColors.Desktop;
             movieForm.ForeColor = SystemColors.Control;
 
-            Font f = new Font("Arial", 14, FontStyle.Bold);
+            Font f = new Font("Arial", 24, FontStyle.Bold);
+            Font f3 = new Font("Arial", 16, FontStyle.Bold);
             Font f2 = new Font("Arial", 12, FontStyle.Regular);
 
             Label textLabel = new Label() { Text = movie.Overview };
             textLabel.Dock = DockStyle.Top;
             textLabel.Font = f2;
             textLabel.AutoSize = true;
-            Padding p2 = new Padding(5, 20, 10, 0);
-            textLabel.Padding = p2;
+            textLabel.Padding = new Padding(20);
             textLabel.MaximumSize = movieForm.Size;
             movieForm.Controls.Add(textLabel);
 
@@ -317,13 +324,11 @@ namespace LocalVideoPlayer
             headerLabel.Dock = DockStyle.Top;
             headerLabel.Font = f;
             headerLabel.AutoSize = true;
-            Padding p3 = new Padding(5, 20, 0, 0);
-            headerLabel.Padding = p3;
+            headerLabel.Padding = new Padding(20);
             movieForm.Controls.Add(headerLabel);
 
             PictureBox movieBackdropBox = new PictureBox();
-            //Console.WriteLine(movieForm.Width);
-            movieBackdropBox.Height = 622; //3840 x 2160 1920 x 1080
+            movieBackdropBox.Height = 622;
             string imagePath = movie.Backdrop;
             movieBackdropBox.Image = Image.FromFile(imagePath);
             movieBackdropBox.BackColor = Color.Red;
@@ -336,13 +341,14 @@ namespace LocalVideoPlayer
 
             movieForm.Deactivate += (s, ev) => { 
                 //opacity adjusted to 0.8
-                Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Slow);
+                Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
                 movieForm.Close();
             };
 
             Form form1 = Application.OpenForms[0];
             dimmerForm.Size = form1.Size;
-            Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Slow, 0.8);
+            //calls form. show
+            Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Normal, 0.8);
             dimmerForm.Location = form1.Location;
             movieForm.Show();
         }
@@ -405,16 +411,14 @@ namespace LocalVideoPlayer
             textLabel.Dock = DockStyle.Top;
             textLabel.Font = f2;
             textLabel.AutoSize = true;
-            Padding p2 = new Padding(10, 0, 0, 10);
-            textLabel.Padding = p2;
+            textLabel.Padding = new Padding(20);
             prompt.Controls.Add(textLabel);
 
             Label headerLabel = new Label() { Text = header };
             headerLabel.Dock = DockStyle.Top;
             headerLabel.Font = f;
             headerLabel.AutoSize = true;
-            Padding p = new Padding(0, 0, 0, 15);
-            headerLabel.Padding = p;
+            headerLabel.Padding = new Padding(20);
             prompt.Controls.Add(headerLabel);
 
             Button confirmation = new Button() { Text = "Ok" };
@@ -435,7 +439,7 @@ namespace LocalVideoPlayer
             Form prompt = new Form();
             prompt.Width = 800;
             prompt.Height = 400;
-            Size maxSize = new Size(800, 800);
+            Size maxSize = new Size(this.Width, 800);
             prompt.MaximumSize = maxSize;
             prompt.AutoScroll = true;
             prompt.AutoSize = true;
@@ -443,14 +447,15 @@ namespace LocalVideoPlayer
             prompt.StartPosition = FormStartPosition.CenterScreen;
             prompt.BackColor = SystemColors.Desktop;
             prompt.ForeColor = SystemColors.Control;
+
             Font f = new Font("Arial", 14, FontStyle.Bold);
             Font f2 = new Font("Arial", 12, FontStyle.Regular);
+
             Label textLabel = new Label() { Text = "Choose a selection for: " + item };
             textLabel.Dock = DockStyle.Top;
             textLabel.Font = f;
             textLabel.AutoSize = true;
-            Padding p = new Padding(0, 0, 0, 15);
-            textLabel.Padding = p;
+            textLabel.Padding = new Padding(20);
 
             List<Control> controls = new List<Control>();
 
@@ -461,8 +466,7 @@ namespace LocalVideoPlayer
                 r1.Font = f2;
                 r1.AutoSize = true;
                 r1.Cursor = Cursors.Hand;
-                Padding p2 = new Padding(0, 0, 0, 10);
-                r1.Padding = p2;
+                r1.Padding = new Padding(20);
                 r1.Name = info[1][i];
                 controls.Add(r1);
 
@@ -470,9 +474,8 @@ namespace LocalVideoPlayer
                 l1.Dock = DockStyle.Top;
                 l1.Font = f2;
                 l1.AutoSize = true;
-                Padding p3 = new Padding(10, 0, 0, 10);
-                l1.Padding = p3;
-                Size s = new Size(prompt.Width - 20, prompt.Height);
+                l1.Padding = new Padding(20);                 
+                Size s = new Size(prompt.Width, prompt.Height);
                 l1.MaximumSize = s;
                 controls.Add(l1);
 

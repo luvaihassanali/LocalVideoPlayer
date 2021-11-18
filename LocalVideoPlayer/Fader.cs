@@ -90,8 +90,9 @@ namespace LocalVideoPlayer
                     break;
 
                 // Fade out
+                // add zeros to avoid flash
                 case FadeDirection.Out:
-                    if (form.Opacity > 0.1)
+                    if (form.Opacity > 0.000000000000000000000000000000001)
                     {
                         form.Opacity -= (fadeSpeed / 1000.0);
                     }
