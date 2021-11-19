@@ -77,7 +77,6 @@ namespace LocalVideoPlayer
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "PlayerForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Player Form";
             this.TopMost = true;
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PlayerForm_FormClosing);

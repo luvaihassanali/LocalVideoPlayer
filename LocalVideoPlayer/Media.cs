@@ -175,10 +175,12 @@ namespace LocalVideoPlayer
         private string poster;
         private Season[] seasons;
         DateTime? date;
+        private int currSeason;
 
         public TvShow(string n)
         {
             name = n;
+            currSeason = 1;
         }
 
         public int Id
@@ -191,6 +193,12 @@ namespace LocalVideoPlayer
         {
             get => name;
             set => name = value;
+        }
+
+        public int CurrSeason
+        {
+            get => currSeason;
+            set => currSeason = value;
         }
 
         public string Backdrop
