@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -34,18 +35,22 @@ namespace LocalVideoPlayer
         private Label movieLabel;
         private Label tvLabel;
         private Form dimmerForm;
-        private Form dimmerForm2; 
+        private Form dimmerForm2;
 
         private bool seasonFormOpen = false;
         private bool isPlaying = false;
+
         public MainForm()
         {
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+
             InitializeComponent();
 
             backgroundWorker1.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorker1_RunWorkerCompleted);
-            //backgroundWorker1.ProgressChanged += new ProgressChangedEventHandler( backgroundWorker1_ProgressChanged);
             backgroundWorker1.RunWorkerAsync();
+
+            loadingCircle1.Active = true;
 
             dimmerForm = new Form();
             dimmerForm.ShowInTaskbar = false;
@@ -71,23 +76,24 @@ namespace LocalVideoPlayer
             dimmerForm2.Close();
         }
 
-        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            loadingCircle1.Dispose();
+
             InitGui();
-            //tvShowBox_Click(null, null);
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            //To-do: add path to app.config
+            //BackgroundWorker worker = sender as BackgroundWorker;
+
             string mediaPath = ConfigurationManager.AppSettings["mediaPath"];
             ProcessDirectory(mediaPath);
+
+            if (media == null) throw new ArgumentNullException();
+
             bool update = CheckForUpdates();
+
             if (update)
             {
                 Task buildCache = BuildCacheAsync();
@@ -125,7 +131,7 @@ namespace LocalVideoPlayer
                 string imagePath = media.Movies[i].Poster;
                 movieBox.Image = Image.FromFile(imagePath);
                 movieBox.BackColor = Color.Transparent;
-                movieBox.Left = movieBox.Width * currentPanel.Controls.Count; 
+                movieBox.Left = movieBox.Width * currentPanel.Controls.Count;
                 movieBox.Cursor = Cursors.Hand;
                 movieBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 movieBox.Padding = new Padding(20);
@@ -167,7 +173,7 @@ namespace LocalVideoPlayer
                 string imagePath = media.TvShows[i].Poster;
                 tvShowBox.Image = Image.FromFile(imagePath);
                 tvShowBox.BackColor = Color.Transparent;
-                tvShowBox.Left = tvShowBox.Width * currentPanel.Controls.Count; 
+                tvShowBox.Left = tvShowBox.Width * currentPanel.Controls.Count;
                 tvShowBox.Cursor = Cursors.Hand;
                 tvShowBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 tvShowBox.Padding = new Padding(20);
@@ -382,13 +388,13 @@ namespace LocalVideoPlayer
             foreach (Control c in tvForm.Controls)
             {
                 Panel p = c as Panel;
-                if(p != null && p.Name.Equals("mainPanel"))
+                if (p != null && p.Name.Equals("mainPanel"))
                 {
                     mainPanel = p;
-                    foreach(Control c_ in p.Controls)
+                    foreach (Control c_ in p.Controls)
                     {
                         Panel p_ = c_ as Panel;
-                        if(p_ != null && p_.Name.Contains("episodePanel"))
+                        if (p_ != null && p_.Name.Contains("episodePanel"))
                         {
                             p.Controls.Remove(p_);
                         }
@@ -466,7 +472,7 @@ namespace LocalVideoPlayer
             seasonForm.ForeColor = SystemColors.Control;
             seasonForm.FormClosing += (sender_, e_) =>
             {
-                if(indexChange)
+                if (indexChange)
                     UpdateTvForm();
                 seasonFormOpen = false;
                 Fader.FadeOut(dimmerForm2, Fader.FadeSpeed.Normal);
@@ -529,10 +535,10 @@ namespace LocalVideoPlayer
                     seasonNum = Int32.Parse(seasonBox.Name);
                     tvShow.CurrSeason = seasonNum;
                     b.Text = "Season " + seasonNum;
-                };     
-                
+                };
+
                 if (i == currSeasonIndex)
-                { 
+                {
                     seasonBox.BorderStyle = BorderStyle.Fixed3D;
                 }
 
@@ -669,7 +675,7 @@ namespace LocalVideoPlayer
             return null;
         }
 
-        private void CustomMessageForm(string header, string message)
+        private void CustomMessageDialog(string header, string message)
         {
             Form customMessageForm = new Form();
             customMessageForm.Width = this.Width / 2;
@@ -716,19 +722,24 @@ namespace LocalVideoPlayer
             customMessageForm.Dispose();
         }
 
-        private int ShowOptionsForm(string item, string[][] info, DateTime?[] dates)
+        private int ShowOptionsDialog(string item, string[][] info, DateTime?[] dates)
         {
             Form optionsForm = new Form();
             optionsForm.Width = this.Width / 2;
             optionsForm.Height = this.Height / 6;
             optionsForm.MaximumSize = new Size(this.Width, this.Height);
-            
+            optionsForm.TopMost = true;
             optionsForm.AutoScroll = true;
+            optionsForm.AutoScrollPosition = new Point(0, 0);
             optionsForm.AutoSize = true;
             optionsForm.StartPosition = FormStartPosition.CenterScreen;
             optionsForm.BackColor = SystemColors.Desktop;
             optionsForm.ForeColor = SystemColors.Control;
             optionsForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+            optionsForm.Shown += (s, e) =>
+            {
+                optionsForm.AutoScrollPosition = new Point(0, 0);
+            };
 
             Font f = new Font("Arial", 14, FontStyle.Bold);
             Font f2 = new Font("Arial", 12, FontStyle.Regular);
@@ -740,31 +751,8 @@ namespace LocalVideoPlayer
             textLabel.Padding = new Padding(20);
             Size maxSize = new Size(this.Width / 2, this.Height);
             textLabel.MaximumSize = maxSize;
-            optionsForm.Controls.Add(textLabel);
 
             List<Control> controls = new List<Control>();
-
-            for (int i = 0; i < info[0].Length; i++)
-            {
-                RadioButton r1 = new RadioButton { Text = info[0][i] + " (" + dates[i].GetValueOrDefault().Year + ")" };
-                r1.Dock = DockStyle.Top;
-                r1.Font = f2;
-                r1.AutoSize = true;
-                r1.Cursor = Cursors.Hand;
-                r1.Padding = new Padding(20, 20, 20, 0);
-                r1.Name = info[1][i];
-                controls.Add(r1);
-
-                Label l1 = new Label() { Text = info[2][i].Equals(String.Empty) ? "No description." : info[2][i] };
-                l1.Dock = DockStyle.Top;
-                l1.Font = f2;
-                l1.AutoSize = true;
-                l1.Padding = new Padding(20);
-                Size s = new Size(optionsForm.Width, optionsForm.Height);
-                l1.MaximumSize = s;
-                controls.Add(l1);
-
-            }
 
             Button confirmation = new Button() { Text = "Ok" };
             confirmation.AutoSize = true;
@@ -791,7 +779,40 @@ namespace LocalVideoPlayer
                     optionsForm.Close();
             };
 
+            for (int i = 0; i < info[0].Length; i++)
+            {
+                RadioButton r1 = new RadioButton { Text = info[0][i] + " (" + dates[i].GetValueOrDefault().Year + ")" };
+                r1.Dock = DockStyle.Top;
+                r1.Font = f2;
+                r1.AutoSize = true;
+                r1.Cursor = Cursors.Hand;
+                r1.Padding = new Padding(20, 20, 20, 0);
+                r1.Name = info[1][i];
+                r1.Click += (sender, e) =>
+                {
+                    optionsForm.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
+                };
+                controls.Add(r1);
+
+                Label l1 = new Label() { Text = info[2][i].Equals(String.Empty) ? "No description." : info[2][i] };
+                l1.Dock = DockStyle.Top;
+                l1.Font = f2;
+                l1.AutoSize = true;
+                l1.Padding = new Padding(20);
+                Size s = new Size(optionsForm.Width, optionsForm.Height);
+                l1.MaximumSize = s;
+                l1.Cursor = Cursors.Hand;
+                l1.Click += (sender, e) =>
+                {
+                    r1.Checked = true;
+                    optionsForm.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
+                };
+                controls.Add(l1);
+            }
+
+            optionsForm.Controls.Add(textLabel);
             optionsForm.Controls.Add(confirmation);
+
             controls.Reverse();
             foreach (Control c in controls)
             {
@@ -840,7 +861,7 @@ namespace LocalVideoPlayer
 
                     if (totalResults == 0)
                     {
-                        CustomMessageForm("Error", "No movie found for: " + movie.Name);
+                        CustomMessageDialog("Error", "No movie found for: " + movie.Name);
                     }
                     else if (totalResults != 1)
                     {
@@ -860,7 +881,7 @@ namespace LocalVideoPlayer
                         }
 
                         string[][] info = new string[][] { names, ids, overviews };
-                        movie.Id = ShowOptionsForm(movie.Name, info, dates);
+                        movie.Id = ShowOptionsDialog(movie.Name, info, dates);
                     }
                     else
                     {
@@ -893,7 +914,7 @@ namespace LocalVideoPlayer
                     else
                     {
                         string message = "Local movie name does not match retrieved data. Renaming file '" + movie.Name.Replace(":", "") + "' to '" + ((string)movieObject["title"]).Replace(":", "") + "'.";
-                        CustomMessageForm("Warning", message);
+                        CustomMessageDialog("Warning", message);
 
                         string oldPath = movie.Path;
                         string[] fileNamePath = oldPath.Split('\\');
@@ -940,7 +961,7 @@ namespace LocalVideoPlayer
 
                         if (totalResults == 0)
                         {
-                            CustomMessageForm("Error", "No tv show for: " + tvShow.Name);
+                            CustomMessageDialog("Error", "No tv show for: " + tvShow.Name);
                         }
                         else if (totalResults != 1)
                         {
@@ -959,7 +980,7 @@ namespace LocalVideoPlayer
                                 dates[j] = DateTime.TryParse((string)tvObject["results"][j]["first_air_date"], out temp) ? temp : DateTime.MinValue.AddHours(9);
                             }
                             string[][] info = new string[][] { names, ids, overviews };
-                            tvShow.Id = ShowOptionsForm(tvShow.Name, info, dates);
+                            tvShow.Id = ShowOptionsDialog(tvShow.Name, info, dates);
                         }
                         else
                         {
@@ -1027,7 +1048,7 @@ namespace LocalVideoPlayer
                             Episode episode = episodes[k];
 
                             if (String.Compare(episode.Name, (string)jEpisode["name"], System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0)
-                               // && episode.Id == (int)jEpisode["episode_number"])
+                            // && episode.Id == (int)jEpisode["episode_number"])
                             {
                                 episode.Id = (int)jEpisode["episode_number"];
                                 episode.Overview = (string)jEpisode["overview"];
@@ -1045,7 +1066,7 @@ namespace LocalVideoPlayer
                             else
                             {
                                 string message = "Local episode name does not match retrieved data. Renaming file '" + episode.Name + "' to '" + (string)jEpisode["name"] + "'.";
-                                CustomMessageForm("Warning", message);
+                                CustomMessageDialog("Warning", message);
 
                                 string oldPath = episode.Path;
                                 string newPath = oldPath.Replace(episode.Name, (string)jEpisode["name"]);
@@ -1154,13 +1175,15 @@ namespace LocalVideoPlayer
             string moviesDir = null;
             string tvDir = null;
             string[] subdirectoryEntries = Directory.GetDirectories(targetDir);
-            foreach(string subDir in subdirectoryEntries)
+            foreach (string subDir in subdirectoryEntries)
             {
-                if(subDir.ToLower().Equals("movies"))
+                string[] subDirPath = subDir.Split('\\');
+                string targetSubDir = subDirPath[subDirPath.Length - 1].ToLower();
+                if (targetSubDir.ToLower().Equals("movies"))
                 {
                     moviesDir = subDir;
                 }
-                if(subDir.ToLower().Equals("tv"))
+                if (targetSubDir.Equals("tv"))
                 {
                     tvDir = subDir;
                 }

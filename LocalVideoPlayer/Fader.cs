@@ -1,4 +1,15 @@
-﻿using System;
+﻿//
+//
+//
+// Nathan Fiscaletti
+// https://gist.github.com/nathan-fiscaletti
+// https://stackoverflow.com/users/1720829/nathan-f
+// https://gist.github.com/nathan-fiscaletti/3c0514862fe88b5664b10444e1098778
+//
+//
+//
+
+using System;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
