@@ -1026,8 +1026,8 @@ namespace LocalVideoPlayer
                             JObject jEpisode = (JObject)jEpisodes[k];
                             Episode episode = episodes[k];
 
-                            if (String.Compare(episode.Name, (string)jEpisode["name"], System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0
-                                && episode.Id == (int)jEpisode["episode_number"])
+                            if (String.Compare(episode.Name, (string)jEpisode["name"], System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0)
+                               // && episode.Id == (int)jEpisode["episode_number"])
                             {
                                 episode.Id = (int)jEpisode["episode_number"];
                                 episode.Overview = (string)jEpisode["overview"];
@@ -1151,10 +1151,22 @@ namespace LocalVideoPlayer
 
         private void ProcessDirectory(string targetDir)
         {
-            //expect only TV and MOVIES folder
+            string moviesDir = null;
+            string tvDir = null;
             string[] subdirectoryEntries = Directory.GetDirectories(targetDir);
-            string moviesDir = subdirectoryEntries[0];
-            string tvDir = subdirectoryEntries[1];
+            foreach(string subDir in subdirectoryEntries)
+            {
+                if(subDir.ToLower().Equals("movies"))
+                {
+                    moviesDir = subDir;
+                }
+                if(subDir.ToLower().Equals("tv"))
+                {
+                    tvDir = subDir;
+                }
+            }
+            if (moviesDir == null || tvDir == null) throw new ArgumentNullException();
+
             int moviesCount = Directory.GetDirectories(moviesDir).Length;
             int tvCount = Directory.GetDirectories(tvDir).Length;
             media = new Media(moviesCount, tvCount);
@@ -1192,6 +1204,7 @@ namespace LocalVideoPlayer
             show.Seasons = new Season[seasonEntries.Length];
             for (int i = 0; i < seasonEntries.Length; i++)
             {
+                if (!seasonEntries[i].Contains("Season")) continue;
                 Season season = new Season(i + 1);
                 string[] episodeEntries = Directory.GetFiles(seasonEntries[i]);
                 season.Episodes = new Episode[episodeEntries.Length];
