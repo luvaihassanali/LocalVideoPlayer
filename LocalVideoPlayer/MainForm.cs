@@ -21,8 +21,8 @@ namespace LocalVideoPlayer
         private const string apiKey = "?api_key=c69c4effc7beb9c473d22b8f85d59e4c";
         private const string apiUrl = "https://api.themoviedb.org/3/";
         private const string apiImageUrl = "http://image.tmdb.org/t/p/original";
-        private const string tvSearch = "https://api.themoviedb.org/3/search/tv?api_key=c69c4effc7beb9c473d22b8f85d59e4c&query=";
-        private const string movieSearch = "https://api.themoviedb.org/3/search/movie?api_key=c69c4effc7beb9c473d22b8f85d59e4c&query=";
+        private const string tvSearch = apiUrl + "search/tv" + apiKey + "&query=";
+        private const string movieSearch = apiUrl + "search/movie" + apiKey + "&query=";
 
         private string tvGet = "https://api.themoviedb.org/3/tv/{tv_id}?api_key=c69c4effc7beb9c473d22b8f85d59e4c";
         private string tvSeasonGet = "https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}?api_key=c69c4effc7beb9c473d22b8f85d59e4c";
@@ -36,7 +36,7 @@ namespace LocalVideoPlayer
         private Form dimmerForm2; 
 
         private bool seasonFormOpen = false;
-
+        private bool isPlaying = false;
         public MainForm()
         {
             InitializeComponent();
@@ -63,7 +63,9 @@ namespace LocalVideoPlayer
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            //to-do: move vlc object here
+            string jsonString = JsonConvert.SerializeObject(media);
+            File.WriteAllText(jsonFile, jsonString);
+
             dimmerForm.Close();
             dimmerForm2.Close();
         }
@@ -76,13 +78,12 @@ namespace LocalVideoPlayer
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             InitGui();
-            //
-            //tvShowBox_Click(null, null);
+            tvShowBox_Click(null, null);
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            //To-do: add to app.config
+            //To-do: add path to app.config
             ProcessDirectory(@"C:\zMedia");
             bool update = CheckForUpdates();
             if (update)
@@ -98,6 +99,8 @@ namespace LocalVideoPlayer
             Panel currentPanel = null;
             int count = 0;
             int panelCount = 0;
+            int widthValue = (int)(this.Width / 6.12);
+            int heightValue = (int)(widthValue * 1.5);
 
             for (int i = 0; i < media.Movies.Length; i++)
             {
@@ -115,15 +118,15 @@ namespace LocalVideoPlayer
                 }
 
                 PictureBox movieBox = new PictureBox();
-                movieBox.Width = this.Width / 6;
-                movieBox.Height = (int)(this.Height / 2.3);
+                movieBox.Width = widthValue;
+                movieBox.Height = heightValue;
                 string imagePath = media.Movies[i].Poster;
                 movieBox.Image = Image.FromFile(imagePath);
                 movieBox.BackColor = Color.Transparent;
                 movieBox.Left = movieBox.Width * currentPanel.Controls.Count; 
                 movieBox.Cursor = Cursors.Hand;
                 movieBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                movieBox.Padding = new Padding(10);
+                movieBox.Padding = new Padding(20);
                 movieBox.Name = media.Movies[i].Name;
                 movieBox.Click += movieBox_Click;
                 currentPanel.Controls.Add(movieBox);
@@ -157,15 +160,15 @@ namespace LocalVideoPlayer
                 }
 
                 PictureBox tvShowBox = new PictureBox();
-                tvShowBox.Width = this.Width / 6;
-                tvShowBox.Height = (int)(this.Height / 2.3);
+                tvShowBox.Width = widthValue;
+                tvShowBox.Height = heightValue;
                 string imagePath = media.TvShows[i].Poster;
                 tvShowBox.Image = Image.FromFile(imagePath);
                 tvShowBox.BackColor = Color.Transparent;
                 tvShowBox.Left = tvShowBox.Width * currentPanel.Controls.Count; 
                 tvShowBox.Cursor = Cursors.Hand;
                 tvShowBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                tvShowBox.Padding = new Padding(10);
+                tvShowBox.Padding = new Padding(20);
                 tvShowBox.Name = media.TvShows[i].Name;
                 tvShowBox.Click += tvShowBox_Click;
                 currentPanel.Controls.Add(tvShowBox);
@@ -211,6 +214,7 @@ namespace LocalVideoPlayer
 
             TvShow tvShow = GetTvShow(pictureBox.Name);
 
+            tvForm.Name = tvShow.Name;
             tvForm.FormBorderStyle = FormBorderStyle.FixedDialog;
             tvForm.Width = (int)(this.Width / 1.75);
             tvForm.Height = this.Height;
@@ -238,6 +242,7 @@ namespace LocalVideoPlayer
             mainPanel.Dock = DockStyle.Top;
             mainPanel.AutoSize = true;
             mainPanel.Padding = new Padding(20);
+            mainPanel.Name = "mainPanel";
 
             Label headerLabel = new Label() { Text = tvShow.Name + " (" + tvShow.Date.GetValueOrDefault().Year + ")" };
             headerLabel.Dock = DockStyle.Top;
@@ -298,10 +303,12 @@ namespace LocalVideoPlayer
                 episodePanel.Dock = DockStyle.Top;
                 episodePanel.AutoSize = true;
                 episodePanel.BorderStyle = BorderStyle.FixedSingle;
+                episodePanel.Name = "episodePanel" + i;
 
                 mainPanel.Controls.Add(episodePanel);
 
                 PictureBox episodeBox = new PictureBox();
+                //To-do: fix it
                 episodeBox.Width = 300;
                 episodeBox.Height = 169;
                 string eImagePath = currEpisode.Backdrop;
@@ -310,6 +317,8 @@ namespace LocalVideoPlayer
                 episodeBox.Cursor = Cursors.Hand;
                 episodeBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 episodeBox.Padding = new Padding(10);
+                episodeBox.Click += tvShowEpisodeBox_Click;
+                episodeBox.Name = currEpisode.Path;
 
                 Label episodeNameLabel = new Label() { Text = currEpisode.Name };
                 episodeNameLabel.Dock = DockStyle.Top;
@@ -346,23 +355,98 @@ namespace LocalVideoPlayer
 
             tvForm.Deactivate += (s, ev) =>
             {
-                if (seasonFormOpen) return;
+                if (seasonFormOpen || isPlaying) return;
                 tvForm.Close();
-                //opacity adjusted to 0.8
                 Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
             };
 
             dimmerForm.Size = mainForm.Size;
-            //calls form .show
             Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Normal, 0.8);
             dimmerForm.Location = mainForm.Location;
 
             tvForm.Show();
         }
 
+        private void UpdateTvForm()
+        {
+            Form tvForm = Application.OpenForms[2]; //not 1 because dimmer form
+            Panel mainPanel = null;
+
+            Font f = new Font("Arial", 26, FontStyle.Bold);
+            Font f3 = new Font("Arial", 16, FontStyle.Bold);
+            Font f2 = new Font("Arial", 12, FontStyle.Regular);
+            Font f4 = new Font("Arial", 14, FontStyle.Bold);
+
+            foreach (Control c in tvForm.Controls)
+            {
+                Panel p = c as Panel;
+                if(p != null && p.Name.Equals("mainPanel"))
+                {
+                    mainPanel = p;
+                    foreach(Control c_ in p.Controls)
+                    {
+                        Panel p_ = c_ as Panel;
+                        if(p_ != null && p_.Name.Contains("episodePanel"))
+                        {
+                            p.Controls.Remove(p_);
+                        }
+                    }
+                }
+            }
+            TvShow tvShow = GetTvShow(tvForm.Name);
+            Season currSeason = tvShow.Seasons[tvShow.CurrSeason - 1];
+            for (int i = 0; i < currSeason.Episodes.Length; i++)
+            {
+                Episode currEpisode = currSeason.Episodes[i];
+
+                Panel episodePanel = new Panel();
+                episodePanel.BackColor = Color.FromArgb(20, 20, 20);
+                episodePanel.Dock = DockStyle.Top;
+                episodePanel.AutoSize = true;
+                episodePanel.BorderStyle = BorderStyle.FixedSingle;
+                episodePanel.Name = "episodePanel" + i;
+
+                mainPanel.Controls.Add(episodePanel);
+                mainPanel.Controls.SetChildIndex(episodePanel, 0);
+                PictureBox episodeBox = new PictureBox();
+                episodeBox.Width = 300;
+                episodeBox.Height = 169;
+                episodeBox.Name = currEpisode.Path;
+
+                string eImagePath = currEpisode.Backdrop;
+                episodeBox.Image = Image.FromFile(eImagePath);
+                episodeBox.BackColor = Color.Transparent;
+                episodeBox.Cursor = Cursors.Hand;
+                episodeBox.SizeMode = PictureBoxSizeMode.StretchImage;
+                episodeBox.Padding = new Padding(10);
+                episodeBox.Click += tvShowEpisodeBox_Click;
+
+                Label episodeNameLabel = new Label() { Text = currEpisode.Name };
+                episodeNameLabel.Dock = DockStyle.Top;
+                episodeNameLabel.Font = f4;
+                episodeNameLabel.AutoSize = true;
+                episodeNameLabel.Padding = new Padding(episodeBox.Width, 20, 0, 20);
+
+                //To-do: center image when overview too long or cut off overview if too long
+                Label episodeOverviewLabel = new Label() { Text = currEpisode.Overview };
+                episodeOverviewLabel.Dock = DockStyle.Top;
+                episodeOverviewLabel.Font = f2;
+                episodeOverviewLabel.AutoSize = true;
+                episodeOverviewLabel.Padding = new Padding(episodeBox.Width, 0, 0, 20);
+                episodeOverviewLabel.ForeColor = Color.LightGray;
+                episodeOverviewLabel.MaximumSize = new Size((this.Width / 2) + (episodeBox.Width / 8), this.Height);
+
+                //To-do: add running time 
+                episodePanel.Controls.Add(episodeBox);
+                episodePanel.Controls.Add(episodeOverviewLabel);
+                episodePanel.Controls.Add(episodeNameLabel);
+            }
+        }
+
         private void SeasonButton_Click(object sender, EventArgs e)
         {
             seasonFormOpen = true;
+            bool indexChange = false;
 
             Button b = sender as Button;
             string showName = b.Name.Replace("season_", "");
@@ -380,11 +464,14 @@ namespace LocalVideoPlayer
             seasonForm.ForeColor = SystemColors.Control;
             seasonForm.FormClosing += (sender_, e_) =>
             {
+                if(indexChange)
+                    UpdateTvForm();
                 seasonFormOpen = false;
                 Fader.FadeOut(dimmerForm2, Fader.FadeSpeed.Normal);
             };
 
             int numSeasons = tvShow.Seasons.Length;
+            int currSeasonIndex = tvShow.CurrSeason - 1;
 
             Panel currentPanel = null;
             int count = 0;
@@ -403,6 +490,7 @@ namespace LocalVideoPlayer
                     seasonForm.Controls.Add(currentPanel);
                     seasonForm.Controls.SetChildIndex(currentPanel, 0);
                 }
+
                 Season currSeason = tvShow.Seasons[i];
                 PictureBox seasonBox = new PictureBox();
                 seasonBox.Width = (int)(seasonForm.Width / 3.2);
@@ -414,10 +502,38 @@ namespace LocalVideoPlayer
                 seasonBox.Cursor = Cursors.Hand;
                 seasonBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 seasonBox.Padding = new Padding(5);
+                seasonBox.Name = (i + 1).ToString();
+
                 seasonBox.Click += (s, ev) =>
                 {
-                    Console.WriteLine("Click");
-                };
+                    indexChange = true;
+                    PictureBox p = s as PictureBox;
+                    foreach (Control c in seasonForm.Controls)
+                    {
+                        Panel p_ = c as Panel;
+                        if (p_ != null)
+                        {
+                            foreach (Control c_ in p_.Controls)
+                            {
+                                PictureBox prevSeason = c_ as PictureBox;
+                                if (prevSeason != null && Int32.Parse(prevSeason.Name) == seasonNum)
+                                {
+                                    prevSeason.BorderStyle = BorderStyle.None;
+                                }
+                            }
+                        }
+                    }
+                    seasonBox.BorderStyle = BorderStyle.Fixed3D;
+                    seasonNum = Int32.Parse(seasonBox.Name);
+                    tvShow.CurrSeason = seasonNum;
+                    b.Text = "Season " + seasonNum;
+                };     
+                
+                if (i == currSeasonIndex)
+                { 
+                    seasonBox.BorderStyle = BorderStyle.Fixed3D;
+                }
+
                 currentPanel.Controls.Add(seasonBox);
                 count++;
             }
@@ -428,6 +544,16 @@ namespace LocalVideoPlayer
             dimmerForm2.Location = tvForm.Location;
 
             seasonForm.ShowDialog();
+        }
+
+        private void seasonBox_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void seasonBox_DoubleClick(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         private void movieBox_Click(object sender, EventArgs e)
@@ -483,17 +609,23 @@ namespace LocalVideoPlayer
 
             movieForm.Deactivate += (s, ev) =>
             {
-                //opacity adjusted to 0.8
                 Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
                 movieForm.Close();
             };
 
             dimmerForm.Size = mainForm.Size;
-            //calls form. show
             Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Normal, 0.8);
             dimmerForm.Location = mainForm.Location;
 
             movieForm.Show();
+        }
+
+        private void tvShowEpisodeBox_Click(object sender, EventArgs e)
+        {
+            isPlaying = true;
+            PictureBox p = sender as PictureBox;
+            string path = p.Name;
+            LaunchVlc(path);
         }
 
         private void movieBackdropBox_Click(object sender, EventArgs e)
@@ -505,8 +637,10 @@ namespace LocalVideoPlayer
 
         private void LaunchVlc(string path)
         {
+            //To-do: Fade in
             Form playerForm = new PlayerForm(path);
-            playerForm.Show();
+            playerForm.ShowDialog();
+            isPlaying = false;
         }
 
         private Movie GetMovie(object name)
@@ -535,18 +669,18 @@ namespace LocalVideoPlayer
 
         private void CustomMessageForm(string header, string message)
         {
-            Form prompt = new Form();
-            prompt.Width = this.Width / 2;
-            prompt.Height = this.Height / 6;
-            prompt.MaximumSize = new Size(this.Width, this.Height);
+            Form customMessageForm = new Form();
+            customMessageForm.Width = this.Width / 2;
+            customMessageForm.Height = this.Height / 6;
+            customMessageForm.MaximumSize = new Size(this.Width, this.Height);
 
-            prompt.AutoScroll = true;
-            prompt.AutoSize = true;
-            prompt.Text = header;
-            prompt.StartPosition = FormStartPosition.CenterScreen;
-            prompt.BackColor = SystemColors.Desktop;
-            prompt.ForeColor = SystemColors.Control;
-            prompt.FormBorderStyle = FormBorderStyle.FixedDialog;
+            customMessageForm.AutoScroll = true;
+            customMessageForm.AutoSize = true;
+            customMessageForm.Text = header;
+            customMessageForm.StartPosition = FormStartPosition.CenterScreen;
+            customMessageForm.BackColor = SystemColors.Desktop;
+            customMessageForm.ForeColor = SystemColors.Control;
+            customMessageForm.FormBorderStyle = FormBorderStyle.FixedDialog;
 
             Font f = new Font("Arial", 14, FontStyle.Bold);
             Font f2 = new Font("Arial", 12, FontStyle.Regular);
@@ -558,14 +692,14 @@ namespace LocalVideoPlayer
             textLabel.Padding = new Padding(20);
             Size maxSize = new Size(this.Width / 2, this.Height);
             textLabel.MaximumSize = maxSize;
-            prompt.Controls.Add(textLabel);
+            customMessageForm.Controls.Add(textLabel);
 
             Label headerLabel = new Label() { Text = header };
             headerLabel.Dock = DockStyle.Top;
             headerLabel.Font = f;
             headerLabel.AutoSize = true;
             headerLabel.Padding = new Padding(20);
-            prompt.Controls.Add(headerLabel);
+            customMessageForm.Controls.Add(headerLabel);
 
             Button confirmation = new Button() { Text = "Ok" };
             confirmation.AutoSize = true;
@@ -573,26 +707,26 @@ namespace LocalVideoPlayer
             confirmation.Dock = DockStyle.Bottom;
             confirmation.FlatStyle = FlatStyle.Flat;
             confirmation.Cursor = Cursors.Hand;
-            confirmation.Click += (sender, e) => { prompt.Close(); };
+            confirmation.Click += (sender, e) => { customMessageForm.Close(); };
 
-            prompt.Controls.Add(confirmation);
-            prompt.ShowDialog();
-            prompt.Dispose();
+            customMessageForm.Controls.Add(confirmation);
+            customMessageForm.ShowDialog();
+            customMessageForm.Dispose();
         }
 
         private int ShowOptionsForm(string item, string[][] info, DateTime?[] dates)
         {
-            Form prompt = new Form();
-            prompt.Width = this.Width / 2;
-            prompt.Height = this.Height / 6;
-            prompt.MaximumSize = new Size(this.Width, this.Height);
+            Form optionsForm = new Form();
+            optionsForm.Width = this.Width / 2;
+            optionsForm.Height = this.Height / 6;
+            optionsForm.MaximumSize = new Size(this.Width, this.Height);
             
-            prompt.AutoScroll = true;
-            prompt.AutoSize = true;
-            prompt.StartPosition = FormStartPosition.CenterScreen;
-            prompt.BackColor = SystemColors.Desktop;
-            prompt.ForeColor = SystemColors.Control;
-            prompt.FormBorderStyle = FormBorderStyle.FixedDialog;
+            optionsForm.AutoScroll = true;
+            optionsForm.AutoSize = true;
+            optionsForm.StartPosition = FormStartPosition.CenterScreen;
+            optionsForm.BackColor = SystemColors.Desktop;
+            optionsForm.ForeColor = SystemColors.Control;
+            optionsForm.FormBorderStyle = FormBorderStyle.FixedDialog;
 
             Font f = new Font("Arial", 14, FontStyle.Bold);
             Font f2 = new Font("Arial", 12, FontStyle.Regular);
@@ -604,7 +738,7 @@ namespace LocalVideoPlayer
             textLabel.Padding = new Padding(20);
             Size maxSize = new Size(this.Width / 2, this.Height);
             textLabel.MaximumSize = maxSize;
-            prompt.Controls.Add(textLabel);
+            optionsForm.Controls.Add(textLabel);
 
             List<Control> controls = new List<Control>();
 
@@ -624,7 +758,7 @@ namespace LocalVideoPlayer
                 l1.Font = f2;
                 l1.AutoSize = true;
                 l1.Padding = new Padding(20);
-                Size s = new Size(prompt.Width, prompt.Height);
+                Size s = new Size(optionsForm.Width, optionsForm.Height);
                 l1.MaximumSize = s;
                 controls.Add(l1);
 
@@ -652,19 +786,19 @@ namespace LocalVideoPlayer
                 }
 
                 if (selection)
-                    prompt.Close();
+                    optionsForm.Close();
             };
 
-            prompt.Controls.Add(confirmation);
+            optionsForm.Controls.Add(confirmation);
             controls.Reverse();
             foreach (Control c in controls)
             {
-                prompt.Controls.Add(c);
+                optionsForm.Controls.Add(c);
             }
-            prompt.Controls.Add(textLabel);
+            optionsForm.Controls.Add(textLabel);
 
-            prompt.ShowDialog();
-            prompt.Dispose();
+            optionsForm.ShowDialog();
+            optionsForm.Dispose();
 
             int id = 0;
             foreach (Control c in controls)
@@ -730,7 +864,7 @@ namespace LocalVideoPlayer
                     {
                         movie.Id = (int)movieObject["results"][0]["id"];
                     }
-
+                    //To-do: 404 not found
                     string movieString = client.DownloadString(movieGet.Replace("{movie_id}", movie.Id.ToString()));
                     movieObject = JObject.Parse(movieString);
 

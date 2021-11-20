@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LocalVideoPlayer.Properties;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -51,10 +52,10 @@ namespace LocalVideoPlayer
 
         private void PlayerForm_Load(object sender, EventArgs e)
         {
+            closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 2));
+            playButton.Location = new Point(this.Width / 2, this.Height - (int)(playButton.Width * 1.5));
             FileInfo media = new FileInfo(path);
             vlcControl.Play(media);
-            closeButton.Location = new Point(this.Width - closeButton.Width * 2, closeButton.Width);
-            playButton.Location = new Point(this.Width / 2, this.Height - 100);
         }
 
         private void vlcControl_MouseMove(object sender, MouseEventArgs e)
@@ -67,19 +68,6 @@ namespace LocalVideoPlayer
                 playButton.Visible = true;
                 closeButton.Visible = true;
                 vlcControl.MouseMove -= vlcControl_MouseMove;
-            }
-        }
-
-        private void playButton_MouseClick(object sender, MouseEventArgs e)
-        {
-            if(vlcControl.IsPlaying)
-            {
-                playButton.Text = "||";
-                vlcControl.Pause();
-            } else
-            {
-                playButton.Text = ">";
-                vlcControl.Play();
             }
         }
 
@@ -96,9 +84,36 @@ namespace LocalVideoPlayer
             vlcControl.Dispose();
         }
 
-        private void closeButton_MouseClick(object sender, MouseEventArgs e)
+        private void closeButton_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void playButton_Click(object sender, EventArgs e)
+        {
+            if (vlcControl.IsPlaying)
+            {
+                playButton.BackgroundImage = Resources.pause;
+                vlcControl.Pause();
+                pollingTimer.Stop();
+            }
+            else
+            {
+                playButton.BackgroundImage = Resources.play;
+                vlcControl.Play();
+                pollingTimer.Start();
+            } 
+        }
+    }
+
+    public class RoundButton : Button
+    {
+        protected override void OnPaint(System.Windows.Forms.PaintEventArgs e)
+        {
+            System.Drawing.Drawing2D.GraphicsPath graphicsPath = new System.Drawing.Drawing2D.GraphicsPath();
+            graphicsPath.AddEllipse(0, 0, ClientSize.Width, ClientSize.Height);
+            this.Region = new System.Drawing.Region(graphicsPath);
+            base.OnPaint(e);
         }
     }
 }

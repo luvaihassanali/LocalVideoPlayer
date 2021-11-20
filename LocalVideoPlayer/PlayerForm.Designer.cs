@@ -29,41 +29,41 @@ namespace LocalVideoPlayer
         /// </summary>
         private void InitializeComponent()
         {
-            this.playButton = new System.Windows.Forms.Button();
-            this.closeButton = new System.Windows.Forms.Button();
+            this.closeButton = new LocalVideoPlayer.RoundButton();
+            this.playButton = new LocalVideoPlayer.RoundButton();
             this.SuspendLayout();
-            // 
-            // playButton
-            // 
-            this.playButton.AutoSize = true;
-            this.playButton.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.playButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.playButton.Font = new System.Drawing.Font("Arial", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.playButton.ForeColor = System.Drawing.SystemColors.Control;
-            this.playButton.Location = new System.Drawing.Point(376, 408);
-            this.playButton.Name = "playButton";
-            this.playButton.Size = new System.Drawing.Size(33, 34);
-            this.playButton.TabIndex = 0;
-            this.playButton.Text = ">";
-            this.playButton.UseVisualStyleBackColor = true;
-            this.playButton.Visible = false;
-            this.playButton.MouseClick += new System.Windows.Forms.MouseEventHandler(this.playButton_MouseClick);
             // 
             // closeButton
             // 
-            this.closeButton.AutoSize = true;
-            this.closeButton.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.closeButton.BackgroundImage = global::LocalVideoPlayer.Properties.Resources.close;
+            this.closeButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.closeButton.FlatAppearance.BorderSize = 0;
+            this.closeButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Red;
             this.closeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.closeButton.Font = new System.Drawing.Font("Arial", 14.25F, System.Drawing.FontStyle.Bold);
-            this.closeButton.ForeColor = System.Drawing.SystemColors.Control;
-            this.closeButton.Location = new System.Drawing.Point(760, 16);
+            this.closeButton.Location = new System.Drawing.Point(400, 200);
             this.closeButton.Name = "closeButton";
-            this.closeButton.Size = new System.Drawing.Size(33, 34);
-            this.closeButton.TabIndex = 1;
-            this.closeButton.Text = "x";
+            this.closeButton.Size = new System.Drawing.Size(64, 64);
+            this.closeButton.TabIndex = 3;
             this.closeButton.UseVisualStyleBackColor = true;
             this.closeButton.Visible = false;
-            this.closeButton.MouseClick += new System.Windows.Forms.MouseEventHandler(this.closeButton_MouseClick);
+            this.closeButton.Click += new System.EventHandler(this.closeButton_Click);
+            // 
+            // playButton
+            // 
+            this.playButton.BackColor = System.Drawing.SystemColors.Desktop;
+            this.playButton.BackgroundImage = global::LocalVideoPlayer.Properties.Resources.play;
+            this.playButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.playButton.FlatAppearance.BorderSize = 0;
+            this.playButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Red;
+            this.playButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.playButton.ForeColor = System.Drawing.SystemColors.Desktop;
+            this.playButton.Location = new System.Drawing.Point(328, 200);
+            this.playButton.Name = "playButton";
+            this.playButton.Size = new System.Drawing.Size(64, 64);
+            this.playButton.TabIndex = 2;
+            this.playButton.UseVisualStyleBackColor = false;
+            this.playButton.Visible = false;
+            this.playButton.Click += new System.EventHandler(this.playButton_Click);
             // 
             // PlayerForm
             // 
@@ -82,13 +82,11 @@ namespace LocalVideoPlayer
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PlayerForm_FormClosing);
             this.Load += new System.EventHandler(this.PlayerForm_Load);
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.Button playButton;
-        private System.Windows.Forms.Button closeButton;
+        private RoundButton playButton;
+        private RoundButton closeButton;
     }
 }
