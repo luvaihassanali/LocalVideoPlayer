@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -78,13 +79,14 @@ namespace LocalVideoPlayer
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             InitGui();
-            tvShowBox_Click(null, null);
+            //tvShowBox_Click(null, null);
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             //To-do: add path to app.config
-            ProcessDirectory(@"C:\zMedia");
+            string mediaPath = ConfigurationManager.AppSettings["mediaPath"];
+            ProcessDirectory(mediaPath);
             bool update = CheckForUpdates();
             if (update)
             {
