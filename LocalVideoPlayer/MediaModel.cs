@@ -2,12 +2,12 @@
 
 namespace LocalVideoPlayer
 {
-    class Media
+    class MediaModel
     {
         private Movie[] movies;
         private TvShow[] tvShows;
 
-        public Media(int m, int s)
+        public MediaModel(int m, int s)
         {
             movies = new Movie[m];
             tvShows = new TvShow[s];
@@ -25,7 +25,7 @@ namespace LocalVideoPlayer
             set => tvShows = value;
         }
 
-        internal bool Compare(Media prevMedia)
+        internal bool Compare(MediaModel prevMedia)
         {
             if (this.movies.Length != prevMedia.movies.Length) return false;
             if (this.tvShows.Length != prevMedia.tvShows.Length) return false;
@@ -43,7 +43,7 @@ namespace LocalVideoPlayer
             return true;
         }
 
-        internal void Ingest(Media prevMedia)
+        internal void Ingest(MediaModel prevMedia)
         {
             for (int i = 0; i < prevMedia.Movies.Length; i++)
             {
@@ -176,6 +176,7 @@ namespace LocalVideoPlayer
         private Season[] seasons;
         DateTime? date;
         private int currSeason;
+        private string timestamp;
 
         public TvShow(string n)
         {

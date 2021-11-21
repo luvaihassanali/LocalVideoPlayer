@@ -31,7 +31,7 @@ namespace LocalVideoPlayer
         private string movieGet = "https://api.themoviedb.org/3/movie/{movie_id}?api_key=c69c4effc7beb9c473d22b8f85d59e4c";
         private string bufferString = "";
 
-        private Media media;
+        private MediaModel media;
         private Label movieLabel;
         private Label tvLabel;
         private Form dimmerForm;
@@ -81,6 +81,7 @@ namespace LocalVideoPlayer
             loadingCircle1.Dispose();
 
             InitGui();
+            tvShowBox_Click(null, null);
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
@@ -1162,11 +1163,11 @@ namespace LocalVideoPlayer
 
         private bool CheckForUpdates()
         {
-            Media prevMedia = null;
+            MediaModel prevMedia = null;
             if (File.Exists(jsonFile))
             {
                 string jsonString = File.ReadAllText(jsonFile);
-                prevMedia = JsonConvert.DeserializeObject<Media>(jsonString);
+                prevMedia = JsonConvert.DeserializeObject<MediaModel>(jsonString);
             }
 
             if (prevMedia == null)
@@ -1209,7 +1210,7 @@ namespace LocalVideoPlayer
 
             int moviesCount = Directory.GetDirectories(moviesDir).Length;
             int tvCount = Directory.GetDirectories(tvDir).Length;
-            media = new Media(moviesCount, tvCount);
+            media = new MediaModel(moviesCount, tvCount);
 
             string[] movieEntries = Directory.GetDirectories(moviesDir);
             for (int i = 0; i < movieEntries.Length; i++)

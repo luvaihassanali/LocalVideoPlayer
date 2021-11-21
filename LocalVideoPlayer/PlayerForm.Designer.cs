@@ -29,9 +29,23 @@ namespace LocalVideoPlayer
         /// </summary>
         private void InitializeComponent()
         {
+            this.videoView1 = new LibVLCSharp.WinForms.VideoView();
             this.closeButton = new LocalVideoPlayer.RoundButton();
             this.playButton = new LocalVideoPlayer.RoundButton();
+            ((System.ComponentModel.ISupportInitialize)(this.videoView1)).BeginInit();
             this.SuspendLayout();
+            // 
+            // videoView1
+            // 
+            this.videoView1.BackColor = System.Drawing.Color.Black;
+            this.videoView1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.videoView1.Location = new System.Drawing.Point(0, 0);
+            this.videoView1.MediaPlayer = null;
+            this.videoView1.Name = "videoView1";
+            this.videoView1.Size = new System.Drawing.Size(800, 450);
+            this.videoView1.TabIndex = 4;
+            this.videoView1.Text = "videoView1";
+            this.videoView1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.videoView1_MouseMove);
             // 
             // closeButton
             // 
@@ -74,6 +88,7 @@ namespace LocalVideoPlayer
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.closeButton);
             this.Controls.Add(this.playButton);
+            this.Controls.Add(this.videoView1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "PlayerForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -81,6 +96,7 @@ namespace LocalVideoPlayer
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PlayerForm_FormClosing);
             this.Load += new System.EventHandler(this.PlayerForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.videoView1)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -88,5 +104,6 @@ namespace LocalVideoPlayer
         #endregion
         private RoundButton playButton;
         private RoundButton closeButton;
+        private LibVLCSharp.WinForms.VideoView videoView1;
     }
 }
