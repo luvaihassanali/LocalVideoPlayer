@@ -320,13 +320,22 @@ namespace LocalVideoPlayer
                 episodeBox.Width = 300;
                 episodeBox.Height = 169;
                 string eImagePath = currEpisode.Backdrop;
-                episodeBox.Image = Image.FromFile(eImagePath);
+                episodeBox.BackgroundImage = Image.FromFile(eImagePath);
+                episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
                 episodeBox.BackColor = Color.Transparent;
                 episodeBox.Cursor = Cursors.Hand;
-                episodeBox.SizeMode = PictureBoxSizeMode.StretchImage;
+                episodeBox.SizeMode = PictureBoxSizeMode.CenterImage;
                 episodeBox.Padding = new Padding(10);
                 episodeBox.Click += tvShowEpisodeBox_Click;
                 episodeBox.Name = currEpisode.Path;
+                episodeBox.MouseEnter += (s, ev) =>
+                {
+                    episodeBox.Image = Properties.Resources.smallPlay;
+                };
+                episodeBox.MouseLeave += (s, ev) =>
+                {
+                    episodeBox.Image = null;
+                };
 
                 Label episodeNameLabel = new Label() { Text = currEpisode.Name };
                 episodeNameLabel.Dock = DockStyle.Top;
@@ -554,16 +563,6 @@ namespace LocalVideoPlayer
             seasonForm.ShowDialog();
         }
 
-        private void seasonBox_Click(object sender, EventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void seasonBox_DoubleClick(object sender, EventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
         private void movieBox_Click(object sender, EventArgs e)
         {
             Form movieForm = new Form();
@@ -588,14 +587,22 @@ namespace LocalVideoPlayer
             PictureBox movieBackdropBox = new PictureBox();
             movieBackdropBox.Height = (int)(movieForm.Height / 1.777777777777778);
             string imagePath = movie.Backdrop;
-            movieBackdropBox.Image = Image.FromFile(imagePath);
+            movieBackdropBox.BackgroundImage = Image.FromFile(imagePath);
+            movieBackdropBox.BackgroundImageLayout = ImageLayout.Stretch;
             movieBackdropBox.BackColor = Color.Transparent;
             movieBackdropBox.Dock = DockStyle.Top;
             movieBackdropBox.Cursor = Cursors.Hand;
-            movieBackdropBox.SizeMode = PictureBoxSizeMode.StretchImage;
+            movieBackdropBox.SizeMode = PictureBoxSizeMode.CenterImage;
             movieBackdropBox.Name = movie.Path;
             movieBackdropBox.Click += movieBackdropBox_Click;
-
+            movieBackdropBox.MouseEnter += (s, ev) =>
+            {
+                movieBackdropBox.Image = Properties.Resources.play;
+            };
+            movieBackdropBox.MouseLeave += (s, ev) =>
+            {
+                movieBackdropBox.Image = null;
+            };
             Label headerLabel = new Label() { Text = movie.Name + " (" + movie.Date.GetValueOrDefault().Year + ")" };
             headerLabel.Dock = DockStyle.Top;
             headerLabel.Font = f;
