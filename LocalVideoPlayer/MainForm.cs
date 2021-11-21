@@ -922,6 +922,11 @@ namespace LocalVideoPlayer
                         string extension = fileName.Split('.')[1];
                         string newFileName = ((string)movieObject["title"]).Replace(":", "");
                         string newPath = oldPath.Replace(fileName, newFileName + "." + extension);
+                        string invalid = new string(Path.GetInvalidPathChars()) + '?';
+                        foreach (char c in invalid)
+                        {
+                            newPath = newPath.Replace(c.ToString(), "");
+                        }
                         File.Move(oldPath, newPath);
 
                         movie.Path = newPath;
@@ -1042,7 +1047,7 @@ namespace LocalVideoPlayer
                         for (int k = 0; k < episodes.Length; k++)
                         {
                             //To-do: what if backdrop is null
-                            if (episodes[k].Backdrop != null) continue;
+                            if (episodes[k].Id != 0) continue;
 
                             JObject jEpisode = (JObject)jEpisodes[k];
                             Episode episode = episodes[k];
@@ -1070,6 +1075,11 @@ namespace LocalVideoPlayer
 
                                 string oldPath = episode.Path;
                                 string newPath = oldPath.Replace(episode.Name, (string)jEpisode["name"]);
+                                string invalid = new string(Path.GetInvalidPathChars()) + '?';
+                                foreach (char c in invalid)
+                                {
+                                    newPath = newPath.Replace(c.ToString(), "");
+                                }
                                 File.Move(oldPath, newPath);
 
                                 episode.Path = newPath;
@@ -1224,19 +1234,23 @@ namespace LocalVideoPlayer
             string name = path[path.Length - 1].Split('%')[0];
             TvShow show = new TvShow(name.Trim());
             string[] seasonEntries = Directory.GetDirectories(targetDir);
+            Array.Sort(seasonEntries);
             show.Seasons = new Season[seasonEntries.Length];
             for (int i = 0; i < seasonEntries.Length; i++)
             {
                 if (!seasonEntries[i].Contains("Season")) continue;
                 Season season = new Season(i + 1);
                 string[] episodeEntries = Directory.GetFiles(seasonEntries[i]);
+                Array.Sort(episodeEntries);
                 season.Episodes = new Episode[episodeEntries.Length];
                 for (int j = 0; j < episodeEntries.Length; j++)
                 {
                     string[] namePath = episodeEntries[j].Split('\\');
                     string[] episodeNameNumber = namePath[namePath.Length - 1].Split('%');
-                    string episodeName = episodeNameNumber[1].Split('.')[0].Trim();
-                    Episode episode = new Episode(Int32.Parse(episodeNameNumber[0].Trim()), episodeName, episodeEntries[j]);
+                    int fileSuffixIndex = episodeNameNumber[1].LastIndexOf('.');
+                    //string episodeName = episodeNameNumber[1].Split('.')[0].Trim();
+                    string episodeName = episodeNameNumber[1].Substring(0, fileSuffixIndex).Trim();
+                    Episode episode = new Episode(0, episodeName, episodeEntries[j]);
                     season.Episodes[j] = episode;
                 }
                 show.Seasons[i] = season;
