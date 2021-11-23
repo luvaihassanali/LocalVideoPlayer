@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -35,7 +37,7 @@ namespace LocalVideoPlayer
         private Label movieLabel;
         private Label tvLabel;
         private Form dimmerForm;
-        private Form dimmerForm2;
+        private Form seasonDimmerForm;
 
         private bool seasonFormOpen = false;
         private bool isPlaying = false;
@@ -57,31 +59,33 @@ namespace LocalVideoPlayer
             dimmerForm.FormBorderStyle = FormBorderStyle.None;
             dimmerForm.BackColor = Color.Black;
 
-            dimmerForm2 = new Form();
-            dimmerForm2.ShowInTaskbar = false;
-            dimmerForm2.FormBorderStyle = FormBorderStyle.None;
-            dimmerForm2.BackColor = Color.Black;
+            seasonDimmerForm = new Form();
+            seasonDimmerForm.ShowInTaskbar = false;
+            seasonDimmerForm.FormBorderStyle = FormBorderStyle.None;
+            seasonDimmerForm.BackColor = Color.Black;
 
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.Padding = new Padding(5, 20, 20, 20);
             this.DoubleBuffered = true;
         }
 
+        #region General form functions
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             string jsonString = JsonConvert.SerializeObject(media);
             File.WriteAllText(jsonFile, jsonString);
 
             dimmerForm.Close();
-            dimmerForm2.Close();
+            seasonDimmerForm.Close();
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            //To-do: add some sort of text indicator for loading circle on initial launch
             loadingCircle1.Dispose();
 
             InitGui();
-            tvShowBox_Click(null, null);
+            //tvShowBox_Click(null, null);
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
@@ -97,10 +101,695 @@ namespace LocalVideoPlayer
 
             if (update)
             {
+                //To-do: change to synchronous
                 Task buildCache = BuildCacheAsync();
                 buildCache.Wait();
             }
         }
+
+        private void headerLabel_Paint(object sender, PaintEventArgs e)
+        {
+            float fontSize = NewHeaderFontSize(e.Graphics, this.Bounds.Size, movieLabel.Font, movieLabel.Text);
+            Font f = new Font("Arial", fontSize, FontStyle.Bold);
+            movieLabel.Font = f;
+            tvLabel.Font = f;
+        }
+
+        public static float NewHeaderFontSize(Graphics graphics, Size size, Font font, string str)
+        {
+            SizeF stringSize = graphics.MeasureString(str, font);
+            float ratio = (size.Height / stringSize.Height) / 10;
+            return font.Size * ratio;
+        }
+
+        private void LaunchVlc(string showName, string episodeName, string path)
+        {
+            //To-do: Fade in
+            Form playerForm = new PlayerForm(path);
+            playerForm.ShowDialog();
+
+            if (showName != null)
+            {
+                int currSeason = 0;
+                long endTime = long.Parse(playerForm.Text);
+                if (endTime > 0) //600000 ms = 10 mins 
+                {
+
+                    TvShow currTvShow = GetTvShow(showName);
+                    Episode currEpisode = GetTvEpisode(showName, episodeName, out currSeason);
+                    if (currEpisode == null) throw new ArgumentNullException();
+                    if (currSeason == 0) throw new ArgumentNullException();
+
+                    currEpisode.SavedTime = endTime;
+                    currTvShow.CurrSeason = currSeason;
+                    currTvShow.LastEpisode = currEpisode;
+                }
+            }
+
+            playerForm.Dispose();
+            isPlaying = false;
+        }
+
+        #endregion 
+
+        #region Tv
+
+        private void tvShowBox_Click(object sender, EventArgs e)
+        {
+            Form tvForm = new Form();
+            Form mainForm = Application.OpenForms[0];
+
+            PictureBox pictureBox = null;
+            if (sender != null)
+            {
+                pictureBox = sender as PictureBox;
+            }
+            else
+            {
+                foreach (Control c in mainForm.Controls)
+                {
+                    if (c.Name.Contains("tv") && c is Panel)
+                    {
+                        Panel panel = c as Panel;
+                        foreach (Control pc in panel.Controls)
+                        {
+                            if (pc.Name.Equals("Family Guy"))
+                            {
+                                pictureBox = pc as PictureBox;
+                            }
+                        }
+                    }
+                }
+            }
+
+            TvShow tvShow = GetTvShow(pictureBox.Name);
+
+            tvForm.Name = tvShow.Name;
+            tvForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+            tvForm.Width = (int)(this.Width / 1.75);
+            tvForm.Height = this.Height;
+            tvForm.AutoScroll = true;
+            tvForm.StartPosition = FormStartPosition.CenterScreen;
+            tvForm.BackColor = SystemColors.Desktop;
+            tvForm.ForeColor = SystemColors.Control;
+            
+            Font f = new Font("Arial", 26, FontStyle.Bold);
+            Font f3 = new Font("Arial", 16, FontStyle.Bold);
+            Font f2 = new Font("Arial", 12, FontStyle.Regular);
+            Font f4 = new Font("Arial", 14, FontStyle.Bold);
+
+            PictureBox tvShowBackdropBox = new PictureBox();
+            tvShowBackdropBox.Height = (int)(tvForm.Height / 1.777777777777778);
+            string imagePath = tvShow.Backdrop;
+            tvShowBackdropBox.Image = Image.FromFile(imagePath);
+            tvShowBackdropBox.Dock = DockStyle.Top;
+            tvShowBackdropBox.SizeMode = PictureBoxSizeMode.StretchImage;
+            tvShowBackdropBox.Name = tvShow.Name;
+            //tvShowBackdropBox.Click += tvShowBackdropBox_Click;
+
+            Panel mainPanel = new Panel();
+            mainPanel.BackColor = SystemColors.Desktop;
+            mainPanel.Dock = DockStyle.Top;
+            mainPanel.AutoSize = true;
+            mainPanel.Padding = new Padding(20);
+            mainPanel.Name = "mainPanel";
+
+            Label headerLabel = new Label() { Text = tvShow.Name + " (" + tvShow.Date.GetValueOrDefault().Year + ")" };
+            headerLabel.Dock = DockStyle.Top;
+            headerLabel.Font = f;
+            headerLabel.AutoSize = true;
+            headerLabel.Padding = new Padding(20, 20, 20, 0);
+            headerLabel.Name = "headerLabel";
+
+            Label overviewLabel = new Label() { Text = tvShow.Overview };
+            overviewLabel.Dock = DockStyle.Top;
+            overviewLabel.Font = f2;
+            overviewLabel.AutoSize = true;
+            overviewLabel.Padding = new Padding(20, 20, 20, 0);
+            overviewLabel.MaximumSize = new Size(tvForm.Width - (overviewLabel.Width / 2), tvForm.Height);
+            overviewLabel.Name = "overviewLabel";
+
+            Label episodeHeaderLabel = new Label() { Text = "Episodes" };
+            episodeHeaderLabel.Dock = DockStyle.Top;
+            episodeHeaderLabel.Font = f3;
+            episodeHeaderLabel.AutoSize = true;
+            episodeHeaderLabel.Padding = new Padding(0, 0, 0, 20);
+            episodeHeaderLabel.Name = "episodeHeaderLabel";
+
+            Panel seasonButtonPanel = new Panel();
+            seasonButtonPanel.AutoSize = true;
+            seasonButtonPanel.Padding = new Padding(0, 0, 0, 20);
+            seasonButtonPanel.Dock = DockStyle.Top;
+            seasonButtonPanel.Name = "seasonButtonPanel";
+
+            Button seasonButton = new Button();
+            seasonButton.Dock = DockStyle.Top;
+            seasonButton.AutoSize = true;
+            seasonButton.Name = "season_" + tvShow.Name;
+            seasonButton.Text = "Season " + tvShow.CurrSeason;
+            seasonButton.Font = f3;
+            seasonButton.Cursor = Cursors.Hand;
+            seasonButton.FlatStyle = FlatStyle.Flat;
+            seasonButton.FlatAppearance.MouseOverBackColor = SystemColors.ControlDarkDark;
+            seasonButtonPanel.Controls.Add(seasonButton);
+            seasonButton.Click += SeasonButton_Click;
+
+            /*ComboBox seasonComboBox = new ComboBox();
+            seasonComboBox.AutoSize = true;
+            seasonComboBox.Font = f3;
+            seasonComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            seasonComboBox.Dock = DockStyle.Top;
+            seasonComboBox.SelectedIndexChanged += new System.EventHandler(ComboBox1_SelectedIndexChanged);
+            seasonComboBox.Sorted = true;
+            for (int i = 0; i < tvShow.Seasons.Length; i++)
+            {
+                seasonComboBox.Items.Add("Season " + (i + 1));
+            }
+            seasonComboBox.SelectedIndex = 0;
+            seasonComboBoxPanel.Controls.Add(seasonComboBox);*/
+
+            List<Control> episodePanelList = new List<Control>();
+            Season currSeason = tvShow.Seasons[tvShow.CurrSeason - 1];
+            for (int i = 0; i < currSeason.Episodes.Length; i++)
+            {
+                Episode currEpisode = currSeason.Episodes[i];
+
+                Panel episodePanel = new Panel();
+                episodePanel.BackColor = Color.FromArgb(20, 20, 20);
+                episodePanel.Dock = DockStyle.Top;
+                episodePanel.AutoSize = true;
+                episodePanel.BorderStyle = BorderStyle.FixedSingle;
+                episodePanel.Name = "episodePanel" + i + " " + currEpisode.Name;
+                episodePanel.Padding = new Padding(10);
+                episodePanelList.Add(episodePanel);
+
+                PictureBox episodeBox = new PictureBox();
+                //To-do: fix it
+                episodeBox.Width = 300;
+                //To-do: make const
+                episodeBox.Height = (int)(episodeBox.Width / 1.777777777777778);
+                string eImagePath = currEpisode.Backdrop;
+                episodeBox.BackgroundImage = Image.FromFile(eImagePath);
+                episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
+                episodeBox.BackColor = Color.Transparent;
+                episodeBox.Cursor = Cursors.Hand;
+                episodeBox.SizeMode = PictureBoxSizeMode.CenterImage;
+                episodeBox.Click += tvShowEpisodeBox_Click;
+                episodeBox.Name = currEpisode.Path;
+
+                //To-do: set minimum time for bar to show up
+                if (currEpisode.SavedTime != 0)
+                {
+                    ProgressBar progressBar = CreateProgressBar(currEpisode.SavedTime, tvShow.RunningTime);
+                    episodePanel.Controls.Add(progressBar);
+                }
+
+                episodeBox.MouseEnter += (s, ev) =>
+                {
+                    episodeBox.Image = Properties.Resources.smallPlay;
+                };
+
+                episodeBox.MouseLeave += (s, ev) =>
+               {
+                   episodeBox.Image = null;
+               };
+
+                Label episodeNameLabel = new Label() { Text = currEpisode.Name };
+                episodeNameLabel.Dock = DockStyle.Top;
+                episodeNameLabel.Font = f4;
+                episodeNameLabel.AutoSize = true;
+                episodeNameLabel.Padding = new Padding(episodeBox.Width + 15, 10, 0, 15);
+                //To-do: remove unecessary name tags
+                episodeNameLabel.Name = "episodeNameLabel";
+
+                Label episodeOverviewLabel = new Label() { Text = currEpisode.Overview };
+                episodeOverviewLabel.Dock = DockStyle.Top;
+                episodeOverviewLabel.Font = f2;
+                episodeOverviewLabel.AutoSize = true;
+                episodeOverviewLabel.Padding = new Padding(episodeBox.Width + 15, 10, 0, 10);
+                episodeOverviewLabel.ForeColor = Color.LightGray;
+                episodeOverviewLabel.MaximumSize = new Size((this.Width / 2) + (episodeBox.Width / 8), this.Height);
+                episodeOverviewLabel.Name = "episodeOverviewLabel";
+
+                //To-do: add running time 
+                episodePanel.Controls.Add(episodeBox);
+                episodePanel.Controls.Add(episodeOverviewLabel);
+                episodePanel.Controls.Add(episodeNameLabel);
+            }
+
+            episodePanelList.Reverse();
+
+            mainPanel.Controls.AddRange(episodePanelList.ToArray());
+
+            tvForm.Controls.Add(mainPanel);
+
+            mainPanel.Controls.Add(seasonButtonPanel);
+
+            mainPanel.Controls.Add(episodeHeaderLabel);
+
+            tvForm.Controls.Add(overviewLabel);
+
+            tvForm.Controls.Add(headerLabel);
+
+            tvForm.Controls.Add(tvShowBackdropBox);
+
+            tvForm.Deactivate += (s, ev) =>
+            {
+                if (seasonFormOpen || isPlaying) return;
+                tvForm.Close();
+                Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
+            };
+
+            dimmerForm.Size = mainForm.Size;
+            Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Normal, 0.8);
+            dimmerForm.Location = mainForm.Location;
+
+            for (int i = 0; i < episodePanelList.Count; i++)
+            {
+                if (episodePanelList[i].Controls.Count == 4)
+                {
+                    episodePanelList[i].Controls[1].Location = new Point(episodePanelList[i].Controls[1].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[1].Height / 2) + 5);
+                    episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[1].Location.X, episodePanelList[i].Controls[1].Location.Y + episodePanelList[i].Controls[1].Height - 10);
+                }
+                else if (episodePanelList[i].Controls.Count == 3)
+                {
+                    episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[0].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[0].Height / 2) + 5);
+                }
+                else
+                {
+                    throw new ArgumentNullException(); // something went wrong
+                }
+            }
+
+            tvForm.Show();
+        }
+
+        //To-do: Combine similar parts of above function
+        private void UpdateTvForm(TvShow tvShow)
+        {
+            Form tvForm = Application.OpenForms[2];
+            Panel mainPanel = null;
+
+            Font f = new Font("Arial", 26, FontStyle.Bold);
+            Font f3 = new Font("Arial", 16, FontStyle.Bold);
+            Font f2 = new Font("Arial", 12, FontStyle.Regular);
+            Font f4 = new Font("Arial", 14, FontStyle.Bold);
+
+            List<Control> toRemove = new List<Control>();
+            foreach (Control c in tvForm.Controls)
+            {
+                Panel p = c as Panel;
+                if (p != null && p.Name.Equals("mainPanel"))
+                {
+                    mainPanel = p;
+                    foreach (Control c_ in mainPanel.Controls)
+                    {
+                        Panel ePanel = c_ as Panel;
+                        if (ePanel != null && ePanel.Name.Contains("episodePanel"))
+                        {
+                            toRemove.Add(ePanel);
+                        }
+                    }
+                }
+            }
+            foreach (Control c in toRemove)
+            {
+                mainPanel.Controls.Remove(c);
+            }
+            mainPanel.Refresh();
+
+            List<Control> episodePanelList = new List<Control>();
+            Season currSeason = tvShow.Seasons[tvShow.CurrSeason - 1];
+            for (int i = 0; i < currSeason.Episodes.Length; i++)
+            {
+                Episode currEpisode = currSeason.Episodes[i];
+
+                Panel episodePanel = new Panel();
+                episodePanel.BackColor = Color.FromArgb(20, 20, 20);
+                episodePanel.Dock = DockStyle.Top;
+                episodePanel.AutoSize = true;
+                episodePanel.BorderStyle = BorderStyle.FixedSingle;
+                episodePanel.Name = "episodePanel" + i + " " + currEpisode.Name;
+                episodePanel.Padding = new Padding(10);
+                episodePanelList.Add(episodePanel);
+
+                PictureBox episodeBox = new PictureBox();
+                //To-do: fix it
+                episodeBox.Width = 300;
+                //To-do: make const
+                episodeBox.Height = (int)(episodeBox.Width / 1.777777777777778);
+                string eImagePath = currEpisode.Backdrop;
+                episodeBox.BackgroundImage = Image.FromFile(eImagePath);
+                episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
+                episodeBox.BackColor = Color.Transparent;
+                episodeBox.Cursor = Cursors.Hand;
+                episodeBox.SizeMode = PictureBoxSizeMode.CenterImage;
+                episodeBox.Click += tvShowEpisodeBox_Click;
+                episodeBox.Name = currEpisode.Path;
+
+                //To-do: set minimum time for bar to show up
+                if (currEpisode.SavedTime != 0)
+                {
+                    ProgressBar progressBar = CreateProgressBar(currEpisode.SavedTime, tvShow.RunningTime);
+                    episodePanel.Controls.Add(progressBar);
+                }
+
+                episodeBox.MouseEnter += (s, ev) =>
+                {
+                    episodeBox.Image = Properties.Resources.smallPlay;
+                };
+
+                episodeBox.MouseLeave += (s, ev) =>
+                {
+                    episodeBox.Image = null;
+                };
+
+                Label episodeNameLabel = new Label() { Text = currEpisode.Name };
+                episodeNameLabel.Dock = DockStyle.Top;
+                episodeNameLabel.Font = f4;
+                episodeNameLabel.AutoSize = true;
+                episodeNameLabel.Padding = new Padding(episodeBox.Width + 15, 10, 0, 15);
+                episodeNameLabel.Name = "episodeNameLabel";
+
+                Label episodeOverviewLabel = new Label() { Text = currEpisode.Overview };
+                episodeOverviewLabel.Dock = DockStyle.Top;
+                episodeOverviewLabel.Font = f2;
+                episodeOverviewLabel.AutoSize = true;
+                episodeOverviewLabel.Padding = new Padding(episodeBox.Width + 15, 10, 0, 10);
+                episodeOverviewLabel.ForeColor = Color.LightGray;
+                episodeOverviewLabel.MaximumSize = new Size((this.Width / 2) + (episodeBox.Width / 8), this.Height);
+                episodeOverviewLabel.Name = "episodeOverviewLabel";
+
+                //To-do: add running time > update index in for loop
+                episodePanel.Controls.Add(episodeBox);
+                episodePanel.Controls.Add(episodeOverviewLabel);
+                episodePanel.Controls.Add(episodeNameLabel);
+            }
+
+            foreach (Control ep in episodePanelList)
+            {
+                mainPanel.Controls.Add(ep);
+                mainPanel.Controls.SetChildIndex(ep, 0);
+            }
+
+            for (int i = 0; i < episodePanelList.Count; i++)
+            {
+                if (episodePanelList[i].Controls.Count == 4)
+                {
+                    episodePanelList[i].Controls[1].Location = new Point(episodePanelList[i].Controls[1].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[1].Height / 2) + 5);
+                    episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[1].Location.X, episodePanelList[i].Controls[1].Location.Y + episodePanelList[i].Controls[1].Height - 10);
+                }
+                else if (episodePanelList[i].Controls.Count == 3)
+                {
+                    episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[0].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[0].Height / 2) + 5);
+                }
+                else
+                {
+                    throw new ArgumentNullException(); // something went wrong
+                }
+            }
+
+            mainPanel.Refresh();
+        }
+
+        private void SeasonButton_Click(object sender, EventArgs e)
+        {
+            seasonFormOpen = true;
+            bool indexChange = false;
+
+            Button b = sender as Button;
+            string showName = b.Name.Replace("season_", "");
+            int seasonNum = Int32.Parse(b.Text.Replace("Season ", ""));
+            TvShow tvShow = GetTvShow(showName);
+
+            Form seasonForm = new Form();
+            seasonForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+            seasonForm.Width = (int)(this.Width / 2.75);
+            seasonForm.Height = (int)(this.Height / 1.1);
+            seasonForm.AutoScroll = true;
+            seasonForm.Padding = new Padding(5, 5, 5, 5);
+            seasonForm.StartPosition = FormStartPosition.CenterScreen;
+            seasonForm.BackColor = SystemColors.Desktop;
+            seasonForm.ForeColor = SystemColors.Control;
+            seasonForm.FormClosing += (sender_, e_) =>
+            {
+                seasonFormOpen = false;
+                Fader.FadeOut(seasonDimmerForm, Fader.FadeSpeed.Normal);
+                if (indexChange)
+                {
+                    UpdateTvForm(tvShow); //To-do: Make sure update function matches
+                }
+            };
+
+            int numSeasons = tvShow.Seasons.Length;
+            int currSeasonIndex = tvShow.CurrSeason - 1;
+
+            Panel currentPanel = null;
+            int count = 0;
+            int panelCount = 0;
+
+            for (int i = 0; i < numSeasons; i++)
+            {
+                if (count == 3) count = 0;
+                if (count == 0)
+                {
+                    currentPanel = new Panel();
+                    currentPanel.BackColor = Color.Transparent;
+                    currentPanel.Dock = DockStyle.Top;
+                    currentPanel.AutoSize = true;
+                    panelCount++;
+                    seasonForm.Controls.Add(currentPanel);
+                    seasonForm.Controls.SetChildIndex(currentPanel, 0);
+                }
+
+                Season currSeason = tvShow.Seasons[i];
+                PictureBox seasonBox = new PictureBox();
+                seasonBox.Width = (int)(seasonForm.Width / 3.2);
+                seasonBox.Height = (int)(seasonBox.Width * 1.5);
+                //To-do: No season images
+                if (currSeason.Poster == null || currSeason.Poster.Equals(String.Empty)) throw new ArgumentNullException();
+                string imagePath = currSeason.Poster;
+                seasonBox.Image = Image.FromFile(imagePath);
+                seasonBox.BackColor = Color.Transparent;
+                seasonBox.Left = seasonBox.Width * currentPanel.Controls.Count;
+                seasonBox.Cursor = Cursors.Hand;
+                seasonBox.SizeMode = PictureBoxSizeMode.StretchImage;
+                seasonBox.Padding = new Padding(5);
+                seasonBox.Name = (i + 1).ToString();
+
+                seasonBox.Click += (s, ev) =>
+                {
+                    //To-do: still true if not changed after click back
+                    indexChange = true;
+                    PictureBox p = s as PictureBox;
+                    foreach (Control c in seasonForm.Controls)
+                    {
+                        Panel p_ = c as Panel;
+                        if (p_ != null)
+                        {
+                            foreach (Control c_ in p_.Controls)
+                            {
+                                PictureBox prevSeason = c_ as PictureBox;
+                                if (prevSeason != null && Int32.Parse(prevSeason.Name) == seasonNum)
+                                {
+                                    prevSeason.BorderStyle = BorderStyle.None;
+                                }
+                            }
+                        }
+                    }
+                    seasonBox.BorderStyle = BorderStyle.Fixed3D;
+                    seasonNum = Int32.Parse(seasonBox.Name);
+                    tvShow.CurrSeason = seasonNum;
+                    b.Text = "Season " + seasonNum;
+                };
+
+                if (i == currSeasonIndex)
+                {
+                    seasonBox.BorderStyle = BorderStyle.Fixed3D;
+                }
+
+                currentPanel.Controls.Add(seasonBox);
+                count++;
+            }
+
+            Form tvForm = Application.OpenForms[1];
+            seasonDimmerForm.Size = tvForm.Size;
+            Fader.FadeInCustom(seasonDimmerForm, Fader.FadeSpeed.Normal, 0.8);
+            seasonDimmerForm.Location = tvForm.Location;
+
+            seasonForm.ShowDialog();
+            seasonForm.Dispose();
+        }
+
+        private TvShow GetTvShow(string name)
+        {
+            for (int i = 0; i < media.TvShows.Length; i++)
+            {
+                if (media.TvShows[i].Name.Equals(name))
+                {
+                    return media.TvShows[i];
+                }
+            }
+            return null;
+        }
+
+        private Episode GetTvEpisode(string showName, string episodeName, out int season)
+        {
+            for (int i = 0; i < media.TvShows.Length; i++)
+            {
+                if (media.TvShows[i].Name.Equals(showName))
+                {
+                    for (int j = 0; j < media.TvShows[i].Seasons.Length; j++)
+                    {
+                        Season currSeason = media.TvShows[i].Seasons[j];
+
+                        for (int k = 0; k < currSeason.Episodes.Length; k++)
+                        {
+                            Episode currEpisode = currSeason.Episodes[k];
+                            if (currEpisode.Name.Contains(episodeName))
+                            {
+                                season = j + 1;
+                                return currEpisode;
+                            }
+                        }
+                    }
+                }
+            }
+            season = 0;
+            return null;
+        }
+
+        private void tvShowEpisodeBox_Click(object sender, EventArgs e)
+        {
+            isPlaying = true;
+            PictureBox p = sender as PictureBox;
+            string path = p.Name;
+            string[] pathSplit = path.Split('\\');
+            string episodeName = pathSplit[pathSplit.Length - 1].Split('%')[1];
+            episodeName = episodeName.Split('.')[0].Trim();
+            string showName = pathSplit[pathSplit.Length - 3].Split('%')[0].Trim();
+            LaunchVlc(showName, episodeName, path);
+
+            TvShow tvShow = GetTvShow(showName);
+            Episode lastEpisode = tvShow.LastEpisode;
+            Panel episodePanel = (Panel)p.Parent;
+
+            ProgressBar progressBar = CreateProgressBar(lastEpisode.SavedTime, tvShow.RunningTime);
+            progressBar.Location = new Point(p.Location.X, p.Location.Y + p.Height);
+            episodePanel.Controls.Add(progressBar);
+
+        }
+
+        private ProgressBar CreateProgressBar(long savedTime, int runningTime)
+        {
+            //To-do: min time before showing and max time before filling completely
+            ProgressBar progressBar = new ProgressBar();
+            progressBar.Height = 10;
+            progressBar.Width = 300;
+            TimeSpan duration = TimeSpan.FromMilliseconds(savedTime);
+            progressBar.Value = (int)duration.TotalMinutes;
+            progressBar.Maximum = runningTime;
+            return progressBar;
+        }
+
+        #endregion
+
+        #region Movies
+
+        private void movieBox_Click(object sender, EventArgs e)
+        {
+            Form movieForm = new Form();
+            Form mainForm = Application.OpenForms[0];
+
+            PictureBox p = sender as PictureBox;
+            Movie movie = GetMovie(p.Name);
+
+            movieForm.Width = (int)(this.Width / 1.75);
+            movieForm.Height = this.Height;
+            movieForm.AutoScroll = true;
+            movieForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+
+            movieForm.StartPosition = FormStartPosition.CenterScreen;
+            movieForm.BackColor = SystemColors.Desktop;
+            movieForm.ForeColor = SystemColors.Control;
+
+            Font f = new Font("Arial", 24, FontStyle.Bold);
+            Font f3 = new Font("Arial", 16, FontStyle.Bold);
+            Font f2 = new Font("Arial", 12, FontStyle.Regular);
+
+            PictureBox movieBackdropBox = new PictureBox();
+            movieBackdropBox.Height = (int)(movieForm.Height / 1.777777777777778);
+            string imagePath = movie.Backdrop;
+            movieBackdropBox.BackgroundImage = Image.FromFile(imagePath);
+            movieBackdropBox.BackgroundImageLayout = ImageLayout.Stretch;
+            movieBackdropBox.BackColor = Color.Transparent;
+            movieBackdropBox.Dock = DockStyle.Top;
+            movieBackdropBox.Cursor = Cursors.Hand;
+            movieBackdropBox.SizeMode = PictureBoxSizeMode.CenterImage;
+            movieBackdropBox.Name = movie.Path;
+            movieBackdropBox.Click += movieBackdropBox_Click;
+            movieBackdropBox.MouseEnter += (s, ev) =>
+            {
+                movieBackdropBox.Image = Properties.Resources.play;
+            };
+            movieBackdropBox.MouseLeave += (s, ev) =>
+            {
+                movieBackdropBox.Image = null;
+            };
+            Label headerLabel = new Label() { Text = movie.Name + " (" + movie.Date.GetValueOrDefault().Year + ")" };
+            headerLabel.Dock = DockStyle.Top;
+            headerLabel.Font = f;
+            headerLabel.AutoSize = true;
+            headerLabel.Padding = new Padding(20, 20, 20, 0);
+
+            Label overviewLabel = new Label() { Text = movie.Overview };
+            overviewLabel.Dock = DockStyle.Top;
+            overviewLabel.Font = f2;
+            overviewLabel.AutoSize = true;
+            overviewLabel.Padding = new Padding(20, 20, 20, 0);
+            overviewLabel.MaximumSize = new Size(movieForm.Width - (overviewLabel.Width / 2), movieForm.Height);
+
+            movieForm.Controls.Add(overviewLabel);
+
+            movieForm.Controls.Add(headerLabel);
+
+            movieForm.Controls.Add(movieBackdropBox);
+
+            movieForm.Deactivate += (s, ev) =>
+            {
+                Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
+                movieForm.Close();
+            };
+
+            dimmerForm.Size = mainForm.Size;
+            Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Normal, 0.8);
+            dimmerForm.Location = mainForm.Location;
+
+            movieForm.Show();
+        }
+        private void movieBackdropBox_Click(object sender, EventArgs e)
+        {
+            PictureBox p = sender as PictureBox;
+            string path = p.Name;
+            LaunchVlc(null, null, path);
+        }
+        private Movie GetMovie(object name)
+        {
+            for (int i = 0; i < media.Movies.Length; i++)
+            {
+                if (media.Movies[i].Name.Equals(name))
+                {
+                    return media.Movies[i];
+                }
+            }
+            return null;
+        }
+
+
+
+        #endregion 
+
+        #region Startup
 
         private void InitGui()
         {
@@ -193,659 +882,31 @@ namespace LocalVideoPlayer
             this.Controls.Add(tvLabel);
         }
 
-        private void tvShowBox_Click(object sender, EventArgs e)
+        private bool CheckForUpdates()
         {
-            Form tvForm = new Form();
-            Form mainForm = Application.OpenForms[0];
-
-            PictureBox pictureBox = null;
-            if (sender != null)
+            MediaModel prevMedia = null;
+            if (File.Exists(jsonFile))
             {
-                pictureBox = sender as PictureBox;
+                string jsonString = File.ReadAllText(jsonFile);
+                prevMedia = JsonConvert.DeserializeObject<MediaModel>(jsonString);
+            }
+
+            if (prevMedia == null)
+            {
+                return true;
+            }
+
+            bool result = !media.Compare(prevMedia);
+            if (!result)
+            {
+                media = prevMedia;
             }
             else
             {
-                foreach (Control c in mainForm.Controls)
-                {
-                    if (c.Name.Contains("tv") && c is Panel)
-                    {
-                        Panel panel = c as Panel;
-                        foreach (Control pc in panel.Controls)
-                        {
-                            if (pc.Name.Equals("Family Guy"))
-                            {
-                                pictureBox = pc as PictureBox;
-                            }
-                        }
-                    }
-                }
+                media.Ingest(prevMedia);
             }
 
-            TvShow tvShow = GetTvShow(pictureBox.Name);
-
-            tvForm.Name = tvShow.Name;
-            tvForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-            tvForm.Width = (int)(this.Width / 1.75);
-            tvForm.Height = this.Height;
-            tvForm.AutoScroll = true;
-            tvForm.StartPosition = FormStartPosition.CenterScreen;
-            tvForm.BackColor = SystemColors.Desktop;
-            tvForm.ForeColor = SystemColors.Control;
-
-            Font f = new Font("Arial", 26, FontStyle.Bold);
-            Font f3 = new Font("Arial", 16, FontStyle.Bold);
-            Font f2 = new Font("Arial", 12, FontStyle.Regular);
-            Font f4 = new Font("Arial", 14, FontStyle.Bold);
-
-            PictureBox tvShowBackdropBox = new PictureBox();
-            tvShowBackdropBox.Height = (int)(tvForm.Height / 1.777777777777778);
-            string imagePath = tvShow.Backdrop;
-            tvShowBackdropBox.Image = Image.FromFile(imagePath);
-            tvShowBackdropBox.Dock = DockStyle.Top;
-            tvShowBackdropBox.SizeMode = PictureBoxSizeMode.StretchImage;
-            tvShowBackdropBox.Name = tvShow.Name;
-            //tvShowBackdropBox.Click += tvShowBackdropBox_Click;
-
-            Panel mainPanel = new Panel();
-            mainPanel.BackColor = SystemColors.Desktop;
-            mainPanel.Dock = DockStyle.Top;
-            mainPanel.AutoSize = true;
-            mainPanel.Padding = new Padding(20);
-            mainPanel.Name = "mainPanel";
-
-            Label headerLabel = new Label() { Text = tvShow.Name + " (" + tvShow.Date.GetValueOrDefault().Year + ")" };
-            headerLabel.Dock = DockStyle.Top;
-            headerLabel.Font = f;
-            headerLabel.AutoSize = true;
-            headerLabel.Padding = new Padding(20, 20, 20, 0);
-
-            Label overviewLabel = new Label() { Text = tvShow.Overview };
-            overviewLabel.Dock = DockStyle.Top;
-            overviewLabel.Font = f2;
-            overviewLabel.AutoSize = true;
-            overviewLabel.Padding = new Padding(20, 20, 20, 0);
-            overviewLabel.MaximumSize = new Size(tvForm.Width - (overviewLabel.Width / 2), tvForm.Height);
-
-            Label episodeHeaderLabel = new Label() { Text = "Episodes" };
-            episodeHeaderLabel.Dock = DockStyle.Top;
-            episodeHeaderLabel.Font = f3;
-            episodeHeaderLabel.AutoSize = true;
-            episodeHeaderLabel.Padding = new Padding(0, 0, 0, 20);
-
-            Panel seasonComboBoxPanel = new Panel();
-            seasonComboBoxPanel.AutoSize = true;
-            seasonComboBoxPanel.Padding = new Padding(0, 0, 0, 20);
-            seasonComboBoxPanel.Dock = DockStyle.Top;
-
-            Button seasonButton = new Button();
-            seasonButton.Dock = DockStyle.Top;
-            seasonButton.AutoSize = true;
-            seasonButton.Name = "season_" + tvShow.Name;
-            seasonButton.Text = "Season " + tvShow.CurrSeason;
-            seasonButton.Font = f3;
-            seasonButton.FlatStyle = FlatStyle.Flat;
-            seasonButton.FlatAppearance.MouseOverBackColor = SystemColors.ControlDarkDark;
-            seasonComboBoxPanel.Controls.Add(seasonButton);
-            seasonButton.Click += SeasonButton_Click;
-
-            /*ComboBox seasonComboBox = new ComboBox();
-            seasonComboBox.AutoSize = true;
-            seasonComboBox.Font = f3;
-            seasonComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            seasonComboBox.Dock = DockStyle.Top;
-            seasonComboBox.SelectedIndexChanged += new System.EventHandler(ComboBox1_SelectedIndexChanged);
-            seasonComboBox.Sorted = true;
-            for (int i = 0; i < tvShow.Seasons.Length; i++)
-            {
-                seasonComboBox.Items.Add("Season " + (i + 1));
-            }
-            seasonComboBox.SelectedIndex = 0;
-            seasonComboBoxPanel.Controls.Add(seasonComboBox);*/
-
-            Season currSeason = tvShow.Seasons[tvShow.CurrSeason - 1];
-            for (int i = 0; i < currSeason.Episodes.Length; i++)
-            {
-                Episode currEpisode = currSeason.Episodes[i];
-
-                Panel episodePanel = new Panel();
-                episodePanel.BackColor = Color.FromArgb(20, 20, 20);
-                episodePanel.Dock = DockStyle.Top;
-                episodePanel.AutoSize = true;
-                episodePanel.BorderStyle = BorderStyle.FixedSingle;
-                episodePanel.Name = "episodePanel" + i;
-
-                mainPanel.Controls.Add(episodePanel);
-
-                PictureBox episodeBox = new PictureBox();
-                //To-do: fix it
-                episodeBox.Width = 300;
-                episodeBox.Height = 169;
-                string eImagePath = currEpisode.Backdrop;
-                episodeBox.BackgroundImage = Image.FromFile(eImagePath);
-                episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
-                episodeBox.BackColor = Color.Transparent;
-                episodeBox.Cursor = Cursors.Hand;
-                episodeBox.SizeMode = PictureBoxSizeMode.CenterImage;
-                episodeBox.Padding = new Padding(10);
-                episodeBox.Click += tvShowEpisodeBox_Click;
-                episodeBox.Name = currEpisode.Path;
-                episodeBox.MouseEnter += (s, ev) =>
-                {
-                    episodeBox.Image = Properties.Resources.smallPlay;
-                };
-                episodeBox.MouseLeave += (s, ev) =>
-                {
-                    episodeBox.Image = null;
-                };
-
-                Label episodeNameLabel = new Label() { Text = currEpisode.Name };
-                episodeNameLabel.Dock = DockStyle.Top;
-                episodeNameLabel.Font = f4;
-                episodeNameLabel.AutoSize = true;
-                episodeNameLabel.Padding = new Padding(episodeBox.Width, 20, 0, 20);
-
-                //To-do: center image when overview too long or cut off overview if too long
-                Label episodeOverviewLabel = new Label() { Text = currEpisode.Overview };
-                episodeOverviewLabel.Dock = DockStyle.Top;
-                episodeOverviewLabel.Font = f2;
-                episodeOverviewLabel.AutoSize = true;
-                episodeOverviewLabel.Padding = new Padding(episodeBox.Width, 0, 0, 20);
-                episodeOverviewLabel.ForeColor = Color.LightGray;
-                episodeOverviewLabel.MaximumSize = new Size((this.Width / 2) + (episodeBox.Width / 8), this.Height);
-
-                //To-do: add running time 
-                episodePanel.Controls.Add(episodeBox);
-                episodePanel.Controls.Add(episodeOverviewLabel);
-                episodePanel.Controls.Add(episodeNameLabel);
-            }
-
-            tvForm.Controls.Add(mainPanel);
-
-            mainPanel.Controls.Add(seasonComboBoxPanel);
-
-            mainPanel.Controls.Add(episodeHeaderLabel);
-
-            tvForm.Controls.Add(overviewLabel);
-
-            tvForm.Controls.Add(headerLabel);
-
-            tvForm.Controls.Add(tvShowBackdropBox);
-
-            tvForm.Deactivate += (s, ev) =>
-            {
-                if (seasonFormOpen || isPlaying) return;
-                tvForm.Close();
-                Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
-            };
-
-            dimmerForm.Size = mainForm.Size;
-            Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Normal, 0.8);
-            dimmerForm.Location = mainForm.Location;
-
-            tvForm.Show();
-        }
-
-        private void UpdateTvForm()
-        {
-            Form tvForm = Application.OpenForms[2]; //not 1 because dimmer form
-            Panel mainPanel = null;
-
-            Font f = new Font("Arial", 26, FontStyle.Bold);
-            Font f3 = new Font("Arial", 16, FontStyle.Bold);
-            Font f2 = new Font("Arial", 12, FontStyle.Regular);
-            Font f4 = new Font("Arial", 14, FontStyle.Bold);
-
-            foreach (Control c in tvForm.Controls)
-            {
-                Panel p = c as Panel;
-                if (p != null && p.Name.Equals("mainPanel"))
-                {
-                    mainPanel = p;
-                    foreach (Control c_ in p.Controls)
-                    {
-                        Panel p_ = c_ as Panel;
-                        if (p_ != null && p_.Name.Contains("episodePanel"))
-                        {
-                            p.Controls.Remove(p_);
-                        }
-                    }
-                }
-            }
-            TvShow tvShow = GetTvShow(tvForm.Name);
-            Season currSeason = tvShow.Seasons[tvShow.CurrSeason - 1];
-            for (int i = 0; i < currSeason.Episodes.Length; i++)
-            {
-                Episode currEpisode = currSeason.Episodes[i];
-
-                Panel episodePanel = new Panel();
-                episodePanel.BackColor = Color.FromArgb(20, 20, 20);
-                episodePanel.Dock = DockStyle.Top;
-                episodePanel.AutoSize = true;
-                episodePanel.BorderStyle = BorderStyle.FixedSingle;
-                episodePanel.Name = "episodePanel" + i;
-
-                mainPanel.Controls.Add(episodePanel);
-                mainPanel.Controls.SetChildIndex(episodePanel, 0);
-                PictureBox episodeBox = new PictureBox();
-                episodeBox.Width = 300;
-                episodeBox.Height = 169;
-                episodeBox.Name = currEpisode.Path;
-
-                string eImagePath = currEpisode.Backdrop;
-                episodeBox.Image = Image.FromFile(eImagePath);
-                episodeBox.BackColor = Color.Transparent;
-                episodeBox.Cursor = Cursors.Hand;
-                episodeBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                episodeBox.Padding = new Padding(10);
-                episodeBox.Click += tvShowEpisodeBox_Click;
-
-                Label episodeNameLabel = new Label() { Text = currEpisode.Name };
-                episodeNameLabel.Dock = DockStyle.Top;
-                episodeNameLabel.Font = f4;
-                episodeNameLabel.AutoSize = true;
-                episodeNameLabel.Padding = new Padding(episodeBox.Width, 20, 0, 20);
-
-                //To-do: center image when overview too long or cut off overview if too long
-                Label episodeOverviewLabel = new Label() { Text = currEpisode.Overview };
-                episodeOverviewLabel.Dock = DockStyle.Top;
-                episodeOverviewLabel.Font = f2;
-                episodeOverviewLabel.AutoSize = true;
-                episodeOverviewLabel.Padding = new Padding(episodeBox.Width, 0, 0, 20);
-                episodeOverviewLabel.ForeColor = Color.LightGray;
-                episodeOverviewLabel.MaximumSize = new Size((this.Width / 2) + (episodeBox.Width / 8), this.Height);
-
-                //To-do: add running time 
-                episodePanel.Controls.Add(episodeBox);
-                episodePanel.Controls.Add(episodeOverviewLabel);
-                episodePanel.Controls.Add(episodeNameLabel);
-            }
-        }
-
-        private void SeasonButton_Click(object sender, EventArgs e)
-        {
-            seasonFormOpen = true;
-            bool indexChange = false;
-
-            Button b = sender as Button;
-            string showName = b.Name.Replace("season_", "");
-            int seasonNum = Int32.Parse(b.Text.Replace("Season ", ""));
-            TvShow tvShow = GetTvShow(showName);
-
-            Form seasonForm = new Form();
-            seasonForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-            seasonForm.Width = (int)(this.Width / 2.75);
-            seasonForm.Height = (int)(this.Height / 1.1);
-            seasonForm.AutoScroll = true;
-            seasonForm.Padding = new Padding(5, 5, 5, 5);
-            seasonForm.StartPosition = FormStartPosition.CenterScreen;
-            seasonForm.BackColor = SystemColors.Desktop;
-            seasonForm.ForeColor = SystemColors.Control;
-            seasonForm.FormClosing += (sender_, e_) =>
-            {
-                if (indexChange)
-                    UpdateTvForm();
-                seasonFormOpen = false;
-                Fader.FadeOut(dimmerForm2, Fader.FadeSpeed.Normal);
-            };
-
-            int numSeasons = tvShow.Seasons.Length;
-            int currSeasonIndex = tvShow.CurrSeason - 1;
-
-            Panel currentPanel = null;
-            int count = 0;
-            int panelCount = 0;
-
-            for (int i = 0; i < numSeasons; i++)
-            {
-                if (count == 3) count = 0;
-                if (count == 0)
-                {
-                    currentPanel = new Panel();
-                    currentPanel.BackColor = Color.Transparent;
-                    currentPanel.Dock = DockStyle.Top;
-                    currentPanel.AutoSize = true;
-                    panelCount++;
-                    seasonForm.Controls.Add(currentPanel);
-                    seasonForm.Controls.SetChildIndex(currentPanel, 0);
-                }
-
-                Season currSeason = tvShow.Seasons[i];
-                PictureBox seasonBox = new PictureBox();
-                seasonBox.Width = (int)(seasonForm.Width / 3.2);
-                seasonBox.Height = (int)(seasonBox.Width * 1.5);
-                string imagePath = currSeason.Poster;
-                seasonBox.Image = Image.FromFile(imagePath);
-                seasonBox.BackColor = Color.Transparent;
-                seasonBox.Left = seasonBox.Width * currentPanel.Controls.Count;
-                seasonBox.Cursor = Cursors.Hand;
-                seasonBox.SizeMode = PictureBoxSizeMode.StretchImage;
-                seasonBox.Padding = new Padding(5);
-                seasonBox.Name = (i + 1).ToString();
-
-                seasonBox.Click += (s, ev) =>
-                {
-                    indexChange = true;
-                    PictureBox p = s as PictureBox;
-                    foreach (Control c in seasonForm.Controls)
-                    {
-                        Panel p_ = c as Panel;
-                        if (p_ != null)
-                        {
-                            foreach (Control c_ in p_.Controls)
-                            {
-                                PictureBox prevSeason = c_ as PictureBox;
-                                if (prevSeason != null && Int32.Parse(prevSeason.Name) == seasonNum)
-                                {
-                                    prevSeason.BorderStyle = BorderStyle.None;
-                                }
-                            }
-                        }
-                    }
-                    seasonBox.BorderStyle = BorderStyle.Fixed3D;
-                    seasonNum = Int32.Parse(seasonBox.Name);
-                    tvShow.CurrSeason = seasonNum;
-                    b.Text = "Season " + seasonNum;
-                };
-
-                if (i == currSeasonIndex)
-                {
-                    seasonBox.BorderStyle = BorderStyle.Fixed3D;
-                }
-
-                currentPanel.Controls.Add(seasonBox);
-                count++;
-            }
-
-            Form tvForm = Application.OpenForms[1];
-            dimmerForm2.Size = tvForm.Size;
-            Fader.FadeInCustom(dimmerForm2, Fader.FadeSpeed.Normal, 0.8);
-            dimmerForm2.Location = tvForm.Location;
-
-            seasonForm.ShowDialog();
-        }
-
-        private void movieBox_Click(object sender, EventArgs e)
-        {
-            Form movieForm = new Form();
-            Form mainForm = Application.OpenForms[0];
-
-            PictureBox p = sender as PictureBox;
-            Movie movie = GetMovie(p.Name);
-
-            movieForm.Width = (int)(this.Width / 1.75);
-            movieForm.Height = this.Height;
-            movieForm.AutoScroll = true;
-            movieForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-
-            movieForm.StartPosition = FormStartPosition.CenterScreen;
-            movieForm.BackColor = SystemColors.Desktop;
-            movieForm.ForeColor = SystemColors.Control;
-
-            Font f = new Font("Arial", 24, FontStyle.Bold);
-            Font f3 = new Font("Arial", 16, FontStyle.Bold);
-            Font f2 = new Font("Arial", 12, FontStyle.Regular);
-
-            PictureBox movieBackdropBox = new PictureBox();
-            movieBackdropBox.Height = (int)(movieForm.Height / 1.777777777777778);
-            string imagePath = movie.Backdrop;
-            movieBackdropBox.BackgroundImage = Image.FromFile(imagePath);
-            movieBackdropBox.BackgroundImageLayout = ImageLayout.Stretch;
-            movieBackdropBox.BackColor = Color.Transparent;
-            movieBackdropBox.Dock = DockStyle.Top;
-            movieBackdropBox.Cursor = Cursors.Hand;
-            movieBackdropBox.SizeMode = PictureBoxSizeMode.CenterImage;
-            movieBackdropBox.Name = movie.Path;
-            movieBackdropBox.Click += movieBackdropBox_Click;
-            movieBackdropBox.MouseEnter += (s, ev) =>
-            {
-                movieBackdropBox.Image = Properties.Resources.play;
-            };
-            movieBackdropBox.MouseLeave += (s, ev) =>
-            {
-                movieBackdropBox.Image = null;
-            };
-            Label headerLabel = new Label() { Text = movie.Name + " (" + movie.Date.GetValueOrDefault().Year + ")" };
-            headerLabel.Dock = DockStyle.Top;
-            headerLabel.Font = f;
-            headerLabel.AutoSize = true;
-            headerLabel.Padding = new Padding(20, 20, 20, 0);
-
-            Label overviewLabel = new Label() { Text = movie.Overview };
-            overviewLabel.Dock = DockStyle.Top;
-            overviewLabel.Font = f2;
-            overviewLabel.AutoSize = true;
-            overviewLabel.Padding = new Padding(20, 20, 20, 0);
-            overviewLabel.MaximumSize = new Size(movieForm.Width - (overviewLabel.Width / 2), movieForm.Height);
-
-            movieForm.Controls.Add(overviewLabel);
-
-            movieForm.Controls.Add(headerLabel);
-
-            movieForm.Controls.Add(movieBackdropBox);
-
-            movieForm.Deactivate += (s, ev) =>
-            {
-                Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
-                movieForm.Close();
-            };
-
-            dimmerForm.Size = mainForm.Size;
-            Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Normal, 0.8);
-            dimmerForm.Location = mainForm.Location;
-
-            movieForm.Show();
-        }
-
-        private void tvShowEpisodeBox_Click(object sender, EventArgs e)
-        {
-            isPlaying = true;
-            PictureBox p = sender as PictureBox;
-            string path = p.Name;
-            LaunchVlc(path);
-        }
-
-        private void movieBackdropBox_Click(object sender, EventArgs e)
-        {
-            PictureBox p = sender as PictureBox;
-            string path = p.Name;
-            LaunchVlc(path);
-        }
-
-        private void LaunchVlc(string path)
-        {
-            //To-do: Fade in
-            Form playerForm = new PlayerForm(path);
-            playerForm.ShowDialog();
-            isPlaying = false;
-        }
-
-        private Movie GetMovie(object name)
-        {
-            for (int i = 0; i < media.Movies.Length; i++)
-            {
-                if (media.Movies[i].Name.Equals(name))
-                {
-                    return media.Movies[i];
-                }
-            }
-            return null;
-        }
-
-        private TvShow GetTvShow(string name)
-        {
-            for (int i = 0; i < media.TvShows.Length; i++)
-            {
-                if (media.TvShows[i].Name.Equals(name))
-                {
-                    return media.TvShows[i];
-                }
-            }
-            return null;
-        }
-
-        private void CustomMessageDialog(string header, string message)
-        {
-            Form customMessageForm = new Form();
-            customMessageForm.Width = this.Width / 2;
-            customMessageForm.Height = this.Height / 6;
-            customMessageForm.MaximumSize = new Size(this.Width, this.Height);
-
-            customMessageForm.AutoScroll = true;
-            customMessageForm.AutoSize = true;
-            customMessageForm.Text = header;
-            customMessageForm.StartPosition = FormStartPosition.CenterScreen;
-            customMessageForm.BackColor = SystemColors.Desktop;
-            customMessageForm.ForeColor = SystemColors.Control;
-            customMessageForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-
-            Font f = new Font("Arial", 14, FontStyle.Bold);
-            Font f2 = new Font("Arial", 12, FontStyle.Regular);
-
-            Label textLabel = new Label() { Text = message };
-            textLabel.Dock = DockStyle.Top;
-            textLabel.Font = f2;
-            textLabel.AutoSize = true;
-            textLabel.Padding = new Padding(20);
-            Size maxSize = new Size(this.Width / 2, this.Height);
-            textLabel.MaximumSize = maxSize;
-            customMessageForm.Controls.Add(textLabel);
-
-            Label headerLabel = new Label() { Text = header };
-            headerLabel.Dock = DockStyle.Top;
-            headerLabel.Font = f;
-            headerLabel.AutoSize = true;
-            headerLabel.Padding = new Padding(20);
-            customMessageForm.Controls.Add(headerLabel);
-
-            Button confirmation = new Button() { Text = "Ok" };
-            confirmation.AutoSize = true;
-            confirmation.Font = f2;
-            confirmation.Dock = DockStyle.Bottom;
-            confirmation.FlatStyle = FlatStyle.Flat;
-            confirmation.Cursor = Cursors.Hand;
-            confirmation.Click += (sender, e) => { customMessageForm.Close(); };
-
-            customMessageForm.Controls.Add(confirmation);
-            customMessageForm.ShowDialog();
-            customMessageForm.Dispose();
-        }
-
-        private int ShowOptionsDialog(string item, string[][] info, DateTime?[] dates)
-        {
-            Form optionsForm = new Form();
-            optionsForm.Width = this.Width / 2;
-            optionsForm.Height = this.Height / 6;
-            optionsForm.MaximumSize = new Size(this.Width, this.Height);
-            optionsForm.TopMost = true;
-            optionsForm.AutoScroll = true;
-            optionsForm.AutoScrollPosition = new Point(0, 0);
-            optionsForm.AutoSize = true;
-            optionsForm.StartPosition = FormStartPosition.CenterScreen;
-            optionsForm.BackColor = SystemColors.Desktop;
-            optionsForm.ForeColor = SystemColors.Control;
-            optionsForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-            optionsForm.Shown += (s, e) =>
-            {
-                optionsForm.AutoScrollPosition = new Point(0, 0);
-            };
-
-            Font f = new Font("Arial", 14, FontStyle.Bold);
-            Font f2 = new Font("Arial", 12, FontStyle.Regular);
-
-            Label textLabel = new Label() { Text = "Choose a selection for: " + item };
-            textLabel.Dock = DockStyle.Top;
-            textLabel.Font = f;
-            textLabel.AutoSize = true;
-            textLabel.Padding = new Padding(20);
-            Size maxSize = new Size(this.Width / 2, this.Height);
-            textLabel.MaximumSize = maxSize;
-
-            List<Control> controls = new List<Control>();
-
-            Button confirmation = new Button() { Text = "Ok" };
-            confirmation.AutoSize = true;
-            confirmation.Font = f2;
-            confirmation.Dock = DockStyle.Bottom;
-            confirmation.FlatStyle = FlatStyle.Flat;
-            confirmation.Cursor = Cursors.Hand;
-            confirmation.Click += (sender, e) =>
-            {
-                bool selection = false;
-                foreach (Control c in controls)
-                {
-                    RadioButton btn = c as RadioButton;
-                    if (btn != null)
-                    {
-                        if (btn.Checked)
-                        {
-                            selection = true;
-                        }
-                    }
-                }
-
-                if (selection)
-                    optionsForm.Close();
-            };
-
-            for (int i = 0; i < info[0].Length; i++)
-            {
-                RadioButton r1 = new RadioButton { Text = info[0][i] + " (" + dates[i].GetValueOrDefault().Year + ")" };
-                r1.Dock = DockStyle.Top;
-                r1.Font = f2;
-                r1.AutoSize = true;
-                r1.Cursor = Cursors.Hand;
-                r1.Padding = new Padding(20, 20, 20, 0);
-                r1.Name = info[1][i];
-                r1.Click += (sender, e) =>
-                {
-                    optionsForm.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
-                };
-                controls.Add(r1);
-
-                Label l1 = new Label() { Text = info[2][i].Equals(String.Empty) ? "No description." : info[2][i] };
-                l1.Dock = DockStyle.Top;
-                l1.Font = f2;
-                l1.AutoSize = true;
-                l1.Padding = new Padding(20);
-                Size s = new Size(optionsForm.Width, optionsForm.Height);
-                l1.MaximumSize = s;
-                l1.Cursor = Cursors.Hand;
-                l1.Click += (sender, e) =>
-                {
-                    r1.Checked = true;
-                    optionsForm.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
-                };
-                controls.Add(l1);
-            }
-
-            optionsForm.Controls.Add(textLabel);
-            optionsForm.Controls.Add(confirmation);
-
-            controls.Reverse();
-            foreach (Control c in controls)
-            {
-                optionsForm.Controls.Add(c);
-            }
-            optionsForm.Controls.Add(textLabel);
-
-            optionsForm.ShowDialog();
-            optionsForm.Dispose();
-
-            int id = 0;
-            foreach (Control c in controls)
-            {
-                RadioButton btn = c as RadioButton;
-                if (btn != null)
-                {
-                    if (btn.Checked)
-                    {
-                        id = Int32.Parse(btn.Name);
-                    }
-                }
-            }
-            if (id == 0) throw new ArgumentNullException();
-
-            return id;
+            return result;
         }
 
         private async Task BuildCacheAsync()
@@ -904,6 +965,9 @@ namespace LocalVideoPlayer
                         movie.Backdrop = (string)movieObject["backdrop_path"];
                         movie.Poster = (string)movieObject["poster_path"];
                         movie.Overview = (string)movieObject["overview"];
+                        //To-do: Add to gui
+                        movie.RunningTime = (int)movieObject["runtime"];
+
                         DateTime tempDate;
                         movie.Date = DateTime.TryParse((string)movieObject["release_date"], out tempDate) ? tempDate : DateTime.MinValue.AddHours(9);
 
@@ -1005,6 +1069,8 @@ namespace LocalVideoPlayer
                         tvShow.Overview = (string)tvObject["overview"];
                         tvShow.Poster = (string)tvObject["poster_path"];
                         tvShow.Backdrop = (string)tvObject["backdrop_path"];
+                        tvShow.RunningTime = (int)tvObject["episode_run_time"][0];
+
                         DateTime tempDate;
                         tvShow.Date = DateTime.TryParse((string)tvObject["first_air_date"], out tempDate) ? tempDate : DateTime.MinValue.AddHours(9);
 
@@ -1035,7 +1101,7 @@ namespace LocalVideoPlayer
                             seasonObject = JObject.Parse(seasonString);
                         }
 
-                        //what if poster is null
+                        //To-do: what if poster is null
                         if (season.Poster == null)
                         {
                             season.Poster = (string)seasonObject["poster_path"];
@@ -1060,8 +1126,8 @@ namespace LocalVideoPlayer
                             JObject jEpisode = (JObject)jEpisodes[k];
                             Episode episode = episodes[k];
 
-                            if (String.Compare(episode.Name, (string)jEpisode["name"], System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0)
-                            // && episode.Id == (int)jEpisode["episode_number"])
+                            if (String.Compare(episode.Name, (string)jEpisode["name"],
+                                System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0)
                             {
                                 episode.Id = (int)jEpisode["episode_number"];
                                 episode.Overview = (string)jEpisode["overview"];
@@ -1106,7 +1172,7 @@ namespace LocalVideoPlayer
                                 }
                             }
                         }
-                        seasonIndex++; //can be removed..?
+                        seasonIndex++; //To-do: can be removed..?
                     }
                 }
             }
@@ -1159,33 +1225,6 @@ namespace LocalVideoPlayer
                 }
             }
             bufferString = filePath;
-        }
-
-        private bool CheckForUpdates()
-        {
-            MediaModel prevMedia = null;
-            if (File.Exists(jsonFile))
-            {
-                string jsonString = File.ReadAllText(jsonFile);
-                prevMedia = JsonConvert.DeserializeObject<MediaModel>(jsonString);
-            }
-
-            if (prevMedia == null)
-            {
-                return true;
-            }
-
-            bool result = !media.Compare(prevMedia);
-            if (!result)
-            {
-                media = prevMedia;
-            }
-            else
-            {
-                media.Ingest(prevMedia);
-            }
-
-            return result;
         }
 
         private void ProcessDirectory(string targetDir)
@@ -1242,7 +1281,7 @@ namespace LocalVideoPlayer
             string name = path[path.Length - 1].Split('%')[0];
             TvShow show = new TvShow(name.Trim());
             string[] seasonEntries = Directory.GetDirectories(targetDir);
-            Array.Sort(seasonEntries);
+            Array.Sort(seasonEntries, seasonComparer);
             show.Seasons = new Season[seasonEntries.Length];
             for (int i = 0; i < seasonEntries.Length; i++)
             {
@@ -1266,19 +1305,187 @@ namespace LocalVideoPlayer
             return show;
         }
 
-        private void headerLabel_Paint(object sender, PaintEventArgs e)
+        private int seasonComparer(string seasonB, string seasonA)
         {
-            float fontSize = NewHeaderFontSize(e.Graphics, this.Bounds.Size, movieLabel.Font, movieLabel.Text);
-            Font f = new Font("Arial", fontSize, FontStyle.Bold);
-            movieLabel.Font = f;
-            tvLabel.Font = f;
+            string[] seasonValuePathA = seasonA.Split();
+            string[] seasonValuePathB = seasonB.Split();
+            int seasonValueA = Int32.Parse(seasonValuePathA[seasonValuePathA.Length - 1]);
+            int seasonValueB = Int32.Parse(seasonValuePathB[seasonValuePathB.Length - 1]);
+            if (seasonValueA == seasonValueB) return 0;
+            if (seasonValueA < seasonValueB) return 1;
+            return -1;
         }
 
-        public static float NewHeaderFontSize(Graphics graphics, Size size, Font font, string str)
+        #endregion
+
+        #region Custom forms
+
+        private void CustomMessageDialog(string header, string message)
         {
-            SizeF stringSize = graphics.MeasureString(str, font);
-            float ratio = (size.Height / stringSize.Height) / 10;
-            return font.Size * ratio;
+            Form customMessageForm = new Form();
+            customMessageForm.Width = this.Width / 2;
+            customMessageForm.Height = this.Height / 6;
+            customMessageForm.MaximumSize = new Size(this.Width, this.Height);
+
+            customMessageForm.AutoScroll = true;
+            customMessageForm.AutoSize = true;
+            customMessageForm.Text = header;
+            customMessageForm.StartPosition = FormStartPosition.CenterScreen;
+            customMessageForm.BackColor = SystemColors.Desktop;
+            customMessageForm.ForeColor = SystemColors.Control;
+            customMessageForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+
+            Font f = new Font("Arial", 14, FontStyle.Bold);
+            Font f2 = new Font("Arial", 12, FontStyle.Regular);
+
+            Label textLabel = new Label() { Text = message };
+            textLabel.Dock = DockStyle.Top;
+            textLabel.Font = f2;
+            textLabel.AutoSize = true;
+            textLabel.Padding = new Padding(20);
+            Size maxSize = new Size(this.Width / 2, this.Height);
+            textLabel.MaximumSize = maxSize;
+            customMessageForm.Controls.Add(textLabel);
+
+            Label headerLabel = new Label() { Text = header };
+            headerLabel.Dock = DockStyle.Top;
+            headerLabel.Font = f;
+            headerLabel.AutoSize = true;
+            headerLabel.Padding = new Padding(20);
+            customMessageForm.Controls.Add(headerLabel);
+
+            Button confirmation = new Button() { Text = "OK" };
+            confirmation.AutoSize = true;
+            confirmation.Font = f2;
+            confirmation.Dock = DockStyle.Bottom;
+            confirmation.FlatStyle = FlatStyle.Flat;
+            confirmation.Cursor = Cursors.Hand;
+            confirmation.Click += (sender, e) => { customMessageForm.Close(); };
+            customMessageForm.Controls.Add(confirmation);
+
+            customMessageForm.ShowDialog();
+            customMessageForm.Dispose();
         }
+
+        private int ShowOptionsDialog(string item, string[][] info, DateTime?[] dates)
+        {
+            Form optionsForm = new Form();
+            optionsForm.Width = this.Width / 2;
+            optionsForm.Height = this.Height / 6;
+            optionsForm.MaximumSize = new Size(this.Width, this.Height);
+            optionsForm.TopMost = true;
+            optionsForm.AutoScroll = true;
+            optionsForm.AutoScrollPosition = new Point(0, 0);
+            optionsForm.AutoSize = true;
+            optionsForm.StartPosition = FormStartPosition.CenterScreen;
+            optionsForm.BackColor = SystemColors.Desktop;
+            optionsForm.ForeColor = SystemColors.Control;
+            optionsForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+            optionsForm.Shown += (s, e) =>
+            {
+                optionsForm.AutoScrollPosition = new Point(0, 0);
+            };
+
+            Font f = new Font("Arial", 14, FontStyle.Bold);
+            Font f2 = new Font("Arial", 12, FontStyle.Regular);
+
+            Label textLabel = new Label() { Text = "Choose a selection for: " + item };
+            textLabel.Dock = DockStyle.Top;
+            textLabel.Font = f;
+            textLabel.AutoSize = true;
+            textLabel.Padding = new Padding(20);
+            Size maxSize = new Size(this.Width / 2, this.Height);
+            textLabel.MaximumSize = maxSize;
+
+            List<Control> controls = new List<Control>();
+
+            Button confirmation = new Button() { Text = "OK" };
+            confirmation.AutoSize = true;
+            confirmation.Font = f2;
+            confirmation.Dock = DockStyle.Bottom;
+            confirmation.FlatStyle = FlatStyle.Flat;
+            confirmation.Cursor = Cursors.Hand;
+            confirmation.Click += (sender, e) =>
+            {
+                bool selection = false;
+                foreach (Control c in controls)
+                {
+                    RadioButton btn = c as RadioButton;
+                    if (btn != null)
+                    {
+                        if (btn.Checked)
+                        {
+                            selection = true;
+                        }
+                    }
+                }
+
+                if (selection)
+                    optionsForm.Close();
+            };
+
+            for (int i = 0; i < info[0].Length; i++)
+            {
+                RadioButton r1 = new RadioButton { Text = info[0][i] + " (" + dates[i].GetValueOrDefault().Year + ")" };
+                r1.Dock = DockStyle.Top;
+                r1.Font = f2;
+                r1.AutoSize = true;
+                r1.Cursor = Cursors.Hand;
+                r1.Padding = new Padding(20, 20, 20, 0);
+                r1.Name = info[1][i];
+                r1.Click += (sender, e) =>
+                {
+                    optionsForm.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
+                };
+                controls.Add(r1);
+
+                Label l1 = new Label() { Text = info[2][i].Equals(String.Empty) ? "No description." : info[2][i] };
+                l1.Dock = DockStyle.Top;
+                l1.Font = f2;
+                l1.AutoSize = true;
+                l1.Padding = new Padding(20);
+                Size s = new Size(optionsForm.Width, optionsForm.Height);
+                l1.MaximumSize = s;
+                l1.Cursor = Cursors.Hand;
+                l1.Click += (sender, e) =>
+                {
+                    r1.Checked = true;
+                    optionsForm.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
+                };
+                controls.Add(l1);
+            }
+
+            optionsForm.Controls.Add(textLabel);
+            optionsForm.Controls.Add(confirmation);
+
+            controls.Reverse();
+            foreach (Control c in controls)
+            {
+                optionsForm.Controls.Add(c);
+            }
+            optionsForm.Controls.Add(textLabel);
+
+            optionsForm.ShowDialog();
+            optionsForm.Dispose();
+
+            int id = 0;
+            foreach (Control c in controls)
+            {
+                RadioButton btn = c as RadioButton;
+                if (btn != null)
+                {
+                    if (btn.Checked)
+                    {
+                        id = Int32.Parse(btn.Name);
+                    }
+                }
+            }
+            if (id == 0) throw new ArgumentNullException();
+
+            return id;
+        }
+
+        #endregion
+
     }
 }

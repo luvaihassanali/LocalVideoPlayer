@@ -22,12 +22,14 @@ namespace LocalVideoPlayer
             }
 
             InitializeComponent();
+            this.DoubleBuffered = true;
 
             path = p;
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
 
             libVlc = new LibVLC();
             mediaPlayer = new MediaPlayer(libVlc);
+            //To-do: move off screen when form launches
             mediaPlayer.EnableMouseInput = false;
             mediaPlayer.EnableKeyInput = false;
             //To-do: forward skip buttons
@@ -51,6 +53,8 @@ namespace LocalVideoPlayer
         private void polling_Tick(object sender, EventArgs e)
         {
             //To-do: background colors for buttons
+            //To-do: change play button to pause on hover and opposite 
+            
             playButton.Visible = false;
             closeButton.Visible = false;
             pollingTimer.Stop();
@@ -74,8 +78,19 @@ namespace LocalVideoPlayer
                 }
                 pollingTimer.Dispose();
             }
+
+            //To-do: if stopped?
+
+            //To-do:
+            //episode back drop would have resume (with snipped playing) if active
+            //if episode bar if full and it is click it resets...
+            //all bars full = a reset 
+
+            this.Text = mediaPlayer.Time.ToString();
+
             mediaPlayer.Dispose();
             libVlc.Dispose();
+            
         }
 
         private void closeButton_Click(object sender, EventArgs e)

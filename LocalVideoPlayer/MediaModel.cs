@@ -58,6 +58,7 @@ namespace LocalVideoPlayer
                         this.movies[j].Id = prevMedia.movies[i].Id;
                         this.movies[j].Date = prevMedia.movies[i].Date;
                         this.movies[j].Backdrop = prevMedia.movies[i].Backdrop;
+                        this.movies[i].RunningTime = prevMedia.movies[i].RunningTime;
                     }
                 }
             }
@@ -74,12 +75,16 @@ namespace LocalVideoPlayer
                         this.tvShows[l].Poster = prevMedia.tvShows[i].Poster;
                         this.tvShows[l].Date = prevMedia.tvShows[i].Date;
                         this.tvShows[l].Backdrop = prevMedia.tvShows[i].Backdrop;
+                        this.tvShows[l].CurrSeason = prevMedia.tvShows[i].CurrSeason;
+                        this.tvShows[l].LastEpisode = prevMedia.tvShows[i].LastEpisode;
+                        this.tvShows[l].RunningTime = prevMedia.tvShows[i].RunningTime;
 
                         for (int j = 0; j < prevMedia.TvShows[i].Seasons.Length; j++)
                         {
                             this.tvShows[l].Seasons[j].Id = prevMedia.TvShows[i].Seasons[j].Id;
                             this.tvShows[l].Seasons[j].Poster = prevMedia.TvShows[i].Seasons[j].Poster;
                             this.tvShows[l].Seasons[j].Date = prevMedia.TvShows[i].Seasons[j].Date;
+                            this.tvShows[l].CurrSeason = prevMedia.TvShows[i].CurrSeason;
 
                             for (int k = 0; k < prevMedia.TvShows[i].Seasons[j].Episodes.Length; k++)
                             {
@@ -91,6 +96,7 @@ namespace LocalVideoPlayer
                                     this.tvShows[l].Seasons[j].Episodes[k].Date = prevMedia.TvShows[i].Seasons[j].Episodes[k].Date;
                                     this.tvShows[l].Seasons[j].Episodes[k].Overview = prevMedia.TvShows[i].Seasons[j].Episodes[k].Overview;
                                     this.tvShows[l].Seasons[j].Episodes[k].Path = prevMedia.TvShows[i].Seasons[j].Episodes[k].Path;
+                                    this.tvShows[l].Seasons[j].Episodes[k].SavedTime = prevMedia.TvShows[i].Seasons[j].Episodes[k].SavedTime;
                                 }
                             }
 
@@ -110,6 +116,7 @@ namespace LocalVideoPlayer
         private string backdrop;
         private string overview;
         DateTime? date;
+        private int runningTime;
 
         public Movie(string n, string p)
         {
@@ -157,6 +164,12 @@ namespace LocalVideoPlayer
             set => date = value;
         }
 
+        public int RunningTime 
+        { 
+            get => runningTime;
+            set => runningTime = value;
+        }
+
         internal bool Compare(Movie localMovie)
         {
             if (!this.name.Equals(localMovie.Name)) return false;
@@ -174,14 +187,16 @@ namespace LocalVideoPlayer
         private string backdrop;
         private string poster;
         private Season[] seasons;
-        DateTime? date;
+        private DateTime? date;
         private int currSeason;
-        private string timestamp;
+        private int runningTime;
+        Episode lastWatched;
 
         public TvShow(string n)
         {
             name = n;
             currSeason = 1;
+            lastWatched = null;
         }
 
         public int Id
@@ -194,12 +209,6 @@ namespace LocalVideoPlayer
         {
             get => name;
             set => name = value;
-        }
-
-        public int CurrSeason
-        {
-            get => currSeason;
-            set => currSeason = value;
         }
 
         public string Backdrop
@@ -226,10 +235,27 @@ namespace LocalVideoPlayer
             set => date = value;
         }
 
+        public int CurrSeason
+        {
+            get => currSeason;
+            set => currSeason = value;
+        }
+
         public Season[] Seasons
         {
             get => seasons;
             set => seasons = value;
+        }
+        
+        public Episode LastEpisode
+        {
+            get => lastWatched;
+            set => lastWatched = value;
+        }
+        public int RunningTime
+        {
+            get => runningTime;
+            set => runningTime = value;
         }
 
         internal bool Compare(TvShow localShow)
@@ -300,12 +326,14 @@ namespace LocalVideoPlayer
         private string overview;
         private string path;
         DateTime? date;
+        private long savedTime;
 
         public Episode(int i, string n, string p)
         {
             id = i;
             name = n;
             path = p;
+            savedTime = 0;
         }
 
         public int Id
@@ -339,6 +367,12 @@ namespace LocalVideoPlayer
         {
             get => path;
             set => path = value;
+        }
+
+        public long SavedTime
+        {
+            get => savedTime;
+            set => savedTime = value;
         }
 
         internal bool Compare(Episode otherEpisode)
