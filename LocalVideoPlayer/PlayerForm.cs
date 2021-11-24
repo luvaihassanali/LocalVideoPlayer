@@ -12,9 +12,10 @@ namespace LocalVideoPlayer
         public MediaPlayer mediaPlayer;
 
         private string path;
+        private long seekTime;
         private Timer pollingTimer;
 
-        public PlayerForm(string p)
+        public PlayerForm(string p, long s)
         {
             if (!DesignMode)
             {
@@ -24,6 +25,7 @@ namespace LocalVideoPlayer
             InitializeComponent();
             this.DoubleBuffered = true;
 
+            seekTime = s;
             path = p;
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
 
@@ -33,6 +35,8 @@ namespace LocalVideoPlayer
             mediaPlayer.EnableMouseInput = false;
             mediaPlayer.EnableKeyInput = false;
             //To-do: forward skip buttons
+            //To-do: netflix type skipper
+            //To-do: button pop up +0
             videoView1.MediaPlayer = mediaPlayer;
 
             mediaPlayer.EncounteredError += (sender, e) =>
@@ -65,7 +69,11 @@ namespace LocalVideoPlayer
             closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 2));
             playButton.Location = new Point(this.Width / 2, this.Height - (int)(playButton.Width * 1.5));
             FileInfo media = new FileInfo(path);
-            mediaPlayer.Play(new Media(libVlc, path, FromType.FromPath));
+            bool result = mediaPlayer.Play(new Media(libVlc, path, FromType.FromPath));
+            if(seekTime != 0 && result)
+            {
+                mediaPlayer.SeekTo(TimeSpan.FromMilliseconds(seekTime));
+            }
         }
 
         private void PlayerForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -79,18 +87,11 @@ namespace LocalVideoPlayer
                 pollingTimer.Dispose();
             }
 
-            //To-do: if stopped?
-
-            //To-do:
-            //episode back drop would have resume (with snipped playing) if active
-            //if episode bar if full and it is click it resets...
-            //all bars full = a reset 
-
+            //To-do: all bars full = a reset
             this.Text = mediaPlayer.Time.ToString();
 
             mediaPlayer.Dispose();
             libVlc.Dispose();
-            
         }
 
         private void closeButton_Click(object sender, EventArgs e)

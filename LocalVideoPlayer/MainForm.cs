@@ -27,18 +27,16 @@ namespace LocalVideoPlayer
         private const string apiImageUrl = "http://image.tmdb.org/t/p/original";
         private const string tvSearch = apiUrl + "search/tv" + apiKey + "&query=";
         private const string movieSearch = apiUrl + "search/movie" + apiKey + "&query=";
+        private string tvGet = apiUrl + "tv/{tv_id}" + apiKey;
+        private string tvSeasonGet = apiUrl + "tv/{tv_id}/season/{season_number}" + apiKey;
+        private string movieGet = apiUrl + "movie/{movie_id}" + apiKey;
 
-        private string tvGet = "https://api.themoviedb.org/3/tv/{tv_id}?api_key=c69c4effc7beb9c473d22b8f85d59e4c";
-        private string tvSeasonGet = "https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}?api_key=c69c4effc7beb9c473d22b8f85d59e4c";
-        private string movieGet = "https://api.themoviedb.org/3/movie/{movie_id}?api_key=c69c4effc7beb9c473d22b8f85d59e4c";
         private string bufferString = "";
-
         private MediaModel media;
         private Label movieLabel;
         private Label tvLabel;
         private Form dimmerForm;
         private Form seasonDimmerForm;
-
         private bool seasonFormOpen = false;
         private bool isPlaying = false;
 
@@ -122,21 +120,25 @@ namespace LocalVideoPlayer
             return font.Size * ratio;
         }
 
-        private void LaunchVlc(string showName, string episodeName, string path)
+        private void LaunchVlc(string mediaName, string episodeName, string path)
         {
+            TvShow currTvShow = null;
+            if (mediaName != null)
+            {
+                currTvShow = GetTvShow(mediaName);
+            }
+
             //To-do: Fade in
-            Form playerForm = new PlayerForm(path);
+            Form playerForm = new PlayerForm(path, currTvShow.LastEpisode.SavedTime);
             playerForm.ShowDialog();
 
-            if (showName != null)
+            if (currTvShow != null)
             {
                 int currSeason = 0;
                 long endTime = long.Parse(playerForm.Text);
                 if (endTime > 0) //600000 ms = 10 mins 
                 {
-
-                    TvShow currTvShow = GetTvShow(showName);
-                    Episode currEpisode = GetTvEpisode(showName, episodeName, out currSeason);
+                    Episode currEpisode = GetTvEpisode(mediaName, episodeName, out currSeason);
                     if (currEpisode == null) throw new ArgumentNullException();
                     if (currSeason == 0) throw new ArgumentNullException();
 
@@ -253,7 +255,8 @@ namespace LocalVideoPlayer
             seasonButton.FlatAppearance.MouseOverBackColor = SystemColors.ControlDarkDark;
             seasonButtonPanel.Controls.Add(seasonButton);
             seasonButton.Click += SeasonButton_Click;
-
+            if (tvShow.Seasons[0].Poster == null || tvShow.Seasons[0].Equals(String.Empty)) throw new ArgumentNullException();
+            
             /*ComboBox seasonComboBox = new ComboBox();
             seasonComboBox.AutoSize = true;
             seasonComboBox.Font = f3;
@@ -268,74 +271,7 @@ namespace LocalVideoPlayer
             seasonComboBox.SelectedIndex = 0;
             seasonComboBoxPanel.Controls.Add(seasonComboBox);*/
 
-            List<Control> episodePanelList = new List<Control>();
-            Season currSeason = tvShow.Seasons[tvShow.CurrSeason - 1];
-            for (int i = 0; i < currSeason.Episodes.Length; i++)
-            {
-                Episode currEpisode = currSeason.Episodes[i];
-
-                Panel episodePanel = new Panel();
-                episodePanel.BackColor = Color.FromArgb(20, 20, 20);
-                episodePanel.Dock = DockStyle.Top;
-                episodePanel.AutoSize = true;
-                episodePanel.BorderStyle = BorderStyle.FixedSingle;
-                episodePanel.Name = "episodePanel" + i + " " + currEpisode.Name;
-                episodePanel.Padding = new Padding(10);
-                episodePanelList.Add(episodePanel);
-
-                PictureBox episodeBox = new PictureBox();
-                //To-do: fix it
-                episodeBox.Width = 300;
-                //To-do: make const
-                episodeBox.Height = (int)(episodeBox.Width / 1.777777777777778);
-                string eImagePath = currEpisode.Backdrop;
-                episodeBox.BackgroundImage = Image.FromFile(eImagePath);
-                episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
-                episodeBox.BackColor = Color.Transparent;
-                episodeBox.Cursor = Cursors.Hand;
-                episodeBox.SizeMode = PictureBoxSizeMode.CenterImage;
-                episodeBox.Click += tvShowEpisodeBox_Click;
-                episodeBox.Name = currEpisode.Path;
-
-                //To-do: set minimum time for bar to show up
-                if (currEpisode.SavedTime != 0)
-                {
-                    ProgressBar progressBar = CreateProgressBar(currEpisode.SavedTime, tvShow.RunningTime);
-                    episodePanel.Controls.Add(progressBar);
-                }
-
-                episodeBox.MouseEnter += (s, ev) =>
-                {
-                    episodeBox.Image = Properties.Resources.smallPlay;
-                };
-
-                episodeBox.MouseLeave += (s, ev) =>
-               {
-                   episodeBox.Image = null;
-               };
-
-                Label episodeNameLabel = new Label() { Text = currEpisode.Name };
-                episodeNameLabel.Dock = DockStyle.Top;
-                episodeNameLabel.Font = f4;
-                episodeNameLabel.AutoSize = true;
-                episodeNameLabel.Padding = new Padding(episodeBox.Width + 15, 10, 0, 15);
-                //To-do: remove unecessary name tags
-                episodeNameLabel.Name = "episodeNameLabel";
-
-                Label episodeOverviewLabel = new Label() { Text = currEpisode.Overview };
-                episodeOverviewLabel.Dock = DockStyle.Top;
-                episodeOverviewLabel.Font = f2;
-                episodeOverviewLabel.AutoSize = true;
-                episodeOverviewLabel.Padding = new Padding(episodeBox.Width + 15, 10, 0, 10);
-                episodeOverviewLabel.ForeColor = Color.LightGray;
-                episodeOverviewLabel.MaximumSize = new Size((this.Width / 2) + (episodeBox.Width / 8), this.Height);
-                episodeOverviewLabel.Name = "episodeOverviewLabel";
-
-                //To-do: add running time 
-                episodePanel.Controls.Add(episodeBox);
-                episodePanel.Controls.Add(episodeOverviewLabel);
-                episodePanel.Controls.Add(episodeNameLabel);
-            }
+            List<Control> episodePanelList = CreateEpisodePanels(tvShow);
 
             episodePanelList.Reverse();
 
@@ -384,7 +320,6 @@ namespace LocalVideoPlayer
             tvForm.Show();
         }
 
-        //To-do: Combine similar parts of above function
         private void UpdateTvForm(TvShow tvShow)
         {
             Form tvForm = Application.OpenForms[2];
@@ -418,6 +353,38 @@ namespace LocalVideoPlayer
             }
             mainPanel.Refresh();
 
+            List<Control> episodePanelList = CreateEpisodePanels(tvShow);
+
+            foreach (Control ep in episodePanelList)
+            {
+                mainPanel.Controls.Add(ep);
+                mainPanel.Controls.SetChildIndex(ep, 0);
+            }
+
+            for (int i = 0; i < episodePanelList.Count; i++)
+            {
+                if (episodePanelList[i].Controls.Count == 4)
+                {
+                    episodePanelList[i].Controls[1].Location = new Point(episodePanelList[i].Controls[1].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[1].Height / 2) + 5);
+                    episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[1].Location.X, episodePanelList[i].Controls[1].Location.Y + episodePanelList[i].Controls[1].Height - 10);
+                }
+                else if (episodePanelList[i].Controls.Count == 3)
+                {
+                    episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[0].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[0].Height / 2) + 5);
+                }
+                else
+                {
+                    throw new ArgumentNullException(); // something went wrong
+                }
+            }
+
+            mainPanel.Refresh();
+        }
+
+        private List<Control> CreateEpisodePanels(TvShow tvShow)
+        {
+            Font f2 = new Font("Arial", 12, FontStyle.Regular);
+            Font f4 = new Font("Arial", 14, FontStyle.Bold);
             List<Control> episodePanelList = new List<Control>();
             Season currSeason = tvShow.Seasons[tvShow.CurrSeason - 1];
             for (int i = 0; i < currSeason.Episodes.Length; i++)
@@ -469,6 +436,7 @@ namespace LocalVideoPlayer
                 episodeNameLabel.Font = f4;
                 episodeNameLabel.AutoSize = true;
                 episodeNameLabel.Padding = new Padding(episodeBox.Width + 15, 10, 0, 15);
+                //To-do: remove unecessary name tags
                 episodeNameLabel.Name = "episodeNameLabel";
 
                 Label episodeOverviewLabel = new Label() { Text = currEpisode.Overview };
@@ -486,30 +454,7 @@ namespace LocalVideoPlayer
                 episodePanel.Controls.Add(episodeNameLabel);
             }
 
-            foreach (Control ep in episodePanelList)
-            {
-                mainPanel.Controls.Add(ep);
-                mainPanel.Controls.SetChildIndex(ep, 0);
-            }
-
-            for (int i = 0; i < episodePanelList.Count; i++)
-            {
-                if (episodePanelList[i].Controls.Count == 4)
-                {
-                    episodePanelList[i].Controls[1].Location = new Point(episodePanelList[i].Controls[1].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[1].Height / 2) + 5);
-                    episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[1].Location.X, episodePanelList[i].Controls[1].Location.Y + episodePanelList[i].Controls[1].Height - 10);
-                }
-                else if (episodePanelList[i].Controls.Count == 3)
-                {
-                    episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[0].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[0].Height / 2) + 5);
-                }
-                else
-                {
-                    throw new ArgumentNullException(); // something went wrong
-                }
-            }
-
-            mainPanel.Refresh();
+            return episodePanelList;
         }
 
         private void SeasonButton_Click(object sender, EventArgs e)
@@ -533,11 +478,12 @@ namespace LocalVideoPlayer
             seasonForm.ForeColor = SystemColors.Control;
             seasonForm.FormClosing += (sender_, e_) =>
             {
+                //To-do: Loading animation?
                 seasonFormOpen = false;
                 Fader.FadeOut(seasonDimmerForm, Fader.FadeSpeed.Normal);
                 if (indexChange)
                 {
-                    UpdateTvForm(tvShow); //To-do: Make sure update function matches
+                    UpdateTvForm(tvShow); 
                 }
             };
 
@@ -564,6 +510,7 @@ namespace LocalVideoPlayer
 
                 Season currSeason = tvShow.Seasons[i];
                 PictureBox seasonBox = new PictureBox();
+                //To-do: fix?
                 seasonBox.Width = (int)(seasonForm.Width / 3.2);
                 seasonBox.Height = (int)(seasonBox.Width * 1.5);
                 //To-do: No season images
@@ -601,6 +548,8 @@ namespace LocalVideoPlayer
                     seasonNum = Int32.Parse(seasonBox.Name);
                     tvShow.CurrSeason = seasonNum;
                     b.Text = "Season " + seasonNum;
+                    //To-do: Close on click? Transitions...
+                    //seasonForm.Close();
                 };
 
                 if (i == currSeasonIndex)
@@ -674,9 +623,24 @@ namespace LocalVideoPlayer
             Episode lastEpisode = tvShow.LastEpisode;
             Panel episodePanel = (Panel)p.Parent;
 
-            ProgressBar progressBar = CreateProgressBar(lastEpisode.SavedTime, tvShow.RunningTime);
-            progressBar.Location = new Point(p.Location.X, p.Location.Y + p.Height);
-            episodePanel.Controls.Add(progressBar);
+            if (episodePanel.Controls.Count == 3)
+            {
+                ProgressBar progressBar = CreateProgressBar(lastEpisode.SavedTime, tvShow.RunningTime);
+                progressBar.Location = new Point(p.Location.X, p.Location.Y + p.Height);
+                episodePanel.Controls.Add(progressBar);
+            } 
+            else if (episodePanel.Controls.Count == 4)
+            {
+                ProgressBar progressBar = (ProgressBar)episodePanel.Controls[0];
+                TimeSpan duration = TimeSpan.FromMilliseconds(lastEpisode.SavedTime);
+                progressBar.Value = (int)duration.TotalMinutes;
+            } 
+            else
+            {
+                //something went wrong
+                throw new ArgumentNullException();
+            }
+
 
         }
 
@@ -695,7 +659,6 @@ namespace LocalVideoPlayer
         #endregion
 
         #region Movies
-
         private void movieBox_Click(object sender, EventArgs e)
         {
             Form movieForm = new Form();
@@ -784,8 +747,6 @@ namespace LocalVideoPlayer
             }
             return null;
         }
-
-
 
         #endregion 
 
@@ -1320,6 +1281,7 @@ namespace LocalVideoPlayer
 
         #region Custom forms
 
+        //To-do: create .cs for forms?
         private void CustomMessageDialog(string header, string message)
         {
             Form customMessageForm = new Form();
