@@ -83,7 +83,7 @@ namespace LocalVideoPlayer
             loadingCircle1.Dispose();
 
             InitGui();
-            tvShowBox_Click(null, null);
+            //tvShowBox_Click(null, null);
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)

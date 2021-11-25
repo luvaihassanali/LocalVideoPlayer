@@ -15,8 +15,9 @@ namespace LocalVideoPlayer
         private long seekTime;
         private int runningTime;
         private Timer pollingTimer;
-        private bool sliderPressed = false;
-
+        private bool mouseDown = false;
+        private bool screenshotActive = false;
+        private Panel screenshot = null;
         public PlayerForm(string p, long s, int r)
         {
             if (!DesignMode)
@@ -32,8 +33,8 @@ namespace LocalVideoPlayer
             runningTime = r;
 
             long max = runningTime * 60000;
-            colorSlider1.Maximum = max;
-            colorSlider1.Value = seekTime;
+            timeline.Maximum = max;
+            timeline.Value = seekTime;
 
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
 
@@ -49,11 +50,10 @@ namespace LocalVideoPlayer
 
             mediaPlayer.TimeChanged += (sender, e) =>
             {
-                if(!sliderPressed)
+                if(!mouseDown)
                 {
-                    colorSlider1.Value = mediaPlayer.Time; //ms 
+                    timeline.Value = mediaPlayer.Time;  
                 }
-                //panel with screenshot + timestamp in value changed (after mouse down)
 
             };
 
@@ -76,8 +76,8 @@ namespace LocalVideoPlayer
         {
             //To-do: background colors for buttons
             //To-do: change play button to pause on hover and opposite 
-
-            colorSlider1.Visible = false;
+            timeline.Visible = false;
+            timeline.Visible = false;
             playButton.Visible = false;
             closeButton.Visible = false;
             pollingTimer.Stop();
@@ -87,8 +87,8 @@ namespace LocalVideoPlayer
         {
             closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.25), (closeButton.Width / 4));
             playButton.Location = new Point(playButton.Width / 4, this.Height - (int)(playButton.Width * 1.25));
-            colorSlider1.Size = new Size(this.Width - (int)(playButton.Width * 4), playButton.Height / 2);
-            colorSlider1.Location = new Point(playButton.Width * 2, this.Height - playButton.Height);
+            timeline.Size = new Size(this.Width - (int)(playButton.Width * 4), playButton.Height / 2);
+            timeline.Location = new Point(playButton.Width * 2, this.Height - playButton.Height);
 
             FileInfo media = new FileInfo(path);
             bool result = mediaPlayer.Play(new Media(libVlc, path, FromType.FromPath));
@@ -146,28 +146,48 @@ namespace LocalVideoPlayer
                 pollingTimer.Start();
                 playButton.Visible = true;
                 closeButton.Visible = true;
-                colorSlider1.Visible = true;
+                timeline.Visible = true;
+                timeline.Visible = true;
             }
         }
 
-        private void colorSlider1_MouseDown(object sender, MouseEventArgs e)
+        private void timeline_ValueChanged(object sender, decimal value)
         {
-            pollingTimer.Stop();
-            sliderPressed = true;
+            if (mouseDown)
+            {
+                if (screenshotActive)
+                {
+                    screenshot.Location = new Point((int)(timeline._trackerRect.Location.X + timeline._trackerRect.Width / 2), (int)(timeline._trackerRect.Location.Y - timeline._trackerRect.Height));
+                }
+                else
+                {
+                    screenshot = new Panel();
+                    int width = playButton.Width * 4;
+                    screenshot.Size = new Size(width, (int)(width / 1.777777777777778));
+                    screenshot.Location = new Point((int)(timeline._trackerRect.Location.X + timeline._trackerRect.Width / 2), (int)(timeline._trackerRect.Location.Y - timeline._trackerRect.Height));
+                    screenshot.BackColor = Color.Red;
+                    this.Controls.Add(screenshot);
+                    screenshot.BringToFront();
+                    screenshotActive = true;
+                }
+
+            }
         }
 
-        private void colorSlider1_MouseUp(object sender, MouseEventArgs e)
+        private void timeline_MouseUp(object sender, MouseEventArgs e)
         {
             pollingTimer.Start();
-            sliderPressed = false;
-            TimeSpan ts = TimeSpan.FromMilliseconds((double)colorSlider1.Value);
+            mouseDown = false;
+            screenshot.Dispose();
+            screenshotActive = false;
+            TimeSpan ts = TimeSpan.FromMilliseconds((double)timeline.Value);
             mediaPlayer.SeekTo(ts);
         }
 
-        private void colorSlider1_ValueChanged(object sender, EventArgs e)
+        private void timeline_MouseDown(object sender, MouseEventArgs e)
         {
-            //To-do: fix exception when slider is moved too far
-            Console.WriteLine(colorSlider1.Value);
+            pollingTimer.Stop();
+            mouseDown = true;
         }
     }
 

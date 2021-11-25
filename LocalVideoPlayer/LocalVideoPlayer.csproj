@@ -152,9 +152,9 @@
     <None Include="Resources\smallPlay.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ColorSlider\ColorSlider.csproj">
-      <Project>{16e224dc-7ff0-4908-8318-d6a3ac2e797a}</Project>
-      <Name>ColorSlider</Name>
+    <ProjectReference Include="..\MAC_Slider_src\MAC_Slider_C_Sharp_src\MACTrackBarLib\MACTrackBarLib.csproj">
+      <Project>{77a112b1-5440-440b-a0f6-2edcc5b093cb}</Project>
+      <Name>MACTrackBarLib</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
