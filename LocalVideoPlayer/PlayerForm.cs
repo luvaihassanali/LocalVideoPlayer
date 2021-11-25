@@ -6,6 +6,15 @@ using System.Windows.Forms;
 
 namespace LocalVideoPlayer
 {
+    /*
+        Do not call LibVLC from a LibVLC event without switching thread first
+        Doing this:
+        mediaPlayer.EndReached += (sender, args) => mediaPlayer.Play(nextMedia);
+        Might freeze your app.
+        If you need to call back into LibVLCSharp from an event, you need to switch thread. This is an example of how to do it:
+        mediaPlayer.EndReached += (sender, args) => ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia);
+    */
+
     public partial class PlayerForm : Form
     {
         public LibVLC libVlc;
@@ -16,8 +25,9 @@ namespace LocalVideoPlayer
         private int runningTime;
         private Timer pollingTimer;
         private bool mouseDown = false;
-        private bool screenshotActive = false;
-        private Panel screenshot = null;
+        private bool timePanelActive = false;
+        private Panel timePanel = null;
+        private Label timeLabel = null;
         public PlayerForm(string p, long s, int r)
         {
             if (!DesignMode)
@@ -40,12 +50,12 @@ namespace LocalVideoPlayer
 
             libVlc = new LibVLC();
             mediaPlayer = new MediaPlayer(libVlc);
+            
             //To-do: move off screen when form launches
             mediaPlayer.EnableMouseInput = false;
             mediaPlayer.EnableKeyInput = false;
-            //To-do: forward skip buttons
-            //To-do: netflix type skipper
-            //To-do: button pop up +0
+
+            //To-do: button pop up on hover? instead of color
             videoView1.MediaPlayer = mediaPlayer;
 
             mediaPlayer.TimeChanged += (sender, e) =>
@@ -57,15 +67,26 @@ namespace LocalVideoPlayer
 
             };
 
+            mediaPlayer.LengthChanged += (sender, e) =>
+            {
+                timeline.Maximum = mediaPlayer.Length;
+            };
+
             mediaPlayer.EncounteredError += (sender, e) =>
             {
-                Console.WriteLine("An error occurred");
+                throw new Exception("VLC error");
             };
 
             mediaPlayer.EndReached += (sender, e) =>
             {
-                Console.WriteLine("End reached");
+                //To-do: go to next episode
+                this.Invoke(new MethodInvoker(delegate { this.Dispose(); }));
             };
+
+            /*mediaPlayer.Buffering += (sender, e) =>
+            {
+                Console.WriteLine("Buffer");
+            };*/
 
             pollingTimer = new Timer();
             pollingTimer.Tick += new EventHandler(polling_Tick);
@@ -91,11 +112,18 @@ namespace LocalVideoPlayer
             timeline.Location = new Point(playButton.Width * 2, this.Height - playButton.Height);
 
             FileInfo media = new FileInfo(path);
-            bool result = mediaPlayer.Play(new Media(libVlc, path, FromType.FromPath));
-            if(seekTime != 0 && result)
+            Media currentMedia = new Media(libVlc, path, FromType.FromPath);
+            bool result = mediaPlayer.Play(currentMedia);
+
+            if (seekTime != 0 && result)
             {
-                mediaPlayer.SeekTo(TimeSpan.FromMilliseconds(seekTime));
+                if(seekTime < runningTime * 60000)
+                {
+                    mediaPlayer.SeekTo(TimeSpan.FromMilliseconds(seekTime));
+                }
             }
+
+            if (!result) throw new ArgumentNullException();
         }
 
         private void PlayerForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -147,50 +175,107 @@ namespace LocalVideoPlayer
                 playButton.Visible = true;
                 closeButton.Visible = true;
                 timeline.Visible = true;
-                timeline.Visible = true;
             }
         }
 
-        private void timeline_ValueChanged(object sender, decimal value)
+        private void timeline_ValueChanged(object sender, long value)
         {
+            //To-do: test mediaPlayer.length with screenshot up
             if (mouseDown)
             {
-                if (screenshotActive)
+                TimeSpan seekTime = TimeSpan.FromMilliseconds(value);
+                mediaPlayer.SeekTo(seekTime);
+                string timeString;
+
+                if(value > 3600000) //hour in ms
                 {
-                    screenshot.Location = new Point((int)(timeline._trackerRect.Location.X + timeline._trackerRect.Width / 2), (int)(timeline._trackerRect.Location.Y - timeline._trackerRect.Height));
+                    timeString = seekTime.ToString(@"hh\:mm\:ss");
+                } else
+                {
+                    timeString = seekTime.ToString(@"mm\:ss");
+                }
+
+                if (timePanelActive)
+                {
+#pragma warning disable CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
+                    timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width * 2.25), timeline.Location.Y - timePanel.Height - 10);
+#pragma warning restore CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
+                    timeLabel.Text = timeString;
                 }
                 else
                 {
-                    screenshot = new Panel();
-                    int width = playButton.Width * 4;
-                    screenshot.Size = new Size(width, (int)(width / 1.777777777777778));
-                    screenshot.Location = new Point((int)(timeline._trackerRect.Location.X + timeline._trackerRect.Width / 2), (int)(timeline._trackerRect.Location.Y - timeline._trackerRect.Height));
-                    screenshot.BackColor = Color.Red;
-                    this.Controls.Add(screenshot);
-                    screenshot.BringToFront();
-                    screenshotActive = true;
-                }
+                    timePanel = new Panel();
+#pragma warning disable CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
+                    timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width * 2.25), timeline.Location.Y - timePanel.Height - 10);
+#pragma warning restore CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
 
+                    Font f = new Font("Arial", 12, FontStyle.Bold);
+                    timeLabel = new Label();
+                    timeLabel.Text = timeString;
+                    timeLabel.Font = f;
+                    timeLabel.Padding = new Padding(2, 2, 0, 2);
+
+                    timePanel.Controls.Add(timeLabel);
+                    timePanel.ForeColor = SystemColors.Control;
+
+                    this.Controls.Add(timePanel);
+                    timePanel.BringToFront();
+
+                    timePanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+                    timePanel.AutoSize = true;
+                    timeLabel.AutoSize = true;
+                    timePanelActive = true;                    
+                }
             }
         }
 
         private void timeline_MouseUp(object sender, MouseEventArgs e)
         {
-            pollingTimer.Start();
             mouseDown = false;
-            screenshot.Dispose();
-            screenshotActive = false;
+            timePanelActive = false;
+            timePanel.Dispose();
+
             TimeSpan ts = TimeSpan.FromMilliseconds((double)timeline.Value);
             mediaPlayer.SeekTo(ts);
         }
 
         private void timeline_MouseDown(object sender, MouseEventArgs e)
         {
-            pollingTimer.Stop();
             mouseDown = true;
+        }
+
+        private void closeButton_MouseEnter(object sender, EventArgs e)
+        {
+            pollingTimer.Stop();
+        }
+
+        private void closeButton_MouseLeave(object sender, EventArgs e)
+        {
+            pollingTimer.Start();
+        }
+
+        private void playButton_MouseEnter(object sender, EventArgs e)
+        {
+            pollingTimer.Stop();
+        }
+
+        private void playButton_MouseLeave(object sender, EventArgs e)
+        {
+            pollingTimer.Start();
+        }
+
+        private void timeline_MouseEnter(object sender, EventArgs e)
+        {
+            pollingTimer.Stop();
+        }
+
+        private void timeline_MouseLeave(object sender, EventArgs e)
+        {
+            pollingTimer.Start();
         }
     }
 
+    //https://stackoverflow.com/questions/3708113/round-shaped-buttons
     public class RoundButton : Button
     {
         protected override void OnPaint(System.Windows.Forms.PaintEventArgs e)

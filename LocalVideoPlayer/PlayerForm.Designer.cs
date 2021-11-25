@@ -74,6 +74,8 @@ namespace LocalVideoPlayer
             this.timeline.Visible = false;
             this.timeline.ValueChanged += new XComponent.SliderBar.ValueChangedHandler(this.timeline_ValueChanged);
             this.timeline.MouseDown += new System.Windows.Forms.MouseEventHandler(this.timeline_MouseDown);
+            this.timeline.MouseEnter += new System.EventHandler(this.timeline_MouseEnter);
+            this.timeline.MouseLeave += new System.EventHandler(this.timeline_MouseLeave);
             this.timeline.MouseUp += new System.Windows.Forms.MouseEventHandler(this.timeline_MouseUp);
             // 
             // playButton
@@ -92,6 +94,8 @@ namespace LocalVideoPlayer
             this.playButton.UseVisualStyleBackColor = false;
             this.playButton.Visible = false;
             this.playButton.Click += new System.EventHandler(this.playButton_Click);
+            this.playButton.MouseEnter += new System.EventHandler(this.playButton_MouseEnter);
+            this.playButton.MouseLeave += new System.EventHandler(this.playButton_MouseLeave);
             // 
             // closeButton
             // 
@@ -108,6 +112,8 @@ namespace LocalVideoPlayer
             this.closeButton.UseVisualStyleBackColor = false;
             this.closeButton.Visible = false;
             this.closeButton.Click += new System.EventHandler(this.closeButton_Click);
+            this.closeButton.MouseEnter += new System.EventHandler(this.closeButton_MouseEnter);
+            this.closeButton.MouseLeave += new System.EventHandler(this.closeButton_MouseLeave);
             // 
             // PlayerForm
             // 

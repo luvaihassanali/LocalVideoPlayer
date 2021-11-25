@@ -123,25 +123,36 @@ namespace LocalVideoPlayer
         private void LaunchVlc(string mediaName, string episodeName, string path)
         {
             TvShow currTvShow = null;
+            Movie currMovie = null;
             //To-do: change to if episode name is null otherwise use media name to get movie + runningTime
-            if (mediaName != null)
+            if (episodeName != null)
             {
                 currTvShow = GetTvShow(mediaName);
+            } else
+            {
+                currMovie = GetMovie(mediaName);
             }
 
             //To-do: Fade in
-            long savedTime;
+            long savedTime = 0;
+            if (currMovie == null)
+            {
+                if (currTvShow.LastEpisode != null)
+                { 
+                    savedTime = currTvShow.LastEpisode.SavedTime;
+                }
+            }
             //To-do: all one line if-else replace with ? :
-            if (currTvShow.LastEpisode == null)
+            int runningTime;
+            if (currMovie == null)
             {
-                savedTime = 0;
-            } 
-            else
+                runningTime = currTvShow.RunningTime;
+            } else
             {
-                savedTime = currTvShow.LastEpisode.SavedTime;
+                runningTime = currMovie.RunningTime;
             }
 
-            Form playerForm = new PlayerForm(path, savedTime, currTvShow.RunningTime);
+            Form playerForm = new PlayerForm(path, savedTime, runningTime);
             playerForm.ShowDialog();
 
             if (currTvShow != null)

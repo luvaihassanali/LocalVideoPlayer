@@ -56,7 +56,7 @@ namespace XComponent.SliderBar
 	/// <summary>
 	/// Represents the method that will handle a change in value.
 	/// </summary>
-	public delegate void ValueChangedHandler(object sender, decimal value);
+	public delegate void ValueChangedHandler(object sender, long value);
 
 	public enum MACBorderStyle
 	{
