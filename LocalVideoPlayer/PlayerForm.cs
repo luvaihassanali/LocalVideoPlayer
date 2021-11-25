@@ -13,9 +13,11 @@ namespace LocalVideoPlayer
 
         private string path;
         private long seekTime;
+        private int runningTime;
         private Timer pollingTimer;
+        private bool sliderPressed = false;
 
-        public PlayerForm(string p, long s)
+        public PlayerForm(string p, long s, int r)
         {
             if (!DesignMode)
             {
@@ -27,6 +29,12 @@ namespace LocalVideoPlayer
 
             seekTime = s;
             path = p;
+            runningTime = r;
+
+            long max = runningTime * 60000;
+            colorSlider1.Maximum = max;
+            colorSlider1.Value = seekTime;
+
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
 
             libVlc = new LibVLC();
@@ -38,6 +46,16 @@ namespace LocalVideoPlayer
             //To-do: netflix type skipper
             //To-do: button pop up +0
             videoView1.MediaPlayer = mediaPlayer;
+
+            mediaPlayer.TimeChanged += (sender, e) =>
+            {
+                if(!sliderPressed)
+                {
+                    colorSlider1.Value = mediaPlayer.Time; //ms 
+                }
+                //panel with screenshot + timestamp in value changed (after mouse down)
+
+            };
 
             mediaPlayer.EncounteredError += (sender, e) =>
             {
@@ -58,7 +76,8 @@ namespace LocalVideoPlayer
         {
             //To-do: background colors for buttons
             //To-do: change play button to pause on hover and opposite 
-            
+
+            colorSlider1.Visible = false;
             playButton.Visible = false;
             closeButton.Visible = false;
             pollingTimer.Stop();
@@ -66,8 +85,11 @@ namespace LocalVideoPlayer
 
         private void PlayerForm_Load(object sender, EventArgs e)
         {
-            closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 2));
-            playButton.Location = new Point(this.Width / 2, this.Height - (int)(playButton.Width * 1.5));
+            closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.25), (closeButton.Width / 4));
+            playButton.Location = new Point(playButton.Width / 4, this.Height - (int)(playButton.Width * 1.25));
+            colorSlider1.Size = new Size(this.Width - (int)(playButton.Width * 4), playButton.Height / 2);
+            colorSlider1.Location = new Point(playButton.Width * 2, this.Height - playButton.Height);
+
             FileInfo media = new FileInfo(path);
             bool result = mediaPlayer.Play(new Media(libVlc, path, FromType.FromPath));
             if(seekTime != 0 && result)
@@ -124,7 +146,28 @@ namespace LocalVideoPlayer
                 pollingTimer.Start();
                 playButton.Visible = true;
                 closeButton.Visible = true;
+                colorSlider1.Visible = true;
             }
+        }
+
+        private void colorSlider1_MouseDown(object sender, MouseEventArgs e)
+        {
+            pollingTimer.Stop();
+            sliderPressed = true;
+        }
+
+        private void colorSlider1_MouseUp(object sender, MouseEventArgs e)
+        {
+            pollingTimer.Start();
+            sliderPressed = false;
+            TimeSpan ts = TimeSpan.FromMilliseconds((double)colorSlider1.Value);
+            mediaPlayer.SeekTo(ts);
+        }
+
+        private void colorSlider1_ValueChanged(object sender, EventArgs e)
+        {
+            //To-do: fix exception when slider is moved too far
+            Console.WriteLine(colorSlider1.Value);
         }
     }
 

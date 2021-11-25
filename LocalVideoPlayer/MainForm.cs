@@ -83,7 +83,7 @@ namespace LocalVideoPlayer
             loadingCircle1.Dispose();
 
             InitGui();
-            //tvShowBox_Click(null, null);
+            tvShowBox_Click(null, null);
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
@@ -123,13 +123,25 @@ namespace LocalVideoPlayer
         private void LaunchVlc(string mediaName, string episodeName, string path)
         {
             TvShow currTvShow = null;
+            //To-do: change to if episode name is null otherwise use media name to get movie + runningTime
             if (mediaName != null)
             {
                 currTvShow = GetTvShow(mediaName);
             }
 
             //To-do: Fade in
-            Form playerForm = new PlayerForm(path, currTvShow.LastEpisode.SavedTime);
+            long savedTime;
+            //To-do: all one line if-else replace with ? :
+            if (currTvShow.LastEpisode == null)
+            {
+                savedTime = 0;
+            } 
+            else
+            {
+                savedTime = currTvShow.LastEpisode.SavedTime;
+            }
+
+            Form playerForm = new PlayerForm(path, savedTime, currTvShow.RunningTime);
             playerForm.ShowDialog();
 
             if (currTvShow != null)
