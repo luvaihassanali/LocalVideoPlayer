@@ -38,14 +38,14 @@ namespace LocalVideoPlayer
             this.loadingCircle1.Active = false;
             this.loadingCircle1.Color = System.Drawing.Color.DarkGray;
             this.loadingCircle1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.loadingCircle1.InnerCircleRadius = 50;
+            this.loadingCircle1.InnerCircleRadius = 100;
             this.loadingCircle1.Location = new System.Drawing.Point(0, 0);
             this.loadingCircle1.Name = "loadingCircle1";
             this.loadingCircle1.NumberSpoke = 24;
-            this.loadingCircle1.OuterCircleRadius = 55;
+            this.loadingCircle1.OuterCircleRadius = 160;
             this.loadingCircle1.RotationSpeed = 100;
             this.loadingCircle1.Size = new System.Drawing.Size(800, 450);
-            this.loadingCircle1.SpokeThickness = 4;
+            this.loadingCircle1.SpokeThickness = 8;
             this.loadingCircle1.StylePreset = MRG.Controls.UI.LoadingCircle.StylePresets.MacOSX;
             this.loadingCircle1.TabIndex = 0;
             this.loadingCircle1.Text = "loadingCircle1";
@@ -63,6 +63,7 @@ namespace LocalVideoPlayer
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.TransparencyKey = System.Drawing.Color.Chartreuse;
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.ResumeLayout(false);

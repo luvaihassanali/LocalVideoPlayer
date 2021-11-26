@@ -1,6 +1,7 @@
 ﻿using LibVLCSharp.Shared;
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Windows.Forms;
 
@@ -28,6 +29,7 @@ namespace LocalVideoPlayer
         private bool timePanelActive = false;
         private Panel timePanel = null;
         private Label timeLabel = null;
+
         public PlayerForm(string p, long s, int r)
         {
             if (!DesignMode)
@@ -80,6 +82,8 @@ namespace LocalVideoPlayer
             mediaPlayer.EndReached += (sender, e) =>
             {
                 //To-do: go to next episode
+                //To-do: move to next season
+                //To-do: reset
                 this.Invoke(new MethodInvoker(delegate { this.Dispose(); }));
             };
 
@@ -153,13 +157,13 @@ namespace LocalVideoPlayer
         {
             if (mediaPlayer.IsPlaying)
             {
-                playButton.BackgroundImage = Properties.Resources.pause;
+                playButton.BackgroundImage = Properties.Resources.pause64;
                 mediaPlayer.Pause();
                 pollingTimer.Stop();
             }
             else
             {
-                playButton.BackgroundImage = Properties.Resources.play;
+                playButton.BackgroundImage = Properties.Resources.play64;
                 mediaPlayer.Play();
                 pollingTimer.Start();
             }
@@ -180,7 +184,6 @@ namespace LocalVideoPlayer
 
         private void timeline_ValueChanged(object sender, long value)
         {
-            //To-do: test mediaPlayer.length with screenshot up
             if (mouseDown)
             {
                 TimeSpan seekTime = TimeSpan.FromMilliseconds(value);
@@ -233,7 +236,8 @@ namespace LocalVideoPlayer
         {
             mouseDown = false;
             timePanelActive = false;
-            timePanel.Dispose();
+            if(timePanel != null) 
+                timePanel.Dispose();
 
             TimeSpan ts = TimeSpan.FromMilliseconds((double)timeline.Value);
             mediaPlayer.SeekTo(ts);
@@ -244,6 +248,7 @@ namespace LocalVideoPlayer
             mouseDown = true;
         }
 
+        //To-do: merge into same functions
         private void closeButton_MouseEnter(object sender, EventArgs e)
         {
             pollingTimer.Stop();
@@ -275,14 +280,14 @@ namespace LocalVideoPlayer
         }
     }
 
-    //https://stackoverflow.com/questions/3708113/round-shaped-buttons
     public class RoundButton : Button
     {
+        //https://stackoverflow.com/questions/3708113/round-shaped-buttons
         protected override void OnPaint(System.Windows.Forms.PaintEventArgs e)
         {
-            System.Drawing.Drawing2D.GraphicsPath graphicsPath = new System.Drawing.Drawing2D.GraphicsPath();
-            graphicsPath.AddEllipse(0, 0, ClientSize.Width, ClientSize.Height);
-            this.Region = new System.Drawing.Region(graphicsPath);
+            GraphicsPath grPath = new GraphicsPath();
+            grPath.AddEllipse(0, 0, ClientSize.Width, ClientSize.Height);
+            this.Region = new System.Drawing.Region(grPath);
             base.OnPaint(e);
         }
     }

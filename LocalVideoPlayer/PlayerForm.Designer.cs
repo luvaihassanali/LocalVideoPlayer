@@ -29,6 +29,7 @@ namespace LocalVideoPlayer
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PlayerForm));
             this.videoView1 = new LibVLCSharp.WinForms.VideoView();
             this.timeline = new XComponent.SliderBar.MACTrackBar();
             this.playButton = new LocalVideoPlayer.RoundButton();
@@ -80,37 +81,32 @@ namespace LocalVideoPlayer
             // 
             // playButton
             // 
-            this.playButton.BackColor = System.Drawing.Color.Black;
-            this.playButton.BackgroundImage = global::LocalVideoPlayer.Properties.Resources.play;
-            this.playButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.playButton.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("playButton.BackgroundImage")));
+            this.playButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.playButton.FlatAppearance.BorderSize = 0;
             this.playButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Red;
             this.playButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.playButton.ForeColor = System.Drawing.SystemColors.Desktop;
             this.playButton.Location = new System.Drawing.Point(8, 376);
             this.playButton.Name = "playButton";
             this.playButton.Size = new System.Drawing.Size(64, 64);
-            this.playButton.TabIndex = 2;
-            this.playButton.UseVisualStyleBackColor = false;
-            this.playButton.Visible = false;
+            this.playButton.TabIndex = 10;
+            this.playButton.UseVisualStyleBackColor = true;
             this.playButton.Click += new System.EventHandler(this.playButton_Click);
             this.playButton.MouseEnter += new System.EventHandler(this.playButton_MouseEnter);
             this.playButton.MouseLeave += new System.EventHandler(this.playButton_MouseLeave);
             // 
             // closeButton
             // 
-            this.closeButton.BackColor = System.Drawing.Color.Black;
             this.closeButton.BackgroundImage = global::LocalVideoPlayer.Properties.Resources.close;
-            this.closeButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.closeButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.closeButton.FlatAppearance.BorderSize = 0;
             this.closeButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Red;
             this.closeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.closeButton.Location = new System.Drawing.Point(728, 8);
             this.closeButton.Name = "closeButton";
             this.closeButton.Size = new System.Drawing.Size(64, 64);
-            this.closeButton.TabIndex = 3;
-            this.closeButton.UseVisualStyleBackColor = false;
-            this.closeButton.Visible = false;
+            this.closeButton.TabIndex = 9;
+            this.closeButton.UseVisualStyleBackColor = true;
             this.closeButton.Click += new System.EventHandler(this.closeButton_Click);
             this.closeButton.MouseEnter += new System.EventHandler(this.closeButton_MouseEnter);
             this.closeButton.MouseLeave += new System.EventHandler(this.closeButton_MouseLeave);
@@ -140,9 +136,9 @@ namespace LocalVideoPlayer
         }
 
         #endregion
-        private RoundButton playButton;
-        private RoundButton closeButton;
         private LibVLCSharp.WinForms.VideoView videoView1;
         private XComponent.SliderBar.MACTrackBar timeline;
+        private RoundButton closeButton;
+        private RoundButton playButton;
     }
 }
