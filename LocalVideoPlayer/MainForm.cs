@@ -36,6 +36,8 @@ namespace LocalVideoPlayer
         private Form seasonDimmerForm;
         private bool seasonFormOpen = false;
         private bool isPlaying = false;
+        private Panel mainFormMainPanel = null;
+        private CustomScrollbar customScrollbar = null;
 
         public MainForm()
         {
@@ -63,7 +65,6 @@ namespace LocalVideoPlayer
             seasonDimmerForm.FormBorderStyle = FormBorderStyle.None;
             seasonDimmerForm.BackColor = Color.Black;
         }
-        //To-do: custom season + scroll bar
 
         #region General form functions
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -106,8 +107,17 @@ namespace LocalVideoPlayer
         private void closeButton_Click(object sender, EventArgs e)
         {
             Button b = sender as Button;
-            Form f = (Form)b.Parent;
-            if(!f.Name.Equals("MainForm"))
+            Panel p = b.Parent as Panel;
+            Form f;
+            if (p != null)
+            {
+                f = (Form)p.Parent;
+            }
+            else
+            {
+                f = (Form)b.Parent;
+            }
+            if (!f.Name.Equals("MainForm"))
             {
                 Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
             }
@@ -142,7 +152,8 @@ namespace LocalVideoPlayer
                 currTvShow = GetTvShow(mediaName);
                 currEpisode = GetTvEpisode(mediaName, episodeName, out currSeason);
 
-            } else
+            }
+            else
             {
                 currMovie = GetMovie(mediaName);
             }
@@ -161,7 +172,8 @@ namespace LocalVideoPlayer
             if (currMovie == null)
             {
                 runningTime = currTvShow.RunningTime;
-            } else
+            }
+            else
             {
                 runningTime = currMovie.RunningTime;
             }
@@ -311,7 +323,7 @@ namespace LocalVideoPlayer
             seasonButtonPanel.Controls.Add(seasonButton);
             seasonButton.Click += SeasonButton_Click;
             if (tvShow.Seasons[0].Poster == null || tvShow.Seasons[0].Equals(String.Empty)) throw new ArgumentNullException();
-            
+
             /*ComboBox seasonComboBox = new ComboBox();
             seasonComboBox.AutoSize = true;
             seasonComboBox.Font = f3;
@@ -596,7 +608,7 @@ namespace LocalVideoPlayer
                         }
                     }
                     seasonBox.BorderStyle = BorderStyle.Fixed3D;
-                    
+
                     tvShow.CurrSeason = seasonNum;
                     b.Text = "Season " + seasonNum;
                     //To-do: Transitions...
@@ -622,7 +634,7 @@ namespace LocalVideoPlayer
 
             seasonFormOpen = false;
             Fader.FadeOut(seasonDimmerForm, Fader.FadeSpeed.Normal);
-            
+
             if (indexChange)
             {
                 UpdateTvForm(tvShow);
@@ -687,11 +699,11 @@ namespace LocalVideoPlayer
                 ProgressBar progressBar = CreateProgressBar(lastEpisode.SavedTime, tvShow.RunningTime);
                 progressBar.Location = new Point(p.Location.X, p.Location.Y + p.Height);
                 episodePanel.Controls.Add(progressBar);
-            } 
+            }
             else if (episodePanel.Controls.Count == 4)
             {
                 ProgressBar progressBar;
-                foreach(Control c in episodePanel.Controls)
+                foreach (Control c in episodePanel.Controls)
                 {
                     if (c.Name.Equals("pBar"))
                     {
@@ -700,7 +712,7 @@ namespace LocalVideoPlayer
                         progressBar.Value = (int)duration.TotalMinutes;
                     }
                 }
-            } 
+            }
             else
             {
                 //something went wrong
@@ -827,15 +839,24 @@ namespace LocalVideoPlayer
 
         private void InitGui()
         {
+            mainFormMainPanel = new Panel();
+            mainFormMainPanel.Size = this.Size;
+            mainFormMainPanel.AutoScroll = true;
+            mainFormMainPanel.Name = "mainFormMainPanel";
+            mainFormMainPanel.Scroll += mainFormMainPanel_Scroll;
+            mainFormMainPanel.MouseWheel += mainFormMainPanel_MouseWheel;
+
+            this.Controls.Add(mainFormMainPanel);
+
             RoundButton closeButton = CreateCloseButton();
-            closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 8));
+            closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 8));
             closeButton.Click += closeButton_Click;
-            
+
             //To-do: no media exists
             Panel currentPanel = null;
             int count = 0;
             int panelCount = 0;
-            int widthValue = (int)(this.Width / 6.12);
+            int widthValue = (int)(mainFormMainPanel.Width / 6.12);
             int heightValue = (int)(widthValue * 1.5);
 
             for (int i = 0; i < media.Movies.Length; i++)
@@ -849,8 +870,8 @@ namespace LocalVideoPlayer
                     currentPanel.AutoSize = true;
                     currentPanel.Name = "movie" + panelCount;
                     panelCount++;
-                    this.Controls.Add(currentPanel);
-                    this.Controls.SetChildIndex(currentPanel, 0);
+                    mainFormMainPanel.Controls.Add(currentPanel);
+                    mainFormMainPanel.Controls.SetChildIndex(currentPanel, 0);
                 }
 
                 PictureBox movieBox = new PictureBox();
@@ -875,7 +896,7 @@ namespace LocalVideoPlayer
             movieLabel.Paint += headerLabel_Paint;
             movieLabel.AutoSize = true;
             movieLabel.Name = "movieLabel";
-            this.Controls.Add(movieLabel);
+            mainFormMainPanel.Controls.Add(movieLabel);
 
             currentPanel = null;
             count = 0;
@@ -891,8 +912,8 @@ namespace LocalVideoPlayer
                     currentPanel.AutoSize = true;
                     currentPanel.Name = "tv" + panelCount;
                     panelCount++;
-                    this.Controls.Add(currentPanel);
-                    this.Controls.SetChildIndex(currentPanel, 4);
+                    mainFormMainPanel.Controls.Add(currentPanel);
+                    mainFormMainPanel.Controls.SetChildIndex(currentPanel, 4);
                 }
 
                 PictureBox tvShowBox = new PictureBox();
@@ -918,47 +939,55 @@ namespace LocalVideoPlayer
             tvLabel.AutoSize = true;
             tvLabel.Name = "tvLabel";
 
-            this.Controls.Add(closeButton);
-            this.Controls.Add(tvLabel);
+            mainFormMainPanel.Controls.Add(closeButton);
+            mainFormMainPanel.Controls.Add(tvLabel);
 
-            /*CustomScrollbar customScrollbar1 = new CustomScrollbar();
-            customScrollbar1.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
-            //customScrollbar1.Dock = DockStyle.Right;
-            customScrollbar1.LargeChange = 10;
-            customScrollbar1.Location = new Point(this.Width - 20, 0);
-            customScrollbar1.Maximum = 100;
-            customScrollbar1.Minimum = 0;
-            customScrollbar1.Name = "customScrollbar1";
-            customScrollbar1.Size = new Size(15, this.Height);
-            customScrollbar1.SmallChange = 1;
-            customScrollbar1.DownArrowImage = Properties.Resources.downarrow;
-            customScrollbar1.ThumbBottomImage = Properties.Resources.ThumbBottom;
-            customScrollbar1.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
-            customScrollbar1.ThumbMiddleImage = Properties.Resources.ThumbMiddle;
-            customScrollbar1.ThumbTopImage = Properties.Resources.ThumbTop;
-            customScrollbar1.ThumbTopSpanImage = Properties.Resources.ThumbSpanTop;
-            customScrollbar1.UpArrowImage = Properties.Resources.uparrow;
-            customScrollbar1.Value = 0;
-            customScrollbar1.ValueChanged += (s, e) =>
-            {
-                this.AutoScroll = true;
-                this.AutoScrollPosition = new Point(0, customScrollbar1.Value);
-                this.AutoScroll = false;
-                //vScrollBar1.Value = customScrollbar1.Value;
-                customScrollbar1.Invalidate();
-                Application.DoEvents();
-                Console.WriteLine("custom: " + customScrollbar1.Value.ToString());
-            };
-            customScrollbar1.Scroll += (s, e) =>
-            {
-                this.AutoScrollPosition = new Point(0, customScrollbar1.Value);
-                //vScrollBar1.Value = customScrollbar1.Value;
-                customScrollbar1.Invalidate();
-                Application.DoEvents();
-                Console.WriteLine("custom: " + customScrollbar1.Value.ToString());
-            };
+            customScrollbar = new CustomScrollbar();
+            customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
+            customScrollbar.LargeChange = 10;
+            customScrollbar.Location = new Point(mainFormMainPanel.Width - 17, 0);
+            customScrollbar.Maximum = 100;
+            customScrollbar.Minimum = 0;
+            customScrollbar.Name = "customScrollbar";
+            customScrollbar.Size = new Size(15, this.Height - 2);
+            customScrollbar.DownArrowImage = Properties.Resources.downarrow;
+            customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
+            customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
+            customScrollbar.ThumbMiddleImage = Properties.Resources.ThumbMiddle;
+            customScrollbar.ThumbTopImage = Properties.Resources.ThumbTop;
+            customScrollbar.ThumbTopSpanImage = Properties.Resources.ThumbSpanTop;
+            customScrollbar.UpArrowImage = Properties.Resources.uparrow;
+            customScrollbar.Minimum = 0;
+            customScrollbar.Maximum = mainFormMainPanel.DisplayRectangle.Height;
+            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(mainFormMainPanel.Height / 1.19); 
+            customScrollbar.SmallChange = 1;
+            customScrollbar.Value = Math.Abs(mainFormMainPanel.AutoScrollPosition.Y);
+            this.Controls.Add(customScrollbar);
+            customScrollbar.Scroll += customScrollbar_Scroll;
+            customScrollbar.BringToFront();
 
-            this.Controls.Add(customScrollbar1);*/
+            mainFormMainPanel.Width += 20;
+
+         }
+
+        private void customScrollbar_Scroll(object sender, EventArgs e)
+        {
+            mainFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
+
+        }
+
+        private void mainFormMainPanel_MouseWheel(object sender, MouseEventArgs e)
+        {
+            customScrollbar.Value = -mainFormMainPanel.AutoScrollPosition.Y;
+            customScrollbar.Invalidate();
+            Application.DoEvents();
+        }
+
+        private void mainFormMainPanel_Scroll(object sender, ScrollEventArgs e)
+        {
+            customScrollbar.Value = e.NewValue;
+            customScrollbar.Invalidate();
+            Application.DoEvents();
         }
 
         private bool CheckForUpdates()

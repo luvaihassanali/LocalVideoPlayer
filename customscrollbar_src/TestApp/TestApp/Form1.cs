@@ -51,16 +51,16 @@ namespace TestApp {
         {
             innerPanel.AutoScrollPosition = new Point(0, customScrollbar1.Value);
             //vScrollBar1.Value = customScrollbar1.Value;
-            customScrollbar1.Invalidate();
-            Application.DoEvents();
+            //customScrollbar1.Invalidate();
+            //Application.DoEvents();
             Debug.WriteLine("vscroll: " + vScrollBar1.Value.ToString() + "  custom: " + customScrollbar1.Value.ToString());
         }
 
         private void vScrollBar1_Scroll(object sender, ScrollEventArgs e)
         {
             innerPanel.AutoScrollPosition = new Point(0, vScrollBar1.Value);
-            customScrollbar1.Value = vScrollBar1.Value;
-            Application.DoEvents();
+            //customScrollbar1.Value = vScrollBar1.Value;
+            //Application.DoEvents();
             Debug.WriteLine("vscroll: " + vScrollBar1.Value.ToString() + "  custom: " + customScrollbar1.Value.ToString());
         }
 
