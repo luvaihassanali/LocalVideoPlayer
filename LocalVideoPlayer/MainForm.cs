@@ -63,6 +63,7 @@ namespace LocalVideoPlayer
             seasonDimmerForm.FormBorderStyle = FormBorderStyle.None;
             seasonDimmerForm.BackColor = Color.Black;
         }
+        //To-do: custom season + scroll bar
 
         #region General form functions
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -744,7 +745,7 @@ namespace LocalVideoPlayer
             RoundButton closeButton = CreateCloseButton();
             closeButton.Click += closeButton_Click;
             movieForm.Controls.Add(closeButton);
-            closeButton.Location = new Point(movieForm.Width - (int)(closeButton.Width * 1.15), (closeButton.Width / 8));
+            closeButton.Location = new Point(movieForm.Width - (int)(closeButton.Width * 1.165), (closeButton.Width / 8));
 
             Font f = new Font("Arial", 24, FontStyle.Bold);
             Font f3 = new Font("Arial", 16, FontStyle.Bold);
@@ -827,7 +828,7 @@ namespace LocalVideoPlayer
         private void InitGui()
         {
             RoundButton closeButton = CreateCloseButton();
-            closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.75), (closeButton.Width / 8));
+            closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 8));
             closeButton.Click += closeButton_Click;
             
             //To-do: no media exists

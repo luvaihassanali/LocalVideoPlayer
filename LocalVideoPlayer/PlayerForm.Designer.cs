@@ -91,6 +91,7 @@ namespace LocalVideoPlayer
             this.playButton.Size = new System.Drawing.Size(64, 64);
             this.playButton.TabIndex = 10;
             this.playButton.UseVisualStyleBackColor = true;
+            this.playButton.Visible = false;
             this.playButton.Click += new System.EventHandler(this.playButton_Click);
             this.playButton.MouseEnter += new System.EventHandler(this.playButton_MouseEnter);
             this.playButton.MouseLeave += new System.EventHandler(this.playButton_MouseLeave);
@@ -107,6 +108,7 @@ namespace LocalVideoPlayer
             this.closeButton.Size = new System.Drawing.Size(64, 64);
             this.closeButton.TabIndex = 9;
             this.closeButton.UseVisualStyleBackColor = true;
+            this.closeButton.Visible = false;
             this.closeButton.Click += new System.EventHandler(this.closeButton_Click);
             this.closeButton.MouseEnter += new System.EventHandler(this.closeButton_MouseEnter);
             this.closeButton.MouseLeave += new System.EventHandler(this.closeButton_MouseLeave);

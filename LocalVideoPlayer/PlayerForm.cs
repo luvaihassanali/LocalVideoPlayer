@@ -115,6 +115,9 @@ namespace LocalVideoPlayer
             timeline.Size = new Size(this.Width - (int)(playButton.Width * 4), playButton.Height / 2);
             timeline.Location = new Point(playButton.Width * 2, this.Height - playButton.Height);
 
+            this.Cursor = new Cursor(Cursor.Current.Handle);
+            Cursor.Position = new Point(0, this.Height * 2);
+
             FileInfo media = new FileInfo(path);
             Media currentMedia = new Media(libVlc, path, FromType.FromPath);
             bool result = mediaPlayer.Play(currentMedia);
