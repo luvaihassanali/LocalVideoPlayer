@@ -10,7 +10,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-
+using CustomControls;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -921,7 +921,44 @@ namespace LocalVideoPlayer
             this.Controls.Add(closeButton);
             this.Controls.Add(tvLabel);
 
-            //this.Refresh();
+            /*CustomScrollbar customScrollbar1 = new CustomScrollbar();
+            customScrollbar1.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
+            //customScrollbar1.Dock = DockStyle.Right;
+            customScrollbar1.LargeChange = 10;
+            customScrollbar1.Location = new Point(this.Width - 20, 0);
+            customScrollbar1.Maximum = 100;
+            customScrollbar1.Minimum = 0;
+            customScrollbar1.Name = "customScrollbar1";
+            customScrollbar1.Size = new Size(15, this.Height);
+            customScrollbar1.SmallChange = 1;
+            customScrollbar1.DownArrowImage = Properties.Resources.downarrow;
+            customScrollbar1.ThumbBottomImage = Properties.Resources.ThumbBottom;
+            customScrollbar1.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
+            customScrollbar1.ThumbMiddleImage = Properties.Resources.ThumbMiddle;
+            customScrollbar1.ThumbTopImage = Properties.Resources.ThumbTop;
+            customScrollbar1.ThumbTopSpanImage = Properties.Resources.ThumbSpanTop;
+            customScrollbar1.UpArrowImage = Properties.Resources.uparrow;
+            customScrollbar1.Value = 0;
+            customScrollbar1.ValueChanged += (s, e) =>
+            {
+                this.AutoScroll = true;
+                this.AutoScrollPosition = new Point(0, customScrollbar1.Value);
+                this.AutoScroll = false;
+                //vScrollBar1.Value = customScrollbar1.Value;
+                customScrollbar1.Invalidate();
+                Application.DoEvents();
+                Console.WriteLine("custom: " + customScrollbar1.Value.ToString());
+            };
+            customScrollbar1.Scroll += (s, e) =>
+            {
+                this.AutoScrollPosition = new Point(0, customScrollbar1.Value);
+                //vScrollBar1.Value = customScrollbar1.Value;
+                customScrollbar1.Invalidate();
+                Application.DoEvents();
+                Console.WriteLine("custom: " + customScrollbar1.Value.ToString());
+            };
+
+            this.Controls.Add(customScrollbar1);*/
         }
 
         private bool CheckForUpdates()

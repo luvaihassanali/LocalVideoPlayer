@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -117,50 +117,74 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="close" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\close.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="customScrollbar1.DownArrowImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAAA8AAAASCAIAAAAL/BNYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
+        JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABiklEQVQ4T41S4VKCQBj0IUJ9MtCnKcFp
+        JkV9qAAFS5um3iBBTJMMNeS4a+8+Q+1X36zLft/tLQhX4eJYnJfyb5VLFSEKrWH/B4L/uj3Pc123ZBKo
+        oef4roPryV03bM9xh7Apdu8dMCFwHAyxWbpFUeGcVY2ePxwFIx+AGPsBQba+Pw5GgT9EoiiY/Jeabk8f
+        J9EsnIcRGBp4mkyh49nbLFxMJw81/U5lC1Fr9BdxBFjmzftiHs/D15dnmrSt6ziOIZANp3I3e6vVylJl
+        mib0crmkSdu0bs0W2rrRkW68xWrDTj7Wn+sEa1bLBJOmdr1eJUkCD71v6Y6jebr5AkoTCTlMN1EUXbgR
+        hvj9drdLt6WVWsrWjO7JjSkh238fvjNYwQAmyE7T9MKNhTw7ELNDXuQMgJZDTLPs4kk4K0qgcIyIVZvj
+        imzwyS2wqpgxJn20AfvVjiu9c8omq5qfBaNUNn4yEdkMbmOAptrsA3Q4SWOoNQb4ipjU9O7xDAqR4w5K
+        nJdq8QE5kwRw/gP1Q3Ty9HZgbAAAAABJRU5ErkJggg==
+</value>
   </data>
-  <data name="downarrow" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\downarrow.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="customScrollbar1.ThumbBottomImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAAA0AAAABCAIAAACKS7NQAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
+        JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAEElEQVQYV2MwXsZMGC1jBgDiCAstqKrQ
+        dwAAAABJRU5ErkJggg==
+</value>
   </data>
-  <data name="pause" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\pause.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="customScrollbar1.ThumbBottomSpanImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAAA0AAAABCAIAAACKS7NQAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
+        JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAHklEQVQYV2MwXsa8btVqIFqDiVavBIqv
+        X7nSeBkzANx2F8nZP3UmAAAAAElFTkSuQmCC
+</value>
   </data>
-  <data name="pause64" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\pause64.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="customScrollbar1.ThumbMiddleImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAAA0AAAAoCAIAAACq6OeuAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
+        JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAACGUlEQVQ4T4WQW3PSUBSFnelP6r8zpD+n
+        z+UOIUAJ1wRwKNBqEkAQkWu1FdQXQdc5e3sSM8OwZs3K2vt8D3vy5vr26tclgRHczzNiSnGHw4EefkhR
+        x5JGiLn9fo9tROFlwJ3TdynmXi+JuZdLYu7bGX2VQmHuWWq320WKEnN4IG2leAiJue16A29Wa8qgbDZb
+        fNZr5lar1R+p0+lEJaRjwC2XS13XY1LhAt3oGl6Z+/xPi8WCm9R8Pv+ymKMwh3k2myGVaATxafYRhbnp
+        dMrH/C957hGvzE0mE3VWWOLA2Fu8Mjf2R/BkNFaFOjQeeQHnS2Hr+66073meoDxUF8mc67p8UUjiOPE3
+        j77rMffh6b2uxcg3MR2mIja69jR8ZA7tcTBERgo8HPbRmRsMBv1+/0EKRWkgph6SuV6vRzdFhQtPv/u9
+        B+a63S7/MSn8NU3TxM+T973rdJnrOO1uu0PGVnW403ECru202rbjtGxKKrYtimM3kczZrYbdbEWMZ1Hk
+        E3PNekO5UatzNmqUGJmrV2vkmlWFqdRrlljKZK5asaK27mHrvkLJXKUsBqSyGq1KGclcuViCS2aRirLY
+        lEwkc0XTUDaNQrFgCkMFs1QUI3OFvAGDUBnYyBm5PHP5bA7GTCU8GvkskrlcJptNZyjJqueyaSRzmVQ6
+        nUwhI0X0dBLJXCqRPOtkHMlcMp4gJ+7iqrMTd1he3179BRYmfR9zH5fxAAAAAElFTkSuQmCC
+</value>
   </data>
-  <data name="play" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\play.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="customScrollbar1.ThumbTopImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAAA0AAAABCAIAAACKS7NQAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
+        JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAEElEQVQYV2MwXsZMGC1jBgDiCAstqKrQ
+        dwAAAABJRU5ErkJggg==
+</value>
   </data>
-  <data name="play64" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\play64.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="customScrollbar1.ThumbTopSpanImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAAA0AAAABCAIAAACKS7NQAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
+        JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAHElEQVQYV2MwXsb8HQf48e371+/fvn//
+        abyMGQCfwiGPW2Et+gAAAABJRU5ErkJggg==
+</value>
   </data>
-  <data name="slider" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\slider.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="slider32" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\slider32.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="smallPlay" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\smallPlay.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ThumbBottom" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ThumbBottom.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ThumbMiddle" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ThumbMiddle.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ThumbSpanBottom" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ThumbSpanBottom.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ThumbSpanTop" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ThumbSpanTop.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ThumbTop" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ThumbTop.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="uparrow" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\uparrow.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="customScrollbar1.UpArrowImage" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAAA8AAAASCAIAAAAL/BNYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
+        JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABk0lEQVQ4T41S206DQBTsR1jaLwP6NVpo
+        TLS3j5JLodoao39gudQiWOmFsrDOcgi18cWT4TBndnYC2W1xXnCec1Egv6saS4CJBpRli3EuKVNJHUm9
+        CdBWRwBxiG112lWE0pGH2IFsDpUXZckKAIUM6qKEkuOBB1Pthkob0Blj5BR7EFHtuJLv4Ty7GwhTE19l
+        491Whui1+3TM8uxEnZ3yImcAuBChZpn42iZ7n+4I2eGI1YGmowNQ0nSbpimyz+6vOEk+48Nuj2W9r8EN
+        0BjHUZIkF+7QD9LtN0C+ZoMQ063v+xdfgmDENz7iNFJ27cYhdXrjKIr0qjRNA99sNqRgw63Wx9hV7uGs
+        3OpkHfqArt18rIMw8N5eX0gZ6NdhGILgRGt3Wx4tnxb+ygs8Hx0ceF4swcPV+8pbLxePHfkON6eFA5CU
+        sWPP3JkDgMwdlyBGx5m7M9exkc0Lhr8swCzDtE2LuvlgoBNcw4BoWRYulsjGA4bZNIVKnQjKtgzHNPAW
+        7uoOCvd/INz4Sypcmpr9qXqJ8x83aHTyuc49ewAAAABJRU5ErkJggg==
+</value>
   </data>
 </root>

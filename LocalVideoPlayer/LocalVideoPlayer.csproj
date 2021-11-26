@@ -152,6 +152,10 @@
     <None Include="Resources\smallPlay.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\customscrollbar_src\TestApp\CustomControls\CustomControls.csproj">
+      <Project>{5b85e2d7-2005-4496-b5d7-59c68a1ec91d}</Project>
+      <Name>CustomControls</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MAC_Slider_src\MAC_Slider_C_Sharp_src\MACTrackBarLib\MACTrackBarLib.csproj">
       <Project>{77a112b1-5440-440b-a0f6-2edcc5b093cb}</Project>
       <Name>MACTrackBarLib</Name>
@@ -168,6 +172,27 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\pause64.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\downarrow.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ThumbBottom.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ThumbMiddle.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ThumbSpanBottom.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ThumbSpanTop.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ThumbTop.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\uparrow.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\VideoLAN.LibVLC.Windows.3.0.16\build\VideoLAN.LibVLC.Windows.targets" Condition="Exists('..\packages\VideoLAN.LibVLC.Windows.3.0.16\build\VideoLAN.LibVLC.Windows.targets')" />
