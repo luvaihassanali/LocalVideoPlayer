@@ -45,7 +45,7 @@ namespace LocalVideoPlayer
 
             InitializeComponent();
 
-            this.Padding = new System.Windows.Forms.Padding(5, 20, 20, 20);
+            
             this.DoubleBuffered = true;
             this.ControlBox = false;
 
@@ -80,7 +80,7 @@ namespace LocalVideoPlayer
         {
             //To-do: add some sort of text indicator for loading circle on initial launch
             loadingCircle1.Dispose();
-
+            this.Padding = new System.Windows.Forms.Padding(5, 20, 20, 20);
             InitGui();
             //tvShowBox_Click(null, null); 
         }
@@ -210,7 +210,8 @@ namespace LocalVideoPlayer
             closeButton.Location = new Point(728, 8);
             closeButton.Name = "closeButton";
             closeButton.Size = new Size(64, 64);
-            closeButton.UseVisualStyleBackColor = true;
+            //closeButton.UseVisualStyleBackColor = true;
+            closeButton.Click += closeButton_Click;
             return closeButton;
         }
 
@@ -221,7 +222,6 @@ namespace LocalVideoPlayer
         private void tvShowBox_Click(object sender, EventArgs e)
         {
             Form tvForm = new Form();
-            Form mainForm = Application.OpenForms[0];
 
             PictureBox pictureBox = null;
             if (sender != null)
@@ -230,7 +230,7 @@ namespace LocalVideoPlayer
             }
             else
             {
-                foreach (Control c in mainForm.Controls)
+                foreach (Control c in this.Controls)
                 {
                     if (c.Name.Contains("tv") && c is Panel)
                     {
@@ -258,7 +258,6 @@ namespace LocalVideoPlayer
             tvForm.ForeColor = SystemColors.Control;
 
             RoundButton closeButton = CreateCloseButton();
-            closeButton.Click += closeButton_Click;
             tvForm.Controls.Add(closeButton);
             closeButton.Location = new Point(tvForm.Width - (int)(closeButton.Width * 1.45), (closeButton.Width / 8));
 
@@ -363,9 +362,9 @@ namespace LocalVideoPlayer
                 Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
             };
 
-            dimmerForm.Size = mainForm.Size;
+            dimmerForm.Size = this.Size;
             Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Normal, 0.8);
-            dimmerForm.Location = mainForm.Location;
+            dimmerForm.Location = this.Location;
 
             for (int i = 0; i < episodePanelList.Count; i++)
             {
@@ -741,8 +740,6 @@ namespace LocalVideoPlayer
         private void movieBox_Click(object sender, EventArgs e)
         {
             Form movieForm = new Form();
-            Form mainForm = Application.OpenForms[0];
-
             PictureBox p = sender as PictureBox;
             Movie movie = GetMovie(p.Name);
 
@@ -755,7 +752,6 @@ namespace LocalVideoPlayer
             movieForm.ForeColor = SystemColors.Control;
 
             RoundButton closeButton = CreateCloseButton();
-            closeButton.Click += closeButton_Click;
             movieForm.Controls.Add(closeButton);
             closeButton.Location = new Point(movieForm.Width - (int)(closeButton.Width * 1.165), (closeButton.Width / 8));
 
@@ -809,9 +805,9 @@ namespace LocalVideoPlayer
 
             };
 
-            dimmerForm.Size = mainForm.Size;
+            dimmerForm.Size = this.Size;
             Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Normal, 0.8);
-            dimmerForm.Location = mainForm.Location;
+            dimmerForm.Location = this.Location;
 
             movieForm.Show();
         }
@@ -845,12 +841,11 @@ namespace LocalVideoPlayer
             mainFormMainPanel.Name = "mainFormMainPanel";
             mainFormMainPanel.Scroll += mainFormMainPanel_Scroll;
             mainFormMainPanel.MouseWheel += mainFormMainPanel_MouseWheel;
-
+            mainFormMainPanel.Width += 20;
             this.Controls.Add(mainFormMainPanel);
 
             RoundButton closeButton = CreateCloseButton();
             closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 8));
-            closeButton.Click += closeButton_Click;
 
             //To-do: no media exists
             Panel currentPanel = null;
@@ -965,9 +960,6 @@ namespace LocalVideoPlayer
             this.Controls.Add(customScrollbar);
             customScrollbar.Scroll += customScrollbar_Scroll;
             customScrollbar.BringToFront();
-
-            mainFormMainPanel.Width += 20;
-
          }
 
         private void customScrollbar_Scroll(object sender, EventArgs e)
