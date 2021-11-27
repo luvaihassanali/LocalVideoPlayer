@@ -30,8 +30,24 @@ namespace LocalVideoPlayer
         private void InitializeComponent()
         {
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.closeButton = new LocalVideoPlayer.RoundButton();
             this.loadingCircle1 = new MRG.Controls.UI.LoadingCircle();
             this.SuspendLayout();
+            // 
+            // closeButton
+            // 
+            this.closeButton.BackgroundImage = global::LocalVideoPlayer.Properties.Resources.close;
+            this.closeButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.closeButton.FlatAppearance.BorderSize = 0;
+            this.closeButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Red;
+            this.closeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.closeButton.Location = new System.Drawing.Point(736, 0);
+            this.closeButton.Name = "closeButton";
+            this.closeButton.Size = new System.Drawing.Size(64, 64);
+            this.closeButton.TabIndex = 10;
+            this.closeButton.UseVisualStyleBackColor = true;
+            this.closeButton.Visible = false;
+            this.closeButton.Click += new System.EventHandler(this.closeButton_Click);
             // 
             // loadingCircle1
             // 
@@ -58,6 +74,7 @@ namespace LocalVideoPlayer
             this.BackColor = System.Drawing.SystemColors.Desktop;
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.ControlBox = false;
+            this.Controls.Add(this.closeButton);
             this.Controls.Add(this.loadingCircle1);
             this.DoubleBuffered = true;
             this.ForeColor = System.Drawing.SystemColors.Control;
@@ -74,6 +91,7 @@ namespace LocalVideoPlayer
         #endregion
 
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private RoundButton closeButton;
         private MRG.Controls.UI.LoadingCircle loadingCircle1;
     }
 }

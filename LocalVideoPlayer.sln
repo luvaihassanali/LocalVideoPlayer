@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MACTrackBarLib", "MAC_Slide
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomControls", "customscrollbar_src\TestApp\CustomControls\CustomControls.csproj", "{5B85E2D7-2005-4496-B5D7-59C68A1EC91D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{A88368E0-9EF0-41BD-AA88-34C5DFA43BF1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{77A112B1-5440-440B-A0F6-2EDCC5B093CB} = {A88368E0-9EF0-41BD-AA88-34C5DFA43BF1}
+		{5B85E2D7-2005-4496-B5D7-59C68A1EC91D} = {A88368E0-9EF0-41BD-AA88-34C5DFA43BF1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E33ED34E-76A3-4230-8526-39FD316BD0E7}

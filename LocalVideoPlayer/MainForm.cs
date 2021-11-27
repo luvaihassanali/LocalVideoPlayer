@@ -45,7 +45,6 @@ namespace LocalVideoPlayer
 
             InitializeComponent();
 
-            
             this.DoubleBuffered = true;
             this.ControlBox = false;
 
@@ -117,11 +116,13 @@ namespace LocalVideoPlayer
             {
                 f = (Form)b.Parent;
             }
+
+            f.Close();
+
             if (!f.Name.Equals("MainForm"))
             {
                 Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
             }
-            f.Close();
         }
 
         private void headerLabel_Paint(object sender, PaintEventArgs e)
@@ -213,6 +214,34 @@ namespace LocalVideoPlayer
             //closeButton.UseVisualStyleBackColor = true;
             closeButton.Click += closeButton_Click;
             return closeButton;
+        }
+
+        private void customScrollbar_Scroll(object sender, EventArgs e)
+        {
+            mainFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
+            showHideClose(customScrollbar.Value);
+        }
+
+        private void mainFormMainPanel_MouseWheel(object sender, MouseEventArgs e)
+        {
+            //To-do: fix close button on first scroll
+            int newVal = -mainFormMainPanel.AutoScrollPosition.Y;
+            showHideClose(newVal);
+            customScrollbar.Value = newVal;
+            customScrollbar.Invalidate();
+            Application.DoEvents();
+        }
+
+        private void showHideClose(int value)
+        {
+            if (value == 0)
+            {
+                closeButton.Visible = true;
+            }
+            else
+            {
+                closeButton.Visible = false;
+            }
         }
 
         #endregion 
@@ -839,13 +868,12 @@ namespace LocalVideoPlayer
             mainFormMainPanel.Size = this.Size;
             mainFormMainPanel.AutoScroll = true;
             mainFormMainPanel.Name = "mainFormMainPanel";
-            mainFormMainPanel.Scroll += mainFormMainPanel_Scroll;
             mainFormMainPanel.MouseWheel += mainFormMainPanel_MouseWheel;
             mainFormMainPanel.Width += 20;
             this.Controls.Add(mainFormMainPanel);
 
-            RoundButton closeButton = CreateCloseButton();
-            closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 8));
+            closeButton.Visible = true;
+            closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.75), (closeButton.Width / 8));
 
             //To-do: no media exists
             Panel currentPanel = null;
@@ -933,16 +961,11 @@ namespace LocalVideoPlayer
             tvLabel.Paint += headerLabel_Paint;
             tvLabel.AutoSize = true;
             tvLabel.Name = "tvLabel";
-
-            mainFormMainPanel.Controls.Add(closeButton);
             mainFormMainPanel.Controls.Add(tvLabel);
 
             customScrollbar = new CustomScrollbar();
             customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
-            customScrollbar.LargeChange = 10;
-            customScrollbar.Location = new Point(mainFormMainPanel.Width - 17, 0);
-            customScrollbar.Maximum = 100;
-            customScrollbar.Minimum = 0;
+            customScrollbar.Location = new Point(mainFormMainPanel.Width - 37, 0);
             customScrollbar.Name = "customScrollbar";
             customScrollbar.Size = new Size(15, this.Height - 2);
             customScrollbar.DownArrowImage = Properties.Resources.downarrow;
@@ -954,34 +977,15 @@ namespace LocalVideoPlayer
             customScrollbar.UpArrowImage = Properties.Resources.uparrow;
             customScrollbar.Minimum = 0;
             customScrollbar.Maximum = mainFormMainPanel.DisplayRectangle.Height;
-            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(mainFormMainPanel.Height / 1.19); 
+            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(mainFormMainPanel.Height / 1);
             customScrollbar.SmallChange = 1;
             customScrollbar.Value = Math.Abs(mainFormMainPanel.AutoScrollPosition.Y);
-            this.Controls.Add(customScrollbar);
             customScrollbar.Scroll += customScrollbar_Scroll;
+            this.Controls.Add(customScrollbar);
             customScrollbar.BringToFront();
+            //To-do: implement close button logic for other forms? 
          }
-
-        private void customScrollbar_Scroll(object sender, EventArgs e)
-        {
-            mainFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
-
-        }
-
-        private void mainFormMainPanel_MouseWheel(object sender, MouseEventArgs e)
-        {
-            customScrollbar.Value = -mainFormMainPanel.AutoScrollPosition.Y;
-            customScrollbar.Invalidate();
-            Application.DoEvents();
-        }
-
-        private void mainFormMainPanel_Scroll(object sender, ScrollEventArgs e)
-        {
-            customScrollbar.Value = e.NewValue;
-            customScrollbar.Invalidate();
-            Application.DoEvents();
-        }
-
+      
         private bool CheckForUpdates()
         {
             MediaModel prevMedia = null;
@@ -1470,6 +1474,7 @@ namespace LocalVideoPlayer
 
         private int ShowOptionsDialog(string item, string[][] info, DateTime?[] dates)
         {
+            //To-do: scroll bar
             Form optionsForm = new Form();
             optionsForm.Width = this.Width / 2;
             optionsForm.Height = this.Height / 6;
