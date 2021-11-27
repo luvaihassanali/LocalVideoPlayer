@@ -224,7 +224,6 @@ namespace LocalVideoPlayer
 
         private void mainFormMainPanel_MouseWheel(object sender, MouseEventArgs e)
         {
-            //To-do: fix close button on first scroll
             int newVal = -mainFormMainPanel.AutoScrollPosition.Y;
             showHideClose(newVal);
             customScrollbar.Value = newVal;
@@ -966,7 +965,6 @@ namespace LocalVideoPlayer
             customScrollbar = new CustomScrollbar();
             customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
             customScrollbar.Location = new Point(mainFormMainPanel.Width - 37, 0);
-            customScrollbar.Name = "customScrollbar";
             customScrollbar.Size = new Size(15, this.Height - 2);
             customScrollbar.DownArrowImage = Properties.Resources.downarrow;
             customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
@@ -1474,22 +1472,27 @@ namespace LocalVideoPlayer
 
         private int ShowOptionsDialog(string item, string[][] info, DateTime?[] dates)
         {
-            //To-do: scroll bar
             Form optionsForm = new Form();
-            optionsForm.Width = this.Width / 2;
+            optionsForm.Width = (int)(this.Width / 1.5);
             optionsForm.Height = this.Height / 6;
-            optionsForm.MaximumSize = new Size(this.Width, this.Height);
-            optionsForm.TopMost = true;
-            optionsForm.AutoScroll = true;
-            optionsForm.AutoScrollPosition = new Point(0, 0);
+            optionsForm.MaximumSize = new Size(this.Width, this.Height - 100);
             optionsForm.AutoSize = true;
             optionsForm.StartPosition = FormStartPosition.CenterScreen;
             optionsForm.BackColor = SystemColors.Desktop;
             optionsForm.ForeColor = SystemColors.Control;
-            optionsForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+            optionsForm.FormBorderStyle = FormBorderStyle.None;
+
+            Panel optionsFormMainPanel = new Panel();
+            optionsFormMainPanel.Size = optionsForm.Size;
+            optionsFormMainPanel.MaximumSize = optionsForm.MaximumSize;
+            optionsFormMainPanel.AutoSize = true;
+            optionsFormMainPanel.AutoScroll = true;
+            optionsFormMainPanel.Name = "optionsFormMainPanel";
+            optionsForm.Controls.Add(optionsFormMainPanel);
+
             optionsForm.Shown += (s, e) =>
             {
-                optionsForm.AutoScrollPosition = new Point(0, 0);
+                optionsFormMainPanel.AutoScrollPosition = new Point(0, 0);
             };
 
             Font f = new Font("Arial", 14, FontStyle.Bold);
@@ -1543,7 +1546,7 @@ namespace LocalVideoPlayer
                 r1.Name = info[1][i];
                 r1.Click += (sender, e) =>
                 {
-                    optionsForm.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
+                    optionsFormMainPanel.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
                 };
                 controls.Add(r1);
 
@@ -1552,26 +1555,58 @@ namespace LocalVideoPlayer
                 l1.Font = f2;
                 l1.AutoSize = true;
                 l1.Padding = new Padding(20);
-                Size s = new Size(optionsForm.Width, optionsForm.Height);
+                Size s = new Size(optionsForm.Width - (l1.Width / 2), optionsForm.Height);
                 l1.MaximumSize = s;
                 l1.Cursor = Cursors.Hand;
                 l1.Click += (sender, e) =>
                 {
                     r1.Checked = true;
-                    optionsForm.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
+                    optionsFormMainPanel.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
                 };
                 controls.Add(l1);
             }
 
-            optionsForm.Controls.Add(textLabel);
-            optionsForm.Controls.Add(confirmation);
+            optionsFormMainPanel.Controls.Add(textLabel);
+            optionsFormMainPanel.Controls.Add(confirmation);
 
             controls.Reverse();
             foreach (Control c in controls)
             {
-                optionsForm.Controls.Add(c);
+                optionsFormMainPanel.Controls.Add(c);
             }
-            optionsForm.Controls.Add(textLabel);
+            optionsFormMainPanel.Controls.Add(textLabel);
+
+            //To-do: make function
+            CustomScrollbar customScrollbar = new CustomScrollbar();
+            customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
+            customScrollbar.Location = new Point(optionsFormMainPanel.Width - 36, 0);
+            customScrollbar.Size = new Size(15, optionsFormMainPanel.Height);
+            customScrollbar.DownArrowImage = Properties.Resources.downarrow;
+            customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
+            customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
+            customScrollbar.ThumbMiddleImage = Properties.Resources.ThumbMiddle;
+            customScrollbar.ThumbTopImage = Properties.Resources.ThumbTop;
+            customScrollbar.ThumbTopSpanImage = Properties.Resources.ThumbSpanTop;
+            customScrollbar.UpArrowImage = Properties.Resources.uparrow;
+            customScrollbar.Minimum = 0;
+            customScrollbar.Maximum = optionsFormMainPanel.DisplayRectangle.Height;
+            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(optionsFormMainPanel.Height / 1);
+            customScrollbar.SmallChange = 1;
+            customScrollbar.Value = Math.Abs(optionsFormMainPanel.AutoScrollPosition.Y);
+            customScrollbar.Scroll += (s, e) =>
+            {
+                optionsFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
+            };
+            optionsFormMainPanel.MouseWheel += (s, e) =>
+            {
+                int newVal = -optionsFormMainPanel.AutoScrollPosition.Y;
+                customScrollbar.Value = newVal;
+                customScrollbar.Invalidate();
+                Application.DoEvents();
+            };
+            optionsForm.Controls.Add(customScrollbar);
+            customScrollbar.BringToFront();
+            optionsFormMainPanel.Width -= 20;
 
             optionsForm.ShowDialog();
             optionsForm.Dispose();
@@ -1588,6 +1623,7 @@ namespace LocalVideoPlayer
                     }
                 }
             }
+
             if (id == 0) throw new ArgumentNullException();
 
             return id;
