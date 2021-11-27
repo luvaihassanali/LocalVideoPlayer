@@ -280,10 +280,17 @@ namespace LocalVideoPlayer
             tvForm.FormBorderStyle = FormBorderStyle.None;
             tvForm.Width = (int)(this.Width / 1.75);
             tvForm.Height = this.Height;
-            tvForm.AutoScroll = true;
+            tvForm.AutoScroll = false;
             tvForm.StartPosition = FormStartPosition.CenterScreen;
             tvForm.BackColor = SystemColors.Desktop;
             tvForm.ForeColor = SystemColors.Control;
+            tvForm.Text = "tvForm";
+
+            Panel tvFormMainPanel = new Panel();
+            tvFormMainPanel.Size = tvForm.Size;
+            tvFormMainPanel.AutoScroll = true;
+            tvFormMainPanel.Name = "tvFormMainPanel";
+            tvForm.Controls.Add(tvFormMainPanel);
 
             RoundButton closeButton = CreateCloseButton();
             tvForm.Controls.Add(closeButton);
@@ -371,17 +378,17 @@ namespace LocalVideoPlayer
 
             mainPanel.Controls.AddRange(episodePanelList.ToArray());
 
-            tvForm.Controls.Add(mainPanel);
+            tvFormMainPanel.Controls.Add(mainPanel);
 
             mainPanel.Controls.Add(seasonButtonPanel);
 
             mainPanel.Controls.Add(episodeHeaderLabel);
 
-            tvForm.Controls.Add(overviewLabel);
+            tvFormMainPanel.Controls.Add(overviewLabel);
 
-            tvForm.Controls.Add(headerLabel);
+            tvFormMainPanel.Controls.Add(headerLabel);
 
-            tvForm.Controls.Add(tvShowBackdropBox);
+            tvFormMainPanel.Controls.Add(tvShowBackdropBox);
 
             tvForm.Deactivate += (s, ev) =>
             {
@@ -411,15 +418,73 @@ namespace LocalVideoPlayer
                 }
             }
 
+            CustomScrollbar customScrollbar = new CustomScrollbar();
+            customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
+            customScrollbar.Location = new Point(tvFormMainPanel.Width - 16, 0);
+            customScrollbar.Size = new Size(15, tvFormMainPanel.Height - 2);
+            customScrollbar.DownArrowImage = Properties.Resources.downarrow;
+            customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
+            customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
+            customScrollbar.ThumbMiddleImage = Properties.Resources.ThumbMiddle;
+            customScrollbar.ThumbTopImage = Properties.Resources.ThumbTop;
+            customScrollbar.ThumbTopSpanImage = Properties.Resources.ThumbSpanTop;
+            customScrollbar.UpArrowImage = Properties.Resources.uparrow;
+            customScrollbar.Minimum = 0;
+            customScrollbar.Maximum = tvFormMainPanel.DisplayRectangle.Height;
+            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(tvFormMainPanel.Height / 1) + 3;
+            customScrollbar.SmallChange = 1;
+            customScrollbar.Value = Math.Abs(tvFormMainPanel.AutoScrollPosition.Y);
+            customScrollbar.Scroll += (s, e_) =>
+            {
+                tvFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
+                if (customScrollbar.Value == 0)
+                {
+                    closeButton.Visible = true;
+                }
+                else
+                {
+                    closeButton.Visible = false;
+                }
+            };
+            tvFormMainPanel.MouseWheel += (s, e_) =>
+            {
+                int newVal = -tvFormMainPanel.AutoScrollPosition.Y;
+                if (newVal == 0)
+                {
+                    closeButton.Visible = true;
+                }
+                else
+                {
+                    closeButton.Visible = false;
+                }
+                customScrollbar.Value = newVal;
+                customScrollbar.Invalidate();
+                Application.DoEvents();
+            };
+
+            tvForm.Controls.Add(customScrollbar);
+            customScrollbar.BringToFront();
+            closeButton.BringToFront();
             tvForm.Show();
         }
 
 
         private void UpdateTvForm(TvShow tvShow)
         {
-            Form tvForm = Application.OpenForms[2];
+            Form tvForm = null;
+            FormCollection formCollection = Application.OpenForms;
+            foreach(Form f_ in formCollection)
+            {
+                if(f_.Text.Equals("tvForm"))
+                {
+                    tvForm = f_;
+                }
+            }
+            if (tvForm == null) throw new ArgumentNullException();
+
             Panel mainPanel = null;
 
+            //To-do: rename fonts
             Font f = new Font("Arial", 26, FontStyle.Bold);
             Font f3 = new Font("Arial", 16, FontStyle.Bold);
             Font f2 = new Font("Arial", 12, FontStyle.Regular);
@@ -428,20 +493,28 @@ namespace LocalVideoPlayer
             List<Control> toRemove = new List<Control>();
             foreach (Control c in tvForm.Controls)
             {
-                Panel p = c as Panel;
-                if (p != null && p.Name.Equals("mainPanel"))
+                Panel p_ = c as Panel;
+                if (p_ != null && p_.Name.Equals("tvFormMainPanel"))
                 {
-                    mainPanel = p;
-                    foreach (Control c_ in mainPanel.Controls)
+                    foreach (Control ctrl in p_.Controls)
                     {
-                        Panel ePanel = c_ as Panel;
-                        if (ePanel != null && ePanel.Name.Contains("episodePanel"))
+                        Panel p = ctrl as Panel;
+                        if (p != null && p.Name.Equals("mainPanel"))
                         {
-                            toRemove.Add(ePanel);
+                            mainPanel = p;
+                            foreach (Control c_ in mainPanel.Controls)
+                            {
+                                Panel ePanel = c_ as Panel;
+                                if (ePanel != null && ePanel.Name.Contains("episodePanel"))
+                                {
+                                    toRemove.Add(ePanel);
+                                }
+                            }
                         }
                     }
                 }
             }
+
             foreach (Control c in toRemove)
             {
                 mainPanel.Controls.Remove(c);
@@ -561,12 +634,12 @@ namespace LocalVideoPlayer
             string showName = b.Name.Replace("season_", "");
             int seasonNum = Int32.Parse(b.Text.Replace("Season ", ""));
             TvShow tvShow = GetTvShow(showName);
+         
             //To-do: Scroll to current season / tv episode
             Form seasonForm = new Form();
             seasonForm.Width = (int)(this.Width / 2.75);
             seasonForm.Height = (int)(this.Height / 1.1);
-            seasonForm.AutoScroll = true;
-            seasonForm.Padding = new Padding(5, 5, 5, 5);
+            seasonForm.AutoScroll = false;
             seasonForm.StartPosition = FormStartPosition.CenterScreen;
             seasonForm.BackColor = SystemColors.Desktop;
             seasonForm.ForeColor = SystemColors.Control;
@@ -575,6 +648,12 @@ namespace LocalVideoPlayer
             {
                 //To-do: Closing animation?
             };
+
+            Panel seasonFormMainPanel = new Panel();
+            seasonFormMainPanel.Size = seasonForm.Size;
+            seasonFormMainPanel.AutoScroll = true;
+            seasonFormMainPanel.Name = "seasonFormMainPanel";
+            seasonForm.Controls.Add(seasonFormMainPanel);
 
             int numSeasons = tvShow.Seasons.Length;
             int currSeasonIndex = tvShow.CurrSeason - 1;
@@ -593,14 +672,22 @@ namespace LocalVideoPlayer
                     currentPanel.Dock = DockStyle.Top;
                     currentPanel.AutoSize = true;
                     panelCount++;
-                    seasonForm.Controls.Add(currentPanel);
-                    seasonForm.Controls.SetChildIndex(currentPanel, 0);
+                    seasonFormMainPanel.Controls.Add(currentPanel);
+                    seasonFormMainPanel.Controls.SetChildIndex(currentPanel, 0);
                 }
 
                 Season currSeason = tvShow.Seasons[i];
                 PictureBox seasonBox = new PictureBox();
                 //To-do: fix?
-                seasonBox.Width = (int)(seasonForm.Width / 3.1);
+
+                if (numSeasons > 6)
+                {
+                    seasonBox.Width = (int)(seasonForm.Width / 3.07);
+                }
+                else
+                {
+                    seasonBox.Width = (int)(seasonForm.Width / 2.99); 
+                }
                 seasonBox.Height = (int)(seasonBox.Width * 1.5);
                 //To-do: No season images
                 if (currSeason.Poster == null || currSeason.Poster.Equals(String.Empty)) throw new ArgumentNullException();
@@ -651,10 +738,54 @@ namespace LocalVideoPlayer
                 count++;
             }
 
-            Form tvForm = Application.OpenForms[1];
+            Form tvForm = null;
+            FormCollection formCollection = Application.OpenForms;
+            foreach (Form f_ in formCollection)
+            {
+                if (f_.Text.Equals("tvForm"))
+                {
+                    tvForm = f_;
+                }
+            }
+            if (tvForm == null) throw new ArgumentNullException();
+
             seasonDimmerForm.Size = tvForm.Size;
             Fader.FadeInCustom(seasonDimmerForm, Fader.FadeSpeed.Normal, 0.8);
             seasonDimmerForm.Location = tvForm.Location;
+
+            if(numSeasons > 6)
+            {
+                CustomScrollbar customScrollbar = new CustomScrollbar();
+                customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
+                customScrollbar.Location = new Point(seasonFormMainPanel.Width - 16, 0);
+                customScrollbar.Size = new Size(15, seasonFormMainPanel.Height - 2);
+                customScrollbar.DownArrowImage = Properties.Resources.downarrow;
+                customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
+                customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
+                customScrollbar.ThumbMiddleImage = Properties.Resources.ThumbMiddle;
+                customScrollbar.ThumbTopImage = Properties.Resources.ThumbTop;
+                customScrollbar.ThumbTopSpanImage = Properties.Resources.ThumbSpanTop;
+                customScrollbar.UpArrowImage = Properties.Resources.uparrow;
+                customScrollbar.Minimum = 0;
+                customScrollbar.Maximum = seasonFormMainPanel.DisplayRectangle.Height;
+                customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(seasonFormMainPanel.Height / 1) + 3;
+                customScrollbar.SmallChange = 1;
+                customScrollbar.Value = Math.Abs(seasonFormMainPanel.AutoScrollPosition.Y);
+                customScrollbar.Scroll += (s, e_) =>
+                {
+                    seasonFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
+                };
+                seasonFormMainPanel.MouseWheel += (s, e_) =>
+                {
+                    int newVal = -seasonFormMainPanel.AutoScrollPosition.Y;
+                    customScrollbar.Value = newVal;
+                    customScrollbar.Invalidate();
+                    Application.DoEvents();
+                };
+
+                seasonForm.Controls.Add(customScrollbar);
+                customScrollbar.BringToFront();
+            }
 
             seasonForm.ShowDialog();
             seasonForm.Dispose();
@@ -868,7 +999,7 @@ namespace LocalVideoPlayer
             mainFormMainPanel.AutoScroll = true;
             mainFormMainPanel.Name = "mainFormMainPanel";
             mainFormMainPanel.MouseWheel += mainFormMainPanel_MouseWheel;
-            mainFormMainPanel.Width += 20;
+            mainFormMainPanel.Width -= 4;
             this.Controls.Add(mainFormMainPanel);
 
             closeButton.Visible = true;
@@ -964,7 +1095,7 @@ namespace LocalVideoPlayer
 
             customScrollbar = new CustomScrollbar();
             customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
-            customScrollbar.Location = new Point(mainFormMainPanel.Width - 37, 0);
+            customScrollbar.Location = new Point(mainFormMainPanel.Width - 16, 0);
             customScrollbar.Size = new Size(15, this.Height - 2);
             customScrollbar.DownArrowImage = Properties.Resources.downarrow;
             customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
@@ -975,7 +1106,7 @@ namespace LocalVideoPlayer
             customScrollbar.UpArrowImage = Properties.Resources.uparrow;
             customScrollbar.Minimum = 0;
             customScrollbar.Maximum = mainFormMainPanel.DisplayRectangle.Height;
-            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(mainFormMainPanel.Height / 1);
+            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(mainFormMainPanel.Height / 1) + 3; 
             customScrollbar.SmallChange = 1;
             customScrollbar.Value = Math.Abs(mainFormMainPanel.AutoScrollPosition.Y);
             customScrollbar.Scroll += customScrollbar_Scroll;
@@ -999,6 +1130,8 @@ namespace LocalVideoPlayer
             }
 
             bool result = !media.Compare(prevMedia);
+
+            //To-do: replace with ? :
             if (!result)
             {
                 media = prevMedia;
@@ -1429,6 +1562,7 @@ namespace LocalVideoPlayer
             customMessageForm.Width = this.Width / 2;
             customMessageForm.Height = this.Height / 6;
             customMessageForm.MaximumSize = new Size(this.Width, this.Height);
+            customMessageForm.ShowInTaskbar = false;
 
             customMessageForm.AutoScroll = true;
             customMessageForm.AutoSize = true;
@@ -1481,6 +1615,7 @@ namespace LocalVideoPlayer
             optionsForm.BackColor = SystemColors.Desktop;
             optionsForm.ForeColor = SystemColors.Control;
             optionsForm.FormBorderStyle = FormBorderStyle.None;
+            optionsForm.ShowInTaskbar = false;
 
             Panel optionsFormMainPanel = new Panel();
             optionsFormMainPanel.Size = optionsForm.Size;
@@ -1580,7 +1715,7 @@ namespace LocalVideoPlayer
             CustomScrollbar customScrollbar = new CustomScrollbar();
             customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
             customScrollbar.Location = new Point(optionsFormMainPanel.Width - 36, 0);
-            customScrollbar.Size = new Size(15, optionsFormMainPanel.Height);
+            customScrollbar.Size = new Size(15, optionsForm.Height - 2);
             customScrollbar.DownArrowImage = Properties.Resources.downarrow;
             customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
             customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
@@ -1590,7 +1725,7 @@ namespace LocalVideoPlayer
             customScrollbar.UpArrowImage = Properties.Resources.uparrow;
             customScrollbar.Minimum = 0;
             customScrollbar.Maximum = optionsFormMainPanel.DisplayRectangle.Height;
-            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(optionsFormMainPanel.Height / 1);
+            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(optionsFormMainPanel.Height / 1) + 3;
             customScrollbar.SmallChange = 1;
             customScrollbar.Value = Math.Abs(optionsFormMainPanel.AutoScrollPosition.Y);
             customScrollbar.Scroll += (s, e) =>
