@@ -7,10 +7,12 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CustomControls;
+using LocalVideoPlayer.Forms;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -44,9 +46,6 @@ namespace LocalVideoPlayer
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 
             InitializeComponent();
-
-            this.DoubleBuffered = true;
-            this.ControlBox = false;
 
             backgroundWorker1.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorker1_RunWorkerCompleted);
@@ -211,7 +210,6 @@ namespace LocalVideoPlayer
             closeButton.Location = new Point(728, 8);
             closeButton.Name = "closeButton";
             closeButton.Size = new Size(64, 64);
-            //closeButton.UseVisualStyleBackColor = true;
             closeButton.Click += closeButton_Click;
             return closeButton;
         }
@@ -291,6 +289,7 @@ namespace LocalVideoPlayer
             tvFormMainPanel.AutoScroll = true;
             tvFormMainPanel.Name = "tvFormMainPanel";
             tvForm.Controls.Add(tvFormMainPanel);
+            typeof(Form).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, tvForm, new object[] { true });
 
             RoundButton closeButton = CreateCloseButton();
             tvForm.Controls.Add(closeButton);
@@ -418,22 +417,7 @@ namespace LocalVideoPlayer
                 }
             }
 
-            CustomScrollbar customScrollbar = new CustomScrollbar();
-            customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
-            customScrollbar.Location = new Point(tvFormMainPanel.Width - 16, 0);
-            customScrollbar.Size = new Size(15, tvFormMainPanel.Height - 2);
-            customScrollbar.DownArrowImage = Properties.Resources.downarrow;
-            customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
-            customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
-            customScrollbar.ThumbMiddleImage = Properties.Resources.ThumbMiddle;
-            customScrollbar.ThumbTopImage = Properties.Resources.ThumbTop;
-            customScrollbar.ThumbTopSpanImage = Properties.Resources.ThumbSpanTop;
-            customScrollbar.UpArrowImage = Properties.Resources.uparrow;
-            customScrollbar.Minimum = 0;
-            customScrollbar.Maximum = tvFormMainPanel.DisplayRectangle.Height;
-            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(tvFormMainPanel.Height / 1) + 3;
-            customScrollbar.SmallChange = 1;
-            customScrollbar.Value = Math.Abs(tvFormMainPanel.AutoScrollPosition.Y);
+            CustomScrollbar customScrollbar = CustomDialog.CreateScrollBar(tvFormMainPanel);
             customScrollbar.Scroll += (s, e_) =>
             {
                 tvFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
@@ -644,6 +628,7 @@ namespace LocalVideoPlayer
             seasonForm.BackColor = SystemColors.Desktop;
             seasonForm.ForeColor = SystemColors.Control;
             seasonForm.FormBorderStyle = FormBorderStyle.None;
+            typeof(Form).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, seasonForm, new object[] { true });
             seasonForm.FormClosing += (sender_, e_) =>
             {
                 //To-do: Closing animation?
@@ -755,22 +740,7 @@ namespace LocalVideoPlayer
 
             if(numSeasons > 6)
             {
-                CustomScrollbar customScrollbar = new CustomScrollbar();
-                customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
-                customScrollbar.Location = new Point(seasonFormMainPanel.Width - 16, 0);
-                customScrollbar.Size = new Size(15, seasonFormMainPanel.Height - 2);
-                customScrollbar.DownArrowImage = Properties.Resources.downarrow;
-                customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
-                customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
-                customScrollbar.ThumbMiddleImage = Properties.Resources.ThumbMiddle;
-                customScrollbar.ThumbTopImage = Properties.Resources.ThumbTop;
-                customScrollbar.ThumbTopSpanImage = Properties.Resources.ThumbSpanTop;
-                customScrollbar.UpArrowImage = Properties.Resources.uparrow;
-                customScrollbar.Minimum = 0;
-                customScrollbar.Maximum = seasonFormMainPanel.DisplayRectangle.Height;
-                customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(seasonFormMainPanel.Height / 1) + 3;
-                customScrollbar.SmallChange = 1;
-                customScrollbar.Value = Math.Abs(seasonFormMainPanel.AutoScrollPosition.Y);
+                CustomScrollbar customScrollbar = CustomDialog.CreateScrollBar(seasonFormMainPanel);
                 customScrollbar.Scroll += (s, e_) =>
                 {
                     seasonFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
@@ -909,6 +879,7 @@ namespace LocalVideoPlayer
             movieForm.StartPosition = FormStartPosition.CenterScreen;
             movieForm.BackColor = SystemColors.Desktop;
             movieForm.ForeColor = SystemColors.Control;
+            typeof(Form).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, movieForm, new object[] { true });
 
             RoundButton closeButton = CreateCloseButton();
             movieForm.Controls.Add(closeButton);
@@ -999,8 +970,6 @@ namespace LocalVideoPlayer
             mainFormMainPanel.AutoScroll = true;
             mainFormMainPanel.Name = "mainFormMainPanel";
             mainFormMainPanel.MouseWheel += mainFormMainPanel_MouseWheel;
-            mainFormMainPanel.Width -= 4;
-            this.Controls.Add(mainFormMainPanel);
 
             closeButton.Visible = true;
             closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.75), (closeButton.Width / 8));
@@ -1093,27 +1062,14 @@ namespace LocalVideoPlayer
             tvLabel.Name = "tvLabel";
             mainFormMainPanel.Controls.Add(tvLabel);
 
-            customScrollbar = new CustomScrollbar();
-            customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
-            customScrollbar.Location = new Point(mainFormMainPanel.Width - 16, 0);
-            customScrollbar.Size = new Size(15, this.Height - 2);
-            customScrollbar.DownArrowImage = Properties.Resources.downarrow;
-            customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
-            customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
-            customScrollbar.ThumbMiddleImage = Properties.Resources.ThumbMiddle;
-            customScrollbar.ThumbTopImage = Properties.Resources.ThumbTop;
-            customScrollbar.ThumbTopSpanImage = Properties.Resources.ThumbSpanTop;
-            customScrollbar.UpArrowImage = Properties.Resources.uparrow;
-            customScrollbar.Minimum = 0;
-            customScrollbar.Maximum = mainFormMainPanel.DisplayRectangle.Height;
-            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(mainFormMainPanel.Height / 1) + 3; 
-            customScrollbar.SmallChange = 1;
-            customScrollbar.Value = Math.Abs(mainFormMainPanel.AutoScrollPosition.Y);
+            mainFormMainPanel.Width -= 4;
+            this.Controls.Add(mainFormMainPanel);
+
+            customScrollbar = CustomDialog.CreateScrollBar(mainFormMainPanel);
             customScrollbar.Scroll += customScrollbar_Scroll;
             this.Controls.Add(customScrollbar);
             customScrollbar.BringToFront();
-            //To-do: implement close button logic for other forms? 
-         }
+        }
       
         private bool CheckForUpdates()
         {
@@ -1165,7 +1121,7 @@ namespace LocalVideoPlayer
 
                     if (totalResults == 0)
                     {
-                        CustomMessageDialog("Error", "No movie found for: " + movie.Name);
+                        CustomDialog.ShowMessage("Error", "No movie found for: " + movie.Name, this.Width, this.Height);
                     }
                     else if (totalResults != 1)
                     {
@@ -1185,7 +1141,7 @@ namespace LocalVideoPlayer
                         }
 
                         string[][] info = new string[][] { names, ids, overviews };
-                        movie.Id = ShowOptionsDialog(movie.Name, info, dates);
+                        movie.Id = CustomDialog.ShowOptions(movie.Name, info, dates, this.Width, this.Height);
                     }
                     else
                     {
@@ -1221,7 +1177,7 @@ namespace LocalVideoPlayer
                     else
                     {
                         string message = "Local movie name does not match retrieved data. Renaming file '" + movie.Name.Replace(":", "") + "' to '" + ((string)movieObject["title"]).Replace(":", "") + "'.";
-                        CustomMessageDialog("Warning", message);
+                        CustomDialog.ShowMessage("Warning", message, this.Width, this.Height);
 
                         string oldPath = movie.Path;
                         string[] fileNamePath = oldPath.Split('\\');
@@ -1273,7 +1229,7 @@ namespace LocalVideoPlayer
 
                         if (totalResults == 0)
                         {
-                            CustomMessageDialog("Error", "No tv show for: " + tvShow.Name);
+                            CustomDialog.ShowMessage("Error", "No tv show for: " + tvShow.Name, this.Width, this.Height);
                         }
                         else if (totalResults != 1)
                         {
@@ -1292,7 +1248,7 @@ namespace LocalVideoPlayer
                                 dates[j] = DateTime.TryParse((string)tvObject["results"][j]["first_air_date"], out temp) ? temp : DateTime.MinValue.AddHours(9);
                             }
                             string[][] info = new string[][] { names, ids, overviews };
-                            tvShow.Id = ShowOptionsDialog(tvShow.Name, info, dates);
+                            tvShow.Id = CustomDialog.ShowOptions(tvShow.Name, info, dates, this.Width, this.Height);
                         }
                         else
                         {
@@ -1380,7 +1336,7 @@ namespace LocalVideoPlayer
                             else
                             {
                                 string message = "Local episode name does not match retrieved data. Renaming file '" + episode.Name + "' to '" + (string)jEpisode["name"] + "'.";
-                                CustomMessageDialog("Warning", message);
+                                CustomDialog.ShowMessage("Warning", message, this.Width, this.Height);
 
                                 string oldPath = episode.Path;
                                 string newPath = oldPath.Replace(episode.Name, (string)jEpisode["name"]);
@@ -1553,217 +1509,5 @@ namespace LocalVideoPlayer
 
         #endregion
 
-        #region Custom forms
-
-        //To-do: create .cs for forms?
-        private void CustomMessageDialog(string header, string message)
-        {
-            Form customMessageForm = new Form();
-            customMessageForm.Width = this.Width / 2;
-            customMessageForm.Height = this.Height / 6;
-            customMessageForm.MaximumSize = new Size(this.Width, this.Height);
-            customMessageForm.ShowInTaskbar = false;
-
-            customMessageForm.AutoScroll = true;
-            customMessageForm.AutoSize = true;
-            customMessageForm.Text = header;
-            customMessageForm.StartPosition = FormStartPosition.CenterScreen;
-            customMessageForm.BackColor = SystemColors.Desktop;
-            customMessageForm.ForeColor = SystemColors.Control;
-            customMessageForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-
-            Font f = new Font("Arial", 14, FontStyle.Bold);
-            Font f2 = new Font("Arial", 12, FontStyle.Regular);
-
-            Label textLabel = new Label() { Text = message };
-            textLabel.Dock = DockStyle.Top;
-            textLabel.Font = f2;
-            textLabel.AutoSize = true;
-            textLabel.Padding = new Padding(20);
-            Size maxSize = new Size(this.Width / 2, this.Height);
-            textLabel.MaximumSize = maxSize;
-            customMessageForm.Controls.Add(textLabel);
-
-            Label headerLabel = new Label() { Text = header };
-            headerLabel.Dock = DockStyle.Top;
-            headerLabel.Font = f;
-            headerLabel.AutoSize = true;
-            headerLabel.Padding = new Padding(20);
-            customMessageForm.Controls.Add(headerLabel);
-
-            Button confirmation = new Button() { Text = "OK" };
-            confirmation.AutoSize = true;
-            confirmation.Font = f2;
-            confirmation.Dock = DockStyle.Bottom;
-            confirmation.FlatStyle = FlatStyle.Flat;
-            confirmation.Cursor = Cursors.Hand;
-            confirmation.Click += (sender, e) => { customMessageForm.Close(); };
-            customMessageForm.Controls.Add(confirmation);
-
-            customMessageForm.ShowDialog();
-            customMessageForm.Dispose();
-        }
-
-        private int ShowOptionsDialog(string item, string[][] info, DateTime?[] dates)
-        {
-            Form optionsForm = new Form();
-            optionsForm.Width = (int)(this.Width / 1.5);
-            optionsForm.Height = this.Height / 6;
-            optionsForm.MaximumSize = new Size(this.Width, this.Height - 100);
-            optionsForm.AutoSize = true;
-            optionsForm.StartPosition = FormStartPosition.CenterScreen;
-            optionsForm.BackColor = SystemColors.Desktop;
-            optionsForm.ForeColor = SystemColors.Control;
-            optionsForm.FormBorderStyle = FormBorderStyle.None;
-            optionsForm.ShowInTaskbar = false;
-
-            Panel optionsFormMainPanel = new Panel();
-            optionsFormMainPanel.Size = optionsForm.Size;
-            optionsFormMainPanel.MaximumSize = optionsForm.MaximumSize;
-            optionsFormMainPanel.AutoSize = true;
-            optionsFormMainPanel.AutoScroll = true;
-            optionsFormMainPanel.Name = "optionsFormMainPanel";
-            optionsForm.Controls.Add(optionsFormMainPanel);
-
-            optionsForm.Shown += (s, e) =>
-            {
-                optionsFormMainPanel.AutoScrollPosition = new Point(0, 0);
-            };
-
-            Font f = new Font("Arial", 14, FontStyle.Bold);
-            Font f2 = new Font("Arial", 12, FontStyle.Regular);
-
-            Label textLabel = new Label() { Text = "Choose a selection for: " + item };
-            textLabel.Dock = DockStyle.Top;
-            textLabel.Font = f;
-            textLabel.AutoSize = true;
-            textLabel.Padding = new Padding(20);
-            Size maxSize = new Size(this.Width / 2, this.Height);
-            textLabel.MaximumSize = maxSize;
-
-            List<Control> controls = new List<Control>();
-
-            Button confirmation = new Button() { Text = "OK" };
-            confirmation.AutoSize = true;
-            confirmation.Font = f2;
-            confirmation.Dock = DockStyle.Bottom;
-            confirmation.FlatStyle = FlatStyle.Flat;
-            confirmation.Cursor = Cursors.Hand;
-            confirmation.Click += (sender, e) =>
-            {
-                bool selection = false;
-                foreach (Control c in controls)
-                {
-                    RadioButton btn = c as RadioButton;
-                    if (btn != null)
-                    {
-                        if (btn.Checked)
-                        {
-                            selection = true;
-                        }
-                    }
-                }
-
-                if (selection)
-                {
-                    optionsForm.Close();
-                }
-            };
-
-            for (int i = 0; i < info[0].Length; i++)
-            {
-                RadioButton r1 = new RadioButton { Text = info[0][i] + " (" + dates[i].GetValueOrDefault().Year + ")" };
-                r1.Dock = DockStyle.Top;
-                r1.Font = f2;
-                r1.AutoSize = true;
-                r1.Cursor = Cursors.Hand;
-                r1.Padding = new Padding(20, 20, 20, 0);
-                r1.Name = info[1][i];
-                r1.Click += (sender, e) =>
-                {
-                    optionsFormMainPanel.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
-                };
-                controls.Add(r1);
-
-                Label l1 = new Label() { Text = info[2][i].Equals(String.Empty) ? "No description." : info[2][i] };
-                l1.Dock = DockStyle.Top;
-                l1.Font = f2;
-                l1.AutoSize = true;
-                l1.Padding = new Padding(20);
-                Size s = new Size(optionsForm.Width - (l1.Width / 2), optionsForm.Height);
-                l1.MaximumSize = s;
-                l1.Cursor = Cursors.Hand;
-                l1.Click += (sender, e) =>
-                {
-                    r1.Checked = true;
-                    optionsFormMainPanel.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
-                };
-                controls.Add(l1);
-            }
-
-            optionsFormMainPanel.Controls.Add(textLabel);
-            optionsFormMainPanel.Controls.Add(confirmation);
-
-            controls.Reverse();
-            foreach (Control c in controls)
-            {
-                optionsFormMainPanel.Controls.Add(c);
-            }
-            optionsFormMainPanel.Controls.Add(textLabel);
-
-            //To-do: make function
-            CustomScrollbar customScrollbar = new CustomScrollbar();
-            customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
-            customScrollbar.Location = new Point(optionsFormMainPanel.Width - 36, 0);
-            customScrollbar.Size = new Size(15, optionsForm.Height - 2);
-            customScrollbar.DownArrowImage = Properties.Resources.downarrow;
-            customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
-            customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
-            customScrollbar.ThumbMiddleImage = Properties.Resources.ThumbMiddle;
-            customScrollbar.ThumbTopImage = Properties.Resources.ThumbTop;
-            customScrollbar.ThumbTopSpanImage = Properties.Resources.ThumbSpanTop;
-            customScrollbar.UpArrowImage = Properties.Resources.uparrow;
-            customScrollbar.Minimum = 0;
-            customScrollbar.Maximum = optionsFormMainPanel.DisplayRectangle.Height;
-            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(optionsFormMainPanel.Height / 1) + 3;
-            customScrollbar.SmallChange = 1;
-            customScrollbar.Value = Math.Abs(optionsFormMainPanel.AutoScrollPosition.Y);
-            customScrollbar.Scroll += (s, e) =>
-            {
-                optionsFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
-            };
-            optionsFormMainPanel.MouseWheel += (s, e) =>
-            {
-                int newVal = -optionsFormMainPanel.AutoScrollPosition.Y;
-                customScrollbar.Value = newVal;
-                customScrollbar.Invalidate();
-                Application.DoEvents();
-            };
-            optionsForm.Controls.Add(customScrollbar);
-            customScrollbar.BringToFront();
-            optionsFormMainPanel.Width -= 20;
-
-            optionsForm.ShowDialog();
-            optionsForm.Dispose();
-
-            int id = 0;
-            foreach (Control c in controls)
-            {
-                RadioButton btn = c as RadioButton;
-                if (btn != null)
-                {
-                    if (btn.Checked)
-                    {
-                        id = Int32.Parse(btn.Name);
-                    }
-                }
-            }
-
-            if (id == 0) throw new ArgumentNullException();
-
-            return id;
-        }
-
-        #endregion
     }
 }

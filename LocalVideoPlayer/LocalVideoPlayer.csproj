@@ -90,8 +90,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Fader.cs" />
-    <Compile Include="LoadingCircle.cs">
+    <Compile Include="Forms\CustomDialog.cs" />
+    <Compile Include="Libs\Fader.cs" />
+    <Compile Include="Libs\LoadingCircle.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="MainForm.cs">
@@ -101,10 +102,10 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="MediaModel.cs" />
-    <Compile Include="PlayerForm.cs">
+    <Compile Include="Forms\PlayerForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="PlayerForm.designer.cs">
+    <Compile Include="Forms\PlayerForm.designer.cs">
       <DependentUpon>PlayerForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
@@ -112,7 +113,7 @@
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="PlayerForm.resx">
+    <EmbeddedResource Include="Forms\PlayerForm.resx">
       <DependentUpon>PlayerForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
