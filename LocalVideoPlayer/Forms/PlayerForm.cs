@@ -86,7 +86,7 @@ namespace LocalVideoPlayer
 
             /*mediaPlayer.Buffering += (sender, e) =>
             {
-                Console.WriteLine("Buffer");
+                
             };*/
 
             pollingTimer = new Timer();

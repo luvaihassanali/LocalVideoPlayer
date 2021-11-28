@@ -239,7 +239,7 @@ namespace CustomControls {
                 fThumbHeight = 56;
             }
 
-            //Debug.WriteLine(nThumbHeight.ToString());
+            ////Debug.WriteLine(nThumbHeight.ToString());
 
             float fSpanHeight = (fThumbHeight - (ThumbMiddleImage.Height + ThumbTopImage.Height + ThumbBottomImage.Height)) / 2.0f;
             int nSpanHeight = (int)fSpanHeight;
@@ -351,7 +351,7 @@ namespace CustomControls {
                         float fValue = fPerc * (Maximum - LargeChange);
                         
                             moValue = (int)fValue;
-                        Debug.WriteLine(moValue.ToString());
+                        //Debug.WriteLine(moValue.ToString());
 
                         if (ValueChanged != null)
                             ValueChanged(this, new EventArgs());
@@ -383,7 +383,7 @@ namespace CustomControls {
                         float fValue = fPerc * (Maximum-LargeChange);
                        
                             moValue = (int)fValue;
-                        Debug.WriteLine(moValue.ToString());
+                        //Debug.WriteLine(moValue.ToString());
 
                         if (ValueChanged != null)
                             ValueChanged(this, new EventArgs());
@@ -440,7 +440,7 @@ namespace CustomControls {
                     float fPerc = (float)moThumbTop / (float)nPixelRange;
                     float fValue = fPerc * (Maximum-LargeChange);
                     moValue = (int)fValue;
-                    Debug.WriteLine(moValue.ToString());
+                    //Debug.WriteLine(moValue.ToString());
 
                     Application.DoEvents();
 

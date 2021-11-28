@@ -91,6 +91,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Forms\CustomDialog.cs" />
+    <Compile Include="Forms\TvForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\TvForm.Designer.cs">
+      <DependentUpon>TvForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Libs\Fader.cs" />
     <Compile Include="Libs\LoadingCircle.cs">
       <SubType>Component</SubType>
@@ -110,6 +116,9 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Forms\TvForm.resx">
+      <DependentUpon>TvForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
