@@ -195,6 +195,12 @@
   <ItemGroup>
     <None Include="Resources\uparrow.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\noprev.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\extras.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\VideoLAN.LibVLC.Windows.3.0.16\build\VideoLAN.LibVLC.Windows.targets" Condition="Exists('..\packages\VideoLAN.LibVLC.Windows.3.0.16\build\VideoLAN.LibVLC.Windows.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

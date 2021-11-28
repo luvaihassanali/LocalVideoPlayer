@@ -295,10 +295,9 @@ namespace LocalVideoPlayer
             tvForm.Controls.Add(closeButton);
             closeButton.Location = new Point(tvForm.Width - (int)(closeButton.Width * 1.45), (closeButton.Width / 8));
 
-            Font f = new Font("Arial", 26, FontStyle.Bold);
-            Font f3 = new Font("Arial", 16, FontStyle.Bold);
-            Font f2 = new Font("Arial", 12, FontStyle.Regular);
-            Font f4 = new Font("Arial", 14, FontStyle.Bold);
+            Font mainHeaderFont = new Font("Arial", 26, FontStyle.Bold);
+            Font episodeHeaderFont = new Font("Arial", 16, FontStyle.Bold);
+            Font overviewFont = new Font("Arial", 12, FontStyle.Regular);
 
             PictureBox tvShowBackdropBox = new PictureBox();
             tvShowBackdropBox.Height = (int)(tvForm.Height / 1.777777777777778);
@@ -318,14 +317,14 @@ namespace LocalVideoPlayer
 
             Label headerLabel = new Label() { Text = tvShow.Name + " (" + tvShow.Date.GetValueOrDefault().Year + ")" };
             headerLabel.Dock = DockStyle.Top;
-            headerLabel.Font = f;
+            headerLabel.Font = mainHeaderFont;
             headerLabel.AutoSize = true;
             headerLabel.Padding = new Padding(20, 20, 20, 0);
             headerLabel.Name = "headerLabel";
 
             Label overviewLabel = new Label() { Text = tvShow.Overview };
             overviewLabel.Dock = DockStyle.Top;
-            overviewLabel.Font = f2;
+            overviewLabel.Font = overviewFont;
             overviewLabel.AutoSize = true;
             overviewLabel.Padding = new Padding(20, 20, 20, 0);
             overviewLabel.MaximumSize = new Size(tvForm.Width - (overviewLabel.Width / 2), tvForm.Height);
@@ -333,7 +332,7 @@ namespace LocalVideoPlayer
 
             Label episodeHeaderLabel = new Label() { Text = "Episodes" };
             episodeHeaderLabel.Dock = DockStyle.Top;
-            episodeHeaderLabel.Font = f3;
+            episodeHeaderLabel.Font = episodeHeaderFont;
             episodeHeaderLabel.AutoSize = true;
             episodeHeaderLabel.Padding = new Padding(0, 0, 0, 20);
             episodeHeaderLabel.Name = "episodeHeaderLabel";
@@ -349,7 +348,11 @@ namespace LocalVideoPlayer
             seasonButton.AutoSize = true;
             seasonButton.Name = "season_" + tvShow.Name;
             seasonButton.Text = "Season " + tvShow.CurrSeason;
-            seasonButton.Font = f3;
+            if(tvShow.CurrSeason == -1)
+            {
+                seasonButton.Text = "Extras";
+            }
+            seasonButton.Font = episodeHeaderFont;
             seasonButton.Cursor = Cursors.Hand;
             seasonButton.FlatStyle = FlatStyle.Flat;
             seasonButton.FlatAppearance.MouseOverBackColor = SystemColors.ControlDarkDark;
@@ -468,12 +471,6 @@ namespace LocalVideoPlayer
 
             Panel mainPanel = null;
 
-            //To-do: rename fonts
-            Font f = new Font("Arial", 26, FontStyle.Bold);
-            Font f3 = new Font("Arial", 16, FontStyle.Bold);
-            Font f2 = new Font("Arial", 12, FontStyle.Regular);
-            Font f4 = new Font("Arial", 14, FontStyle.Bold);
-
             List<Control> toRemove = new List<Control>();
             foreach (Control c in tvForm.Controls)
             {
@@ -535,10 +532,11 @@ namespace LocalVideoPlayer
 
         private List<Control> CreateEpisodePanels(TvShow tvShow)
         {
-            Font f2 = new Font("Arial", 12, FontStyle.Regular);
-            Font f4 = new Font("Arial", 14, FontStyle.Bold);
+            Font episodeOverviewFont = new Font("Arial", 12, FontStyle.Regular);
+            Font episodeNameFont = new Font("Arial", 14, FontStyle.Bold);
             List<Control> episodePanelList = new List<Control>();
-            Season currSeason = tvShow.Seasons[tvShow.CurrSeason - 1];
+            int index = tvShow.CurrSeason == -1 ? tvShow.Seasons.Length - 1 : tvShow.CurrSeason - 1;
+            Season currSeason = tvShow.Seasons[index];
             for (int i = 0; i < currSeason.Episodes.Length; i++)
             {
                 Episode currEpisode = currSeason.Episodes[i];
@@ -557,10 +555,18 @@ namespace LocalVideoPlayer
                 episodeBox.Width = 300;
                 //To-do: make const
                 episodeBox.Height = (int)(episodeBox.Width / 1.777777777777778);
-                string eImagePath = currEpisode.Backdrop;
-                episodeBox.BackgroundImage = Image.FromFile(eImagePath);
-                episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
-                episodeBox.BackColor = Color.Transparent;
+                
+                if(currEpisode.Backdrop != null)
+                {
+                    string eImagePath = currEpisode.Backdrop;
+                    episodeBox.BackgroundImage = Image.FromFile(eImagePath);
+                    episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
+                } else
+                {
+                    episodeBox.BackgroundImage = Properties.Resources.noprevSeason;
+                    episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
+                }
+                episodeBox.BackColor = SystemColors.Desktop;
                 episodeBox.Cursor = Cursors.Hand;
                 episodeBox.SizeMode = PictureBoxSizeMode.CenterImage;
                 episodeBox.Click += tvShowEpisodeBox_Click;
@@ -585,7 +591,7 @@ namespace LocalVideoPlayer
 
                 Label episodeNameLabel = new Label() { Text = currEpisode.Name };
                 episodeNameLabel.Dock = DockStyle.Top;
-                episodeNameLabel.Font = f4;
+                episodeNameLabel.Font = episodeNameFont;
                 episodeNameLabel.AutoSize = true;
                 episodeNameLabel.Padding = new Padding(episodeBox.Width + 15, 10, 0, 15);
                 //To-do: remove unecessary name tags
@@ -593,7 +599,7 @@ namespace LocalVideoPlayer
 
                 Label episodeOverviewLabel = new Label() { Text = currEpisode.Overview };
                 episodeOverviewLabel.Dock = DockStyle.Top;
-                episodeOverviewLabel.Font = f2;
+                episodeOverviewLabel.Font = episodeOverviewFont;
                 episodeOverviewLabel.AutoSize = true;
                 episodeOverviewLabel.Padding = new Padding(episodeBox.Width + 15, 10, 0, 10);
                 episodeOverviewLabel.ForeColor = Color.LightGray;
@@ -616,9 +622,17 @@ namespace LocalVideoPlayer
 
             Button b = sender as Button;
             string showName = b.Name.Replace("season_", "");
-            int seasonNum = Int32.Parse(b.Text.Replace("Season ", ""));
             TvShow tvShow = GetTvShow(showName);
-         
+
+            int seasonNum;
+            if (b.Text.Contains("Season"))
+            {
+                seasonNum = Int32.Parse(b.Text.Replace("Season ", ""));
+            }
+            else
+            {
+                seasonNum = tvShow.Seasons.Length - 1;
+            }
             //To-do: Scroll to current season / tv episode
             Form seasonForm = new Form();
             seasonForm.Width = (int)(this.Width / 2.75);
@@ -642,7 +656,10 @@ namespace LocalVideoPlayer
 
             int numSeasons = tvShow.Seasons.Length;
             int currSeasonIndex = tvShow.CurrSeason - 1;
-
+            if(tvShow.CurrSeason == -1)
+            {
+                currSeasonIndex = tvShow.Seasons.Length - 1;
+            }
             Panel currentPanel = null;
             int count = 0;
             int panelCount = 0;
@@ -653,7 +670,7 @@ namespace LocalVideoPlayer
                 if (count == 0)
                 {
                     currentPanel = new Panel();
-                    currentPanel.BackColor = Color.Transparent;
+                    currentPanel.BackColor = SystemColors.Desktop;
                     currentPanel.Dock = DockStyle.Top;
                     currentPanel.AutoSize = true;
                     panelCount++;
@@ -663,7 +680,6 @@ namespace LocalVideoPlayer
 
                 Season currSeason = tvShow.Seasons[i];
                 PictureBox seasonBox = new PictureBox();
-                //To-do: fix?
 
                 if (numSeasons > 6)
                 {
@@ -674,16 +690,32 @@ namespace LocalVideoPlayer
                     seasonBox.Width = (int)(seasonForm.Width / 2.99); 
                 }
                 seasonBox.Height = (int)(seasonBox.Width * 1.5);
-                //To-do: No season images
-                if (currSeason.Poster == null || currSeason.Poster.Equals(String.Empty)) throw new ArgumentNullException();
-                string imagePath = currSeason.Poster;
-                seasonBox.Image = Image.FromFile(imagePath);
-                seasonBox.BackColor = Color.Transparent;
+
+                if (currSeason.Poster != null)
+                {
+                    string imagePath = currSeason.Poster;
+                    seasonBox.Image = Image.FromFile(imagePath);
+                }
+                else if (currSeason.Id == -1)
+                {
+                    seasonBox.Image = Properties.Resources.extras;
+                }
+                else
+                {
+                    seasonBox.Image = Properties.Resources.noprevSeason;
+                }
+
+                seasonBox.BackColor = SystemColors.Desktop;
                 seasonBox.Left = seasonBox.Width * currentPanel.Controls.Count;
                 seasonBox.Cursor = Cursors.Hand;
                 seasonBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 seasonBox.Padding = new Padding(5);
+
                 seasonBox.Name = (i + 1).ToString();
+                if(currSeason.Id == -1)
+                {
+                    seasonBox.Name = "-1";
+                }
 
                 seasonBox.Click += (s, ev) =>
                 {
@@ -699,17 +731,22 @@ namespace LocalVideoPlayer
                             foreach (Control c_ in p_.Controls)
                             {
                                 PictureBox prevSeason = c_ as PictureBox;
-                                if (prevSeason != null && Int32.Parse(prevSeason.Name) == seasonNum)
+                                if ((prevSeason != null && Int32.Parse(prevSeason.Name) == seasonNum))
                                 {
                                     prevSeason.BorderStyle = BorderStyle.None;
                                 }
                             }
                         }
                     }
+
                     seasonBox.BorderStyle = BorderStyle.Fixed3D;
 
                     tvShow.CurrSeason = seasonNum;
                     b.Text = "Season " + seasonNum;
+                    if(seasonNum == -1)
+                    {
+                        b.Text = "Extras";
+                    }
                     //To-do: Transitions...
                     seasonForm.Close();
                 };
@@ -846,8 +883,6 @@ namespace LocalVideoPlayer
                 //something went wrong
                 throw new ArgumentNullException();
             }
-
-
         }
 
         private ProgressBar CreateProgressBar(long savedTime, int runningTime)
@@ -885,16 +920,15 @@ namespace LocalVideoPlayer
             movieForm.Controls.Add(closeButton);
             closeButton.Location = new Point(movieForm.Width - (int)(closeButton.Width * 1.165), (closeButton.Width / 8));
 
-            Font f = new Font("Arial", 24, FontStyle.Bold);
-            Font f3 = new Font("Arial", 16, FontStyle.Bold);
-            Font f2 = new Font("Arial", 12, FontStyle.Regular);
+            Font headerFont = new Font("Arial", 24, FontStyle.Bold);
+            Font overviewFont = new Font("Arial", 12, FontStyle.Regular);
 
             PictureBox movieBackdropBox = new PictureBox();
             movieBackdropBox.Height = (int)(movieForm.Height / 1.777777777777778);
             string imagePath = movie.Backdrop;
             movieBackdropBox.BackgroundImage = Image.FromFile(imagePath);
             movieBackdropBox.BackgroundImageLayout = ImageLayout.Stretch;
-            movieBackdropBox.BackColor = Color.Transparent;
+            movieBackdropBox.BackColor = SystemColors.Desktop;
             movieBackdropBox.Dock = DockStyle.Top;
             movieBackdropBox.Cursor = Cursors.Hand;
             movieBackdropBox.SizeMode = PictureBoxSizeMode.CenterImage;
@@ -910,13 +944,13 @@ namespace LocalVideoPlayer
             };
             Label headerLabel = new Label() { Text = movie.Name + " (" + movie.Date.GetValueOrDefault().Year + ")" };
             headerLabel.Dock = DockStyle.Top;
-            headerLabel.Font = f;
+            headerLabel.Font = headerFont;
             headerLabel.AutoSize = true;
             headerLabel.Padding = new Padding(20, 20, 20, 0);
 
             Label overviewLabel = new Label() { Text = movie.Overview };
             overviewLabel.Dock = DockStyle.Top;
-            overviewLabel.Font = f2;
+            overviewLabel.Font = overviewFont;
             overviewLabel.AutoSize = true;
             overviewLabel.Padding = new Padding(20, 20, 20, 0);
             overviewLabel.MaximumSize = new Size(movieForm.Width - (overviewLabel.Width / 2), movieForm.Height);
@@ -972,7 +1006,7 @@ namespace LocalVideoPlayer
             mainFormMainPanel.MouseWheel += mainFormMainPanel_MouseWheel;
 
             closeButton.Visible = true;
-            closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.75), (closeButton.Width / 8));
+            closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 8));
 
             //To-do: no media exists
             Panel currentPanel = null;
@@ -987,7 +1021,7 @@ namespace LocalVideoPlayer
                 if (count == 0)
                 {
                     currentPanel = new Panel();
-                    currentPanel.BackColor = Color.Transparent;
+                    currentPanel.BackColor = SystemColors.Desktop;
                     currentPanel.Dock = DockStyle.Top;
                     currentPanel.AutoSize = true;
                     currentPanel.Name = "movie" + panelCount;
@@ -1001,7 +1035,7 @@ namespace LocalVideoPlayer
                 movieBox.Height = heightValue;
                 string imagePath = media.Movies[i].Poster;
                 movieBox.Image = Image.FromFile(imagePath);
-                movieBox.BackColor = Color.Transparent;
+                movieBox.BackColor = SystemColors.Desktop;
                 movieBox.Left = movieBox.Width * currentPanel.Controls.Count;
                 movieBox.Cursor = Cursors.Hand;
                 movieBox.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -1029,7 +1063,7 @@ namespace LocalVideoPlayer
                 if (count == 0)
                 {
                     currentPanel = new Panel();
-                    currentPanel.BackColor = Color.Transparent;
+                    currentPanel.BackColor = SystemColors.Desktop;
                     currentPanel.Dock = DockStyle.Top;
                     currentPanel.AutoSize = true;
                     currentPanel.Name = "tv" + panelCount;
@@ -1043,7 +1077,7 @@ namespace LocalVideoPlayer
                 tvShowBox.Height = heightValue;
                 string imagePath = media.TvShows[i].Poster;
                 tvShowBox.Image = Image.FromFile(imagePath);
-                tvShowBox.BackColor = Color.Transparent;
+                tvShowBox.BackColor = SystemColors.Desktop;
                 tvShowBox.Left = tvShowBox.Width * currentPanel.Controls.Count;
                 tvShowBox.Cursor = Cursors.Hand;
                 tvShowBox.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -1281,6 +1315,9 @@ namespace LocalVideoPlayer
                     for (int j = 0; j < tvShow.Seasons.Length; j++)
                     {
                         Season season = tvShow.Seasons[j];
+
+                        if (season.Id == -1) continue;
+
                         string seasonApiCall = tvSeasonGet.Replace("{tv_id}", tvShow.Id.ToString()).Replace("{season_number}", seasonIndex.ToString());
                         string seasonString = client.DownloadString(seasonApiCall);
                         JObject seasonObject = JObject.Parse(seasonString);
@@ -1476,7 +1513,21 @@ namespace LocalVideoPlayer
             show.Seasons = new Season[seasonEntries.Length];
             for (int i = 0; i < seasonEntries.Length; i++)
             {
+                if (seasonEntries[i].Contains("Extras"))
+                {
+                    Season extras = new Season(-1);
+                    List<Episode> extraEpisodes = new List<Episode>();
+                    ProcessExtrasDirectory(extraEpisodes, seasonEntries[i]);
+                    extras.Episodes = new Episode[extraEpisodes.Count];
+                    for (int j = 0; j < extraEpisodes.Count; j++)
+                    {
+                        extras.Episodes[j] = extraEpisodes[j];
+                    }
+                    show.Seasons[show.Seasons.Length - 1] = extras;
+                }
+
                 if (!seasonEntries[i].Contains("Season")) continue;
+
                 Season season = new Season(i + 1);
                 string[] episodeEntries = Directory.GetFiles(seasonEntries[i]);
                 Array.Sort(episodeEntries);
@@ -1486,7 +1537,6 @@ namespace LocalVideoPlayer
                     string[] namePath = episodeEntries[j].Split('\\');
                     string[] episodeNameNumber = namePath[namePath.Length - 1].Split('%');
                     int fileSuffixIndex = episodeNameNumber[1].LastIndexOf('.');
-                    //string episodeName = episodeNameNumber[1].Split('.')[0].Trim();
                     string episodeName = episodeNameNumber[1].Substring(0, fileSuffixIndex).Trim();
                     Episode episode = new Episode(0, episodeName, episodeEntries[j]);
                     season.Episodes[j] = episode;
@@ -1496,8 +1546,44 @@ namespace LocalVideoPlayer
             return show;
         }
 
+        private void ProcessExtrasDirectory(List<Episode> extras, string targetDir)
+        {
+            string[] rootEntries = Directory.GetFiles(targetDir);
+            foreach(string entry in rootEntries)
+            {
+                string[] namePath = entry.Split('\\');
+                string[] episodeNameNumber = namePath[namePath.Length - 1].Split('%');
+                int fileSuffixIndex;
+                string episodeName;
+                if(episodeNameNumber.Length == 1)
+                {
+                    fileSuffixIndex = episodeNameNumber[0].LastIndexOf('.');
+                    episodeName = episodeNameNumber[0].Substring(0, fileSuffixIndex).Trim();
+                } else
+                {
+                    fileSuffixIndex = episodeNameNumber[1].LastIndexOf('.');
+                    episodeName = episodeNameNumber[1].Substring(0, fileSuffixIndex).Trim();
+                }
+                
+                Episode ep = new Episode(-1, episodeName, entry);
+                extras.Add(ep);
+            }
+            string[] subDirectories = Directory.GetDirectories(targetDir);
+            foreach(string subDir in subDirectories)
+            {
+                ProcessExtrasDirectory(extras, subDir);
+            }
+        }
+
         private int seasonComparer(string seasonB, string seasonA)
         {
+            if(seasonB.Contains("Extras"))
+            {
+                return 1;
+            } else if (seasonA.Contains("Extras"))
+            {
+                return -1;
+            }
             string[] seasonValuePathA = seasonA.Split();
             string[] seasonValuePathB = seasonB.Split();
             int seasonValueA = Int32.Parse(seasonValuePathA[seasonValuePathA.Length - 1]);

@@ -51,7 +51,7 @@ namespace LocalVideoPlayer
             // 
             // timeline
             // 
-            this.timeline.BackColor = System.Drawing.Color.Transparent;
+            this.timeline.BackColor = System.Drawing.SystemColors.Desktop;
             this.timeline.BorderColor = System.Drawing.SystemColors.ActiveBorder;
             this.timeline.Cursor = System.Windows.Forms.Cursors.Hand;
             this.timeline.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -75,8 +75,8 @@ namespace LocalVideoPlayer
             this.timeline.Visible = false;
             this.timeline.ValueChanged += new XComponent.SliderBar.ValueChangedHandler(this.timeline_ValueChanged);
             this.timeline.MouseDown += new System.Windows.Forms.MouseEventHandler(this.timeline_MouseDown);
-            this.timeline.MouseEnter += new System.EventHandler(this.timeline_MouseEnter);
-            this.timeline.MouseLeave += new System.EventHandler(this.timeline_MouseLeave);
+            this.timeline.MouseEnter += new System.EventHandler(this.control_MouseEnter);
+            this.timeline.MouseLeave += new System.EventHandler(this.control_MouseLeave);
             this.timeline.MouseUp += new System.Windows.Forms.MouseEventHandler(this.timeline_MouseUp);
             // 
             // playButton
@@ -93,8 +93,8 @@ namespace LocalVideoPlayer
             this.playButton.UseVisualStyleBackColor = true;
             this.playButton.Visible = false;
             this.playButton.Click += new System.EventHandler(this.playButton_Click);
-            this.playButton.MouseEnter += new System.EventHandler(this.playButton_MouseEnter);
-            this.playButton.MouseLeave += new System.EventHandler(this.playButton_MouseLeave);
+            this.playButton.MouseEnter += new System.EventHandler(this.control_MouseEnter);
+            this.playButton.MouseLeave += new System.EventHandler(this.control_MouseLeave);
             // 
             // closeButton
             // 
@@ -110,8 +110,8 @@ namespace LocalVideoPlayer
             this.closeButton.UseVisualStyleBackColor = true;
             this.closeButton.Visible = false;
             this.closeButton.Click += new System.EventHandler(this.closeButton_Click);
-            this.closeButton.MouseEnter += new System.EventHandler(this.closeButton_MouseEnter);
-            this.closeButton.MouseLeave += new System.EventHandler(this.closeButton_MouseLeave);
+            this.closeButton.MouseEnter += new System.EventHandler(this.control_MouseEnter);
+            this.closeButton.MouseLeave += new System.EventHandler(this.control_MouseLeave);
             // 
             // PlayerForm
             // 
@@ -124,11 +124,12 @@ namespace LocalVideoPlayer
             this.Controls.Add(this.closeButton);
             this.Controls.Add(this.timeline);
             this.Controls.Add(this.videoView1);
+            this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "PlayerForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.TopMost = true;
-            this.TransparencyKey = System.Drawing.Color.Maroon;
+            this.TransparencyKey = System.Drawing.Color.DeepPink;
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PlayerForm_FormClosing);
             this.Load += new System.EventHandler(this.PlayerForm_Load);

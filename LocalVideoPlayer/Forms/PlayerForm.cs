@@ -38,7 +38,6 @@ namespace LocalVideoPlayer
             }
 
             InitializeComponent();
-            this.DoubleBuffered = true;
 
             seekTime = s;
             path = p;
@@ -49,11 +48,9 @@ namespace LocalVideoPlayer
             timeline.Value = seekTime;
 
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
-
             libVlc = new LibVLC();
             mediaPlayer = new MediaPlayer(libVlc);
             
-            //To-do: move off screen when form launches
             mediaPlayer.EnableMouseInput = false;
             mediaPlayer.EnableKeyInput = false;
 
@@ -203,18 +200,31 @@ namespace LocalVideoPlayer
 
                 if (timePanelActive)
                 {
+                    try
+                    {
 #pragma warning disable CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
-                    timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width * 2.25), timeline.Location.Y - timePanel.Height - 10);
+                        timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width * 2.25), timeline.Location.Y - timePanel.Height - 10);
 #pragma warning restore CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
+                    }
+                    catch(Exception e) 
+                    {
+                        throw e;
+                    }
                     timeLabel.Text = timeString;
                 }
                 else
                 {
                     timePanel = new Panel();
+                    try
+                    {
 #pragma warning disable CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
-                    timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width * 2.25), timeline.Location.Y - timePanel.Height - 10);
+                        timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width * 2.25), timeline.Location.Y - timePanel.Height - 10);
 #pragma warning restore CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
-
+                    }
+                    catch (Exception e)
+                    {
+                        throw e;
+                    }
                     Font f = new Font("Arial", 12, FontStyle.Bold);
                     timeLabel = new Label();
                     timeLabel.Text = timeString;
@@ -239,9 +249,12 @@ namespace LocalVideoPlayer
         {
             mouseDown = false;
             timePanelActive = false;
-            if(timePanel != null) 
+            
+            if(timePanel != null)
+            {
                 timePanel.Dispose();
-
+            }
+                
             TimeSpan ts = TimeSpan.FromMilliseconds((double)timeline.Value);
             mediaPlayer.SeekTo(ts);
         }
@@ -251,33 +264,12 @@ namespace LocalVideoPlayer
             mouseDown = true;
         }
 
-        //To-do: merge into same functions
-        private void closeButton_MouseEnter(object sender, EventArgs e)
+        private void control_MouseEnter(object sender, EventArgs e)
         {
             pollingTimer.Stop();
         }
 
-        private void closeButton_MouseLeave(object sender, EventArgs e)
-        {
-            pollingTimer.Start();
-        }
-
-        private void playButton_MouseEnter(object sender, EventArgs e)
-        {
-            pollingTimer.Stop();
-        }
-
-        private void playButton_MouseLeave(object sender, EventArgs e)
-        {
-            pollingTimer.Start();
-        }
-
-        private void timeline_MouseEnter(object sender, EventArgs e)
-        {
-            pollingTimer.Stop();
-        }
-
-        private void timeline_MouseLeave(object sender, EventArgs e)
+        private void control_MouseLeave(object sender, EventArgs e)
         {
             pollingTimer.Start();
         }
