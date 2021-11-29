@@ -20,7 +20,8 @@ namespace LocalVideoPlayer
     {
         public LibVLC libVlc;
         public MediaPlayer mediaPlayer;
-
+        private TvShow tvShow;
+        private Episode episode;
         private string path;
         private long seekTime;
         private int runningTime;
@@ -30,7 +31,7 @@ namespace LocalVideoPlayer
         private Panel timePanel = null;
         private Label timeLabel = null;
 
-        public PlayerForm(string p, long s, int r)
+        public PlayerForm(string p, long s, int r, TvShow t, Episode ep)
         {
             if (!DesignMode)
             {
@@ -39,7 +40,10 @@ namespace LocalVideoPlayer
 
             InitializeComponent();
 
+            episode = ep;
+            tvShow = t;
             seekTime = s;
+            //To-do: make the show/movie a parameter
             path = p;
             runningTime = r;
 
@@ -82,6 +86,32 @@ namespace LocalVideoPlayer
                 //To-do: move to next season
                 //To-do: reset
                 this.Invoke(new MethodInvoker(delegate { this.Dispose(); }));
+                Console.WriteLine(path);
+                Console.WriteLine("HERE");
+
+                /*if(playNext)
+                       {
+                           Season currentSeason = currTvShow.Seasons[currSeason - 1];
+
+                           for (int i = 0; i < currentSeason.Episodes.Length; i++)
+                           {
+                               if (currEpisode == currentSeason.Episodes[i])
+                               {
+                                   if (i == currentSeason.Episodes.Length - 1)
+                                   {
+                                       throw new NotImplementedException();
+                                       //go to next season
+
+                                       //chec last season -> reset? (skip extraas...)
+                                   }
+                                   else
+                                   {
+                                       Episode nextEpisode = currentSeason.Episodes[i + 1];
+                                       LaunchVlc(currTvShow.Name, nextEpisode.Name, nextEpisode.Path);
+                                   }
+                               }
+                           }
+                       }*/
             };
 
             /*mediaPlayer.Buffering += (sender, e) =>

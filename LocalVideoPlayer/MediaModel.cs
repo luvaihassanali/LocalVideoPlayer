@@ -2,7 +2,7 @@
 
 namespace LocalVideoPlayer
 {
-    class MediaModel
+    public class MediaModel
     {
         private Movie[] movies;
         private TvShow[] tvShows;

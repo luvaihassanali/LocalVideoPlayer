@@ -80,7 +80,7 @@ namespace LocalVideoPlayer
             loadingCircle1.Dispose();
             this.Padding = new System.Windows.Forms.Padding(5, 20, 20, 20);
             InitGui();
-            tvShowBox_Click(null, null);
+            //tvShowBox_Click(null, null);
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
@@ -178,7 +178,7 @@ namespace LocalVideoPlayer
                 runningTime = currMovie.RunningTime;
             }
 
-            Form playerForm = new PlayerForm(path, savedTime, runningTime);
+            Form playerForm = new PlayerForm(path, savedTime, runningTime, currTvShow, currEpisode);
             playerForm.ShowDialog();
 
             if (currTvShow != null)
@@ -188,10 +188,17 @@ namespace LocalVideoPlayer
                 {
                     if (currEpisode == null) throw new ArgumentNullException();
                     if (currSeason == 0) throw new ArgumentNullException();
-
-                    currEpisode.SavedTime = endTime;
-                    currTvShow.CurrSeason = currSeason;
-                    currTvShow.LastEpisode = currEpisode;
+                    
+                    if (path.Contains("Extras"))
+                    {
+                        currEpisode.SavedTime = endTime;
+                    } 
+                    else
+                    {
+                        currTvShow.CurrSeason = currSeason;
+                        currTvShow.LastEpisode = currEpisode;
+                        currEpisode.SavedTime = endTime;
+                    }
                 }
             }
 
@@ -908,14 +915,33 @@ namespace LocalVideoPlayer
             PictureBox p = sender as PictureBox;
             string path = p.Name;
             string[] pathSplit = path.Split('\\');
-            string episodeName = pathSplit[pathSplit.Length - 1].Split('%')[1];
-            episodeName = episodeName.Split('.')[0].Trim();
+            string episodeName;
+            if(pathSplit[pathSplit.Length - 1].Contains('%'))
+            {
+                episodeName = pathSplit[pathSplit.Length - 1].Split('%')[1];
+                episodeName = episodeName.Split('.')[0].Trim();
+            } else
+            {
+                episodeName = pathSplit[pathSplit.Length - 1].Split('.')[0].Trim();
+            }
+
             string showName = pathSplit[pathSplit.Length - 3].Split('%')[0].Trim();
             LaunchVlc(showName, episodeName, path);
 
             TvShow tvShow = GetTvShow(showName);
             Episode lastEpisode = tvShow.LastEpisode;
             Panel episodePanel = (Panel)p.Parent;
+
+            if (lastEpisode == null)
+            {
+                foreach(Episode targetEpisode in tvShow.Seasons[tvShow.Seasons.Length - 1].Episodes)
+                {
+                    if(targetEpisode.Name.Equals(episodeName))
+                    {
+                        lastEpisode = targetEpisode;
+                    }
+                }
+            }
 
             if (episodePanel.Controls.Count == 3)
             {
@@ -941,6 +967,7 @@ namespace LocalVideoPlayer
                 //something went wrong
                 throw new ArgumentNullException();
             }
+
         }
 
         private ProgressBar CreateProgressBar(long savedTime, int runningTime)
