@@ -83,6 +83,7 @@ namespace LocalVideoPlayer
             // 
             this.playButton.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("playButton.BackgroundImage")));
             this.playButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.playButton.Cursor = System.Windows.Forms.Cursors.Hand;
             this.playButton.FlatAppearance.BorderSize = 0;
             this.playButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Red;
             this.playButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -100,6 +101,7 @@ namespace LocalVideoPlayer
             // 
             this.closeButton.BackgroundImage = global::LocalVideoPlayer.Properties.Resources.close;
             this.closeButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.closeButton.Cursor = System.Windows.Forms.Cursors.Hand;
             this.closeButton.FlatAppearance.BorderSize = 0;
             this.closeButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Red;
             this.closeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -130,7 +132,6 @@ namespace LocalVideoPlayer
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.TopMost = true;
             this.TransparencyKey = System.Drawing.Color.DeepPink;
-            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PlayerForm_FormClosing);
             this.Load += new System.EventHandler(this.PlayerForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.videoView1)).EndInit();

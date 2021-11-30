@@ -97,6 +97,7 @@ namespace LocalVideoPlayer
                                     this.tvShows[l].Seasons[j].Episodes[k].Overview = prevMedia.TvShows[i].Seasons[j].Episodes[k].Overview;
                                     this.tvShows[l].Seasons[j].Episodes[k].Path = prevMedia.TvShows[i].Seasons[j].Episodes[k].Path;
                                     this.tvShows[l].Seasons[j].Episodes[k].SavedTime = prevMedia.TvShows[i].Seasons[j].Episodes[k].SavedTime;
+                                    this.tvShows[l].Seasons[j].Episodes[k].Length = prevMedia.TvShows[i].Seasons[j].Episodes[k].Length;
                                 }
                             }
 
@@ -327,6 +328,7 @@ namespace LocalVideoPlayer
         private string path;
         DateTime? date;
         private long savedTime;
+        private long length;
 
         public Episode(int i, string n, string p)
         {
@@ -373,6 +375,12 @@ namespace LocalVideoPlayer
         {
             get => savedTime;
             set => savedTime = value;
+        }
+
+        public long Length
+        {
+            get => length;
+            set => length = value;
         }
 
         internal bool Compare(Episode otherEpisode)

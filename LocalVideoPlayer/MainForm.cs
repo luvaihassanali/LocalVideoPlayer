@@ -139,7 +139,7 @@ namespace LocalVideoPlayer
             return font.Size * ratio;
         }
 
-        private void LaunchVlc(string mediaName, string episodeName, string path)
+        private void LaunchVlc(string mediaName, string episodeName, string path, Form tvForm)
         {
             TvShow currTvShow = null;
             Episode currEpisode = null;
@@ -178,32 +178,16 @@ namespace LocalVideoPlayer
                 runningTime = currMovie.RunningTime;
             }
 
-            Form playerForm = new PlayerForm(path, savedTime, runningTime, currTvShow, currEpisode);
+            Form playerForm = new PlayerForm(path, savedTime, runningTime, currTvShow, currEpisode, tvForm);
             playerForm.ShowDialog();
-
-            if (currTvShow != null)
-            {
-                long endTime = long.Parse(playerForm.Text);
-                if (endTime > 0) //600000 ms = 10 mins 
-                {
-                    if (currEpisode == null) throw new ArgumentNullException();
-                    if (currSeason == 0) throw new ArgumentNullException();
-                    
-                    if (path.Contains("Extras"))
-                    {
-                        currEpisode.SavedTime = endTime;
-                    } 
-                    else
-                    {
-                        currTvShow.CurrSeason = currSeason;
-                        currTvShow.LastEpisode = currEpisode;
-                        currEpisode.SavedTime = endTime;
-                    }
-                }
-            }
 
             playerForm.Dispose();
             isPlaying = false;
+
+            if (tvForm != null)
+            {
+                tvForm.Refresh();
+            }
         }
 
         private RoundButton CreateCloseButton()
@@ -324,6 +308,7 @@ namespace LocalVideoPlayer
             tvShowBackdropBox.Dock = DockStyle.Top;
             tvShowBackdropBox.SizeMode = PictureBoxSizeMode.StretchImage;
             tvShowBackdropBox.Name = tvShow.Name;
+            //To-do: start playing clip
             //tvShowBackdropBox.Click += tvShowBackdropBox_Click;
 
             Button resumeButton = null;
@@ -347,28 +332,8 @@ namespace LocalVideoPlayer
                 resumeButton.Click += (s, e_) =>
                 {
                     isPlaying = true;
-                    Panel episodePanel = null;
                     Episode lastEpisode = tvShow.LastEpisode;
-                    LaunchVlc(tvShow.Name, lastEpisode.Name, lastEpisode.Path);
-
-                    foreach (Panel p in episodePanelList)
-                    {
-                        if(p.Name.Contains(lastEpisode.Name))
-                        {
-                            episodePanel = p;
-                        }
-                    }
-                    ProgressBar progressBar;
-                    foreach (Control c in episodePanel.Controls)
-                    {
-                        if (c.Name.Equals("pBar"))
-                        {
-                            progressBar = c as ProgressBar;
-                            TimeSpan duration = TimeSpan.FromMilliseconds(lastEpisode.SavedTime);
-                            progressBar.Value = (int)duration.TotalMinutes;
-                            progressBar.Update();
-                        }
-                    }
+                    LaunchVlc(tvShow.Name, lastEpisode.Name, lastEpisode.Path, tvForm);
                     isPlaying = false;
                 };
             }
@@ -519,8 +484,7 @@ namespace LocalVideoPlayer
             tvForm.Show();
         }
 
-
-        private void UpdateTvForm(TvShow tvShow)
+        public void UpdateTvForm(TvShow tvShow)
         {
             Form tvForm = null;
             FormCollection formCollection = Application.OpenForms;
@@ -639,7 +603,7 @@ namespace LocalVideoPlayer
                 //To-do: set minimum time for bar to show up
                 if (currEpisode.SavedTime != 0)
                 {
-                    ProgressBar progressBar = CreateProgressBar(currEpisode.SavedTime, tvShow.RunningTime);
+                    ProgressBar progressBar = PlayerForm.CreateProgressBar(currEpisode.SavedTime, currEpisode.Length);
                     episodePanel.Controls.Add(progressBar);
                 }
 
@@ -913,74 +877,22 @@ namespace LocalVideoPlayer
         {
             isPlaying = true;
             PictureBox p = sender as PictureBox;
+            Form tvForm = (Form)p.Parent.Parent.Parent.Parent;
             string path = p.Name;
             string[] pathSplit = path.Split('\\');
             string episodeName;
-            if(pathSplit[pathSplit.Length - 1].Contains('%'))
+            if (pathSplit[pathSplit.Length - 1].Contains('%'))
             {
                 episodeName = pathSplit[pathSplit.Length - 1].Split('%')[1];
                 episodeName = episodeName.Split('.')[0].Trim();
-            } else
+            }
+            else
             {
                 episodeName = pathSplit[pathSplit.Length - 1].Split('.')[0].Trim();
             }
 
-            string showName = pathSplit[pathSplit.Length - 3].Split('%')[0].Trim();
-            LaunchVlc(showName, episodeName, path);
-
-            TvShow tvShow = GetTvShow(showName);
-            Episode lastEpisode = tvShow.LastEpisode;
-            Panel episodePanel = (Panel)p.Parent;
-
-            if (lastEpisode == null)
-            {
-                foreach(Episode targetEpisode in tvShow.Seasons[tvShow.Seasons.Length - 1].Episodes)
-                {
-                    if(targetEpisode.Name.Equals(episodeName))
-                    {
-                        lastEpisode = targetEpisode;
-                    }
-                }
-            }
-
-            if (episodePanel.Controls.Count == 3)
-            {
-                ProgressBar progressBar = CreateProgressBar(lastEpisode.SavedTime, tvShow.RunningTime);
-                progressBar.Location = new Point(p.Location.X, p.Location.Y + p.Height);
-                episodePanel.Controls.Add(progressBar);
-            }
-            else if (episodePanel.Controls.Count == 4)
-            {
-                ProgressBar progressBar;
-                foreach (Control c in episodePanel.Controls)
-                {
-                    if (c.Name.Equals("pBar"))
-                    {
-                        progressBar = c as ProgressBar;
-                        TimeSpan duration = TimeSpan.FromMilliseconds(lastEpisode.SavedTime);
-                        progressBar.Value = (int)duration.TotalMinutes;
-                    }
-                }
-            }
-            else
-            {
-                //something went wrong
-                throw new ArgumentNullException();
-            }
-
-        }
-
-        private ProgressBar CreateProgressBar(long savedTime, int runningTime)
-        {
-            //To-do: min time before showing and max time before filling completely
-            ProgressBar progressBar = new ProgressBar();
-            progressBar.Height = 10;
-            progressBar.Width = 300;
-            TimeSpan duration = TimeSpan.FromMilliseconds(savedTime);
-            progressBar.Value = (int)duration.TotalMinutes;
-            progressBar.Maximum = runningTime;
-            progressBar.Name = "pBar";
-            return progressBar;
+            string showName = pathSplit[3].Split('%')[0].Trim();
+            LaunchVlc(showName, episodeName, path, tvForm);
         }
 
         #endregion
@@ -1064,7 +976,7 @@ namespace LocalVideoPlayer
         {
             PictureBox p = sender as PictureBox;
             string path = p.Name;
-            LaunchVlc(null, null, path);
+            LaunchVlc(null, null, path, null);
         }
         private Movie GetMovie(object name)
         {
