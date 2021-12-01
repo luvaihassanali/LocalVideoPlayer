@@ -213,9 +213,9 @@ namespace LocalVideoPlayer.Forms
         static internal CustomScrollbar CreateScrollBar(Panel panel)
         {
             CustomScrollbar customScrollbar = new CustomScrollbar();
-            customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(166)))), ((int)(((byte)(3)))));
+            customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(88)))), ((int)(((byte)(140))))); //green 51 166 3 //blue 22 88 140
             customScrollbar.Location = new Point(panel.Width - 16, 0);
-            customScrollbar.Size = new Size(15, panel.Height - 2);
+            customScrollbar.Size = new Size(15, panel.Height - 1);
             customScrollbar.DownArrowImage = Properties.Resources.downarrow;
             customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
             customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
@@ -225,7 +225,14 @@ namespace LocalVideoPlayer.Forms
             customScrollbar.UpArrowImage = Properties.Resources.uparrow;
             customScrollbar.Minimum = 0;
             customScrollbar.Maximum = panel.DisplayRectangle.Height;
-            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(panel.Height / 1) + 3;
+            if(panel.Name.Equals("mainFormMainPanel"))
+            {
+                customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(panel.Height / 1.195); 
+            }
+            else
+            {
+                customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(panel.Height / 1);
+            }
             customScrollbar.SmallChange = 1;
             customScrollbar.Value = Math.Abs(panel.AutoScrollPosition.Y);
             return customScrollbar;

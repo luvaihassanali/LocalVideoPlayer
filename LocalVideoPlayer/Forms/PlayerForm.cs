@@ -7,15 +7,6 @@ using System.Windows.Forms;
 
 namespace LocalVideoPlayer
 {
-    /*
-        Do not call LibVLC from a LibVLC event without switching thread first
-        Doing this:
-        mediaPlayer.EndReached += (sender, args) => mediaPlayer.Play(nextMedia);
-        Might freeze your app.
-        If you need to call back into LibVLCSharp from an event, you need to switch thread. This is an example of how to do it:
-        mediaPlayer.EndReached += (sender, args) => ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia);
-    */
-
     public partial class PlayerForm : Form
     {
         public LibVLC libVlc;
@@ -41,7 +32,7 @@ namespace LocalVideoPlayer
 
             InitializeComponent();
 
-            //some parameters are in tv object remove
+            //some parameters are in tv object > remove
             tvForm = tf;
             currEpisode = ep;
             currTvShow = t;
@@ -101,9 +92,6 @@ namespace LocalVideoPlayer
 
         private void mediaPlayer_EndReached(object sender, EventArgs e)
         {
-            //To-do: go to next episode
-            //To-do: move to next season
-            //To-do: reset
             if (currTvShow != null)
             {
                 currEpisode.SavedTime = currEpisode.Length;
@@ -130,8 +118,7 @@ namespace LocalVideoPlayer
                         {
                             if (j == currSeason.Episodes.Length - 1)
                             {
-                                //last episode, second last season, but extras season exists
-                                //last episode last season
+                                //To-do: reset progress bars
                                 if((i == currTvShow.Seasons.Length - 2 && currTvShow.Seasons[currTvShow.Seasons.Length - 1].Id == -1) ||
                                     i == currTvShow.Seasons.Length - 1)
                                 {
