@@ -386,7 +386,7 @@ namespace LocalVideoPlayer
         internal bool Compare(Episode otherEpisode)
         {
             if (!this.name.Equals(otherEpisode.name)) return false;
-            if (!this.id.Equals(otherEpisode.id)) return false;
+            //if (!this.id.Equals(otherEpisode.id)) return false;
 
             return true;
         }

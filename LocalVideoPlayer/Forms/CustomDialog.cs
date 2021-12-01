@@ -34,6 +34,11 @@ namespace LocalVideoPlayer.Forms
                 optionsFormMainPanel.AutoScrollPosition = new Point(0, 0);
             };
 
+            optionsForm.Deactivate += (s, e) =>
+            {
+                optionsForm.Activate();
+                return;
+            };
             Font headerFont = new Font("Arial", 16, FontStyle.Bold);
             Font textFont = new Font("Arial", 12, FontStyle.Regular);
 
@@ -206,6 +211,12 @@ namespace LocalVideoPlayer.Forms
             confirmation.Click += (sender, e) => { customMessageForm.Close(); };
             customMessageForm.Controls.Add(confirmation);
 
+            customMessageForm.Deactivate += (s, e) =>
+            {
+                customMessageForm.Activate();
+                return;
+            };
+
             customMessageForm.ShowDialog();
             customMessageForm.Dispose();
         }
@@ -213,9 +224,9 @@ namespace LocalVideoPlayer.Forms
         static internal CustomScrollbar CreateScrollBar(Panel panel)
         {
             CustomScrollbar customScrollbar = new CustomScrollbar();
-            customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(88)))), ((int)(((byte)(140))))); //green 51 166 3 //blue 22 88 140
+            customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(88)))), ((int)(((byte)(140))))); //green 51 166 3 //blue 22 88 14
             customScrollbar.Location = new Point(panel.Width - 16, 0);
-            customScrollbar.Size = new Size(15, panel.Height - 1);
+            customScrollbar.Size = new Size(15, panel.Height);
             customScrollbar.DownArrowImage = Properties.Resources.downarrow;
             customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
             customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
@@ -225,18 +236,25 @@ namespace LocalVideoPlayer.Forms
             customScrollbar.UpArrowImage = Properties.Resources.uparrow;
             customScrollbar.Minimum = 0;
             customScrollbar.Maximum = panel.DisplayRectangle.Height;
+            customScrollbar.Name = "customScrollbar";
+            customScrollbar.SmallChange = 15;
+            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + panel.Height;
+            customScrollbar.Value = Math.Abs(panel.AutoScrollPosition.Y);
+
             if(panel.Name.Equals("mainFormMainPanel"))
             {
-                customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(panel.Height / 1.195); 
+                
+                customScrollbar.Size = new Size(15, panel.Height - 1);
+                customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(panel.Height / 1.195);
             }
-            else
-            {
-                customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(panel.Height / 1);
-            }
-            customScrollbar.SmallChange = 1;
-            customScrollbar.Value = Math.Abs(panel.AutoScrollPosition.Y);
             return customScrollbar;
         }
 
+        static internal void UpdateScrollBar(CustomScrollbar customScrollbar, Panel panel)
+        {
+            customScrollbar.Size = new Size(15, panel.Height);
+            customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + panel.Height;
+            customScrollbar.Maximum = panel.DisplayRectangle.Height;
+        }
     }
 }

@@ -47,11 +47,14 @@ namespace LocalVideoPlayer
 
             InitializeComponent();
 
+            backgroundWorker1.WorkerReportsProgress = true;
             backgroundWorker1.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
+            backgroundWorker1.ProgressChanged += new ProgressChangedEventHandler(backgroundWorker1_ProgressChanged);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorker1_RunWorkerCompleted);
             backgroundWorker1.RunWorkerAsync();
 
             loadingCircle1.Active = true;
+            loadingLabel.Text = "";
 
             dimmerForm = new Form();
             dimmerForm.ShowInTaskbar = false;
@@ -64,30 +67,14 @@ namespace LocalVideoPlayer
             seasonDimmerForm.BackColor = Color.Black;
         }
 
-        #region General form functions
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            string jsonString = JsonConvert.SerializeObject(media);
-            File.WriteAllText(jsonFile, jsonString);
-
-            dimmerForm.Close();
-            seasonDimmerForm.Close();
-        }
-
-        private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            //To-do: add some sort of text indicator for loading circle on initial launch
-            loadingCircle1.Dispose();
-            this.Padding = new System.Windows.Forms.Padding(5, 20, 20, 20);
-            InitGui();
-            //tvShowBox_Click(null, null);
-        }
+        #region Background worker
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            //BackgroundWorker worker = sender as BackgroundWorker;
+            BackgroundWorker worker = sender as BackgroundWorker;
 
             string mediaPath = ConfigurationManager.AppSettings["mediaPath"];
+
             ProcessDirectory(mediaPath);
 
             if (media == null) throw new ArgumentNullException();
@@ -97,9 +84,45 @@ namespace LocalVideoPlayer
             if (update)
             {
                 //To-do: change to synchronous
-                Task buildCache = BuildCacheAsync();
+                Task buildCache = BuildCacheAsync(worker);
                 buildCache.Wait();
             }
+        }
+
+        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            loadingLabel.Text = e.ProgressPercentage.ToString() + "%  - " + e.UserState.ToString();
+        }
+
+        private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            //To-do: add some sort of text indicator for loading circle on initial launch
+            loadingCircle1.Dispose();
+            loadingLabel.Dispose();
+            this.Padding = new System.Windows.Forms.Padding(5, 20, 20, 20);
+            
+            InitGui();
+            //tvShowBox_Click(null, null);
+        }
+
+        #endregion
+
+        #region General form functions
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            loadingCircle1.Location = new Point(this.Width / 2 - loadingCircle1.Width / 2, this.Height / 2 - loadingCircle1.Height / 2);
+            loadingLabel.Location = new Point(this.Width / 2 - loadingLabel.Width / 2, this.Height / 2 - loadingLabel.Height / 2);
+            loadingLabel.Size = new Size((int)(this.Width / 1.5), loadingLabel.Height);
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            string jsonString = JsonConvert.SerializeObject(media);
+            File.WriteAllText(jsonFile, jsonString);
+
+            dimmerForm.Close();
+            seasonDimmerForm.Close();
         }
 
         private void closeButton_Click(object sender, EventArgs e)
@@ -124,72 +147,6 @@ namespace LocalVideoPlayer
             }
         }
 
-        private void headerLabel_Paint(object sender, PaintEventArgs e)
-        {
-            float fontSize = NewHeaderFontSize(e.Graphics, this.Bounds.Size, movieLabel.Font, movieLabel.Text);
-            Font f = new Font("Arial", fontSize, FontStyle.Bold);
-            movieLabel.Font = f;
-            tvLabel.Font = f;
-        }
-
-        public static float NewHeaderFontSize(Graphics graphics, Size size, Font font, string str)
-        {
-            SizeF stringSize = graphics.MeasureString(str, font);
-            float ratio = (size.Height / stringSize.Height) / 10;
-            return font.Size * ratio;
-        }
-
-        private void LaunchVlc(string mediaName, string episodeName, string path, Form tvForm)
-        {
-            TvShow currTvShow = null;
-            Episode currEpisode = null;
-            Movie currMovie = null;
-            int currSeason = 0;
-
-            //To-do: change to if episode name is null otherwise use media name to get movie + runningTime
-            if (episodeName != null)
-            {
-                currTvShow = GetTvShow(mediaName);
-                currEpisode = GetTvEpisode(mediaName, episodeName, out currSeason);
-
-            }
-            else
-            {
-                currMovie = GetMovie(mediaName);
-            }
-
-            //To-do: Fade in
-            long savedTime = 0;
-            if (currMovie == null)
-            {
-                if (currEpisode != null)
-                {
-                    savedTime = currEpisode.SavedTime;
-                }
-            }
-            //To-do: all one line if-else replace with ? :
-            int runningTime;
-            if (currMovie == null)
-            {
-                runningTime = currTvShow.RunningTime;
-            }
-            else
-            {
-                runningTime = currMovie.RunningTime;
-            }
-
-            Form playerForm = new PlayerForm(path, savedTime, runningTime, currTvShow, currEpisode, tvForm);
-            playerForm.ShowDialog();
-
-            playerForm.Dispose();
-            isPlaying = false;
-
-            if (tvForm != null)
-            {
-                tvForm.Refresh();
-            }
-        }
-
         private RoundButton CreateCloseButton()
         {
             RoundButton closeButton = new RoundButton();
@@ -205,22 +162,7 @@ namespace LocalVideoPlayer
             return closeButton;
         }
 
-        private void customScrollbar_Scroll(object sender, EventArgs e)
-        {
-            mainFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
-            showHideClose(customScrollbar.Value);
-        }
-
-        private void mainFormMainPanel_MouseWheel(object sender, MouseEventArgs e)
-        {
-            int newVal = -mainFormMainPanel.AutoScrollPosition.Y;
-            showHideClose(newVal);
-            customScrollbar.Value = newVal;
-            customScrollbar.Invalidate();
-            Application.DoEvents();
-        }
-
-        private void showHideClose(int value)
+        private void closeButton_SetVisible(int value)
         {
             if (value == 0)
             {
@@ -232,9 +174,62 @@ namespace LocalVideoPlayer
             }
         }
 
-        #endregion 
+        private void customScrollbar_Scroll(object sender, EventArgs e)
+        {
+            mainFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
+            closeButton_SetVisible(customScrollbar.Value);
+        }
+
+        private void mainFormMainPanel_MouseWheel(object sender, MouseEventArgs e)
+        {
+            int newVal = -mainFormMainPanel.AutoScrollPosition.Y;
+            closeButton_SetVisible(newVal);
+            customScrollbar.Value = newVal;
+            customScrollbar.Invalidate();
+            Application.DoEvents();
+        }
+
+        private void headerLabel_Paint(object sender, PaintEventArgs e)
+        {
+            float fontSize = newHeaderFontSize(e.Graphics, this.Bounds.Size, movieLabel.Font, movieLabel.Text);
+            Font f = new Font("Arial", fontSize, FontStyle.Bold);
+            movieLabel.Font = f;
+            tvLabel.Font = f;
+        }
+
+        //TO-DO: apply to all other fonts
+        public static float newHeaderFontSize(Graphics graphics, Size size, Font font, string str)
+        {
+            SizeF stringSize = graphics.MeasureString(str, font);
+            float ratio = (size.Height / stringSize.Height) / 10;
+            return font.Size * ratio;
+        }
+
+        #endregion
 
         #region Tv
+
+        private void tvShowEpisodeBox_Click(object sender, EventArgs e)
+        {
+            isPlaying = true;
+            PictureBox p = sender as PictureBox;
+            Form tvForm = (Form)p.Parent.Parent.Parent.Parent;
+            string path = p.Name;
+            string[] pathSplit = path.Split('\\');
+            string episodeName;
+            if (pathSplit[pathSplit.Length - 1].Contains('%'))
+            {
+                episodeName = pathSplit[pathSplit.Length - 1].Split('%')[1];
+                episodeName = episodeName.Split('.')[0].Trim();
+            }
+            else
+            {
+                episodeName = pathSplit[pathSplit.Length - 1].Split('.')[0].Trim();
+            }
+
+            string showName = pathSplit[3].Split('%')[0].Trim();
+            LaunchVlc(showName, episodeName, path, tvForm);
+        }
 
         private void tvShowBox_Click(object sender, EventArgs e)
         {
@@ -497,14 +492,23 @@ namespace LocalVideoPlayer
             }
             if (tvForm == null) throw new ArgumentNullException();
 
+            Panel masterPanel = null;
             Panel mainPanel = null;
-
+            CustomScrollbar customScrollbar = null;
             List<Control> toRemove = new List<Control>();
+
             foreach (Control c in tvForm.Controls)
             {
+                if(c.Name.Equals("customScrollbar"))
+                {
+                    customScrollbar = (CustomScrollbar)c;
+                }
+
+                //To-do: remove cast and just check names
                 Panel p_ = c as Panel;
                 if (p_ != null && p_.Name.Equals("tvFormMainPanel"))
                 {
+                    masterPanel = p_;
                     foreach (Control ctrl in p_.Controls)
                     {
                         Panel p = ctrl as Panel;
@@ -553,7 +557,8 @@ namespace LocalVideoPlayer
                 }
             }
 
-            mainPanel.Refresh();
+            CustomDialog.UpdateScrollBar(customScrollbar, masterPanel);
+            tvForm.Refresh();
         }
 
         private List<Control> CreateEpisodePanels(TvShow tvShow)
@@ -847,6 +852,7 @@ namespace LocalVideoPlayer
             return null;
         }
 
+        //To-do: remove this...make get season func? apply everywhere else
         private Episode GetTvEpisode(string showName, string episodeName, out int season)
         {
             for (int i = 0; i < media.TvShows.Length; i++)
@@ -873,31 +879,17 @@ namespace LocalVideoPlayer
             return null;
         }
 
-        private void tvShowEpisodeBox_Click(object sender, EventArgs e)
-        {
-            isPlaying = true;
-            PictureBox p = sender as PictureBox;
-            Form tvForm = (Form)p.Parent.Parent.Parent.Parent;
-            string path = p.Name;
-            string[] pathSplit = path.Split('\\');
-            string episodeName;
-            if (pathSplit[pathSplit.Length - 1].Contains('%'))
-            {
-                episodeName = pathSplit[pathSplit.Length - 1].Split('%')[1];
-                episodeName = episodeName.Split('.')[0].Trim();
-            }
-            else
-            {
-                episodeName = pathSplit[pathSplit.Length - 1].Split('.')[0].Trim();
-            }
-
-            string showName = pathSplit[3].Split('%')[0].Trim();
-            LaunchVlc(showName, episodeName, path, tvForm);
-        }
-
         #endregion
 
         #region Movies
+
+        private void movieBackdropBox_Click(object sender, EventArgs e)
+        {
+            PictureBox p = sender as PictureBox;
+            string path = p.Name;
+            LaunchVlc(null, null, path, null);
+        }
+
         private void movieBox_Click(object sender, EventArgs e)
         {
             Form movieForm = new Form();
@@ -972,12 +964,7 @@ namespace LocalVideoPlayer
 
             movieForm.Show();
         }
-        private void movieBackdropBox_Click(object sender, EventArgs e)
-        {
-            PictureBox p = sender as PictureBox;
-            string path = p.Name;
-            LaunchVlc(null, null, path, null);
-        }
+
         private Movie GetMovie(object name)
         {
             for (int i = 0; i < media.Movies.Length; i++)
@@ -1131,8 +1118,9 @@ namespace LocalVideoPlayer
             return result;
         }
 
-        private async Task BuildCacheAsync()
+        private async Task BuildCacheAsync(BackgroundWorker worker)
         {
+            //worker.ReportProgress(0, "test");
             CancellationTokenSource source = new CancellationTokenSource();
             CancellationToken token = source.Token;
 
@@ -1195,13 +1183,13 @@ namespace LocalVideoPlayer
 
                         if (movie.Backdrop != null)
                         {
-                            await SaveImage(movie.Backdrop, movie.Name, true, token);
+                            await DownloadImage(movie.Backdrop, movie.Name, true, token);
                             movie.Backdrop = bufferString;
                         }
 
                         if (movie.Poster != null)
                         {
-                            await SaveImage(movie.Poster, movie.Name, true, token);
+                            await DownloadImage(movie.Poster, movie.Name, true, token);
                             movie.Poster = bufferString;
                         }
                     }
@@ -1234,13 +1222,13 @@ namespace LocalVideoPlayer
 
                         if (movie.Backdrop != null)
                         {
-                            await SaveImage(movie.Backdrop, movie.Name, true, token);
+                            await DownloadImage(movie.Backdrop, movie.Name, true, token);
                             movie.Backdrop = bufferString;
                         }
 
                         if (movie.Poster != null)
                         {
-                            await SaveImage(movie.Poster, movie.Name, true, token);
+                            await DownloadImage(movie.Poster, movie.Name, true, token);
                             movie.Poster = bufferString;
                         }
                     }
@@ -1298,12 +1286,12 @@ namespace LocalVideoPlayer
 
                         if (tvShow.Backdrop != null)
                         {
-                            await SaveImage(tvShow.Backdrop, tvShow.Name, false, token);
+                            await DownloadImage(tvShow.Backdrop, tvShow.Name, false, token);
                             tvShow.Backdrop = bufferString;
                         }
                         if (tvShow.Poster != null)
                         {
-                            await SaveImage(tvShow.Poster, tvShow.Name, false, token);
+                            await DownloadImage(tvShow.Poster, tvShow.Name, false, token);
                             tvShow.Poster = bufferString;
                         }
                     }
@@ -1335,7 +1323,7 @@ namespace LocalVideoPlayer
 
                             if (season.Poster != null)
                             {
-                                await SaveImage(season.Poster, tvShow.Name, false, token);
+                                await DownloadImage(season.Poster, tvShow.Name, false, token);
                                 season.Poster = bufferString;
                             }
                         }
@@ -1363,7 +1351,7 @@ namespace LocalVideoPlayer
                                 //To-do: if season does not match? if one or the other matches error checking
                                 if (episode.Backdrop != null)
                                 {
-                                    await SaveImage(episode.Backdrop, tvShow.Name, false, token);
+                                    await DownloadImage(episode.Backdrop, tvShow.Name, false, token);
                                     episode.Backdrop = bufferString;
                                 }
                             }
@@ -1389,15 +1377,14 @@ namespace LocalVideoPlayer
                                 DateTime tempDate;
                                 episode.Date = DateTime.TryParse((string)jEpisode["air_date"], out tempDate) ? tempDate : DateTime.MinValue.AddHours(9);
 
-                                //To-do: separate function
                                 if (episode.Backdrop != null)
                                 {
-                                    await SaveImage(episode.Backdrop, tvShow.Name, false, token);
+                                    await DownloadImage(episode.Backdrop, tvShow.Name, false, token);
                                     episode.Backdrop = bufferString;
                                 }
                             }
                         }
-                        seasonIndex++; //To-do: can be removed..?
+                        seasonIndex++; 
                     }
                 }
             }
@@ -1406,7 +1393,7 @@ namespace LocalVideoPlayer
             File.WriteAllText(jsonFile, jsonString);
         }
 
-        private async Task SaveImage(string imagePath, string name, bool isMovie, CancellationToken token)
+        private async Task DownloadImage(string imagePath, string name, bool isMovie, CancellationToken token)
         {
             string url = apiImageUrl + imagePath;
             string dirPath;
@@ -1594,5 +1581,54 @@ namespace LocalVideoPlayer
 
         #endregion
 
+        private void LaunchVlc(string mediaName, string episodeName, string path, Form tvForm)
+        {
+            TvShow currTvShow = null;
+            Episode currEpisode = null;
+            Movie currMovie = null;
+            int currSeason = 0;
+
+            //To-do: change to if episode name is null otherwise use media name to get movie + runningTime
+            if (episodeName != null)
+            {
+                currTvShow = GetTvShow(mediaName);
+                currEpisode = GetTvEpisode(mediaName, episodeName, out currSeason);
+            }
+            else
+            {
+                currMovie = GetMovie(mediaName);
+            }
+
+            //To-do: Fade in
+            long savedTime = 0;
+            if (currMovie == null)
+            {
+                if (currEpisode != null)
+                {
+                    savedTime = currEpisode.SavedTime;
+                }
+            }
+            //To-do: all one line if-else replace with ? :
+            int runningTime;
+            if (currMovie == null)
+            {
+                runningTime = currTvShow.RunningTime;
+            }
+            else
+            {
+                runningTime = currMovie.RunningTime;
+            }
+
+            Form playerForm = new PlayerForm(path, savedTime, runningTime, currTvShow, currEpisode, tvForm);
+            playerForm.ShowDialog();
+
+            playerForm.Dispose();
+            isPlaying = false;
+
+            if (tvForm != null)
+            {
+                tvForm.Refresh();
+            }
+        }
     }
 }
