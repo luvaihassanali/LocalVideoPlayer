@@ -47,9 +47,9 @@ namespace LocalVideoPlayer
 
             InitializeComponent();
 
-            backgroundWorker1.WorkerReportsProgress = true;
+            //backgroundWorker1.WorkerReportsProgress = true;
             backgroundWorker1.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
-            backgroundWorker1.ProgressChanged += new ProgressChangedEventHandler(backgroundWorker1_ProgressChanged);
+            //backgroundWorker1.ProgressChanged += new ProgressChangedEventHandler(backgroundWorker1_ProgressChanged);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorker1_RunWorkerCompleted);
             backgroundWorker1.RunWorkerAsync();
 
@@ -67,53 +67,13 @@ namespace LocalVideoPlayer
             seasonDimmerForm.BackColor = Color.Black;
         }
 
-        #region Background worker
-
-        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
-        {
-            BackgroundWorker worker = sender as BackgroundWorker;
-
-            string mediaPath = ConfigurationManager.AppSettings["mediaPath"];
-
-            ProcessDirectory(mediaPath);
-
-            if (media == null) throw new ArgumentNullException();
-
-            bool update = CheckForUpdates();
-
-            if (update)
-            {
-                //To-do: change to synchronous
-                Task buildCache = BuildCacheAsync(worker);
-                buildCache.Wait();
-            }
-        }
-
-        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            loadingLabel.Text = e.ProgressPercentage.ToString() + "%  - " + e.UserState.ToString();
-        }
-
-        private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            //To-do: add some sort of text indicator for loading circle on initial launch
-            loadingCircle1.Dispose();
-            loadingLabel.Dispose();
-            this.Padding = new System.Windows.Forms.Padding(5, 20, 20, 20);
-            
-            InitGui();
-            //tvShowBox_Click(null, null);
-        }
-
-        #endregion
-
         #region General form functions
 
         private void MainForm_Load(object sender, EventArgs e)
         {
             loadingCircle1.Location = new Point(this.Width / 2 - loadingCircle1.Width / 2, this.Height / 2 - loadingCircle1.Height / 2);
-            loadingLabel.Location = new Point(this.Width / 2 - loadingLabel.Width / 2, this.Height / 2 - loadingLabel.Height / 2);
-            loadingLabel.Size = new Size((int)(this.Width / 1.5), loadingLabel.Height);
+            loadingLabel.Location = new Point((int)(this.Width / 2 - loadingLabel.Width / 1.65), this.Height / 2 - loadingLabel.Height / 2); //loadingCircle1.Location.Y + loadingCircle1.Height);
+            loadingLabel.Size = new Size(this.Width / 2, loadingLabel.Height);
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -887,7 +847,9 @@ namespace LocalVideoPlayer
         {
             PictureBox p = sender as PictureBox;
             string path = p.Name;
-            LaunchVlc(null, null, path, null);
+            string[] pathSplit = path.Split('\\');
+            string movieName = pathSplit[pathSplit.Length - 1].Split('.')[0];
+            LaunchVlc(movieName, null, path, null);
         }
 
         private void movieBox_Click(object sender, EventArgs e)
@@ -992,7 +954,6 @@ namespace LocalVideoPlayer
             closeButton.Visible = true;
             closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 8));
 
-            //To-do: no media exists
             Panel currentPanel = null;
             int count = 0;
             int panelCount = 0;
@@ -1118,7 +1079,28 @@ namespace LocalVideoPlayer
             return result;
         }
 
-        private async Task BuildCacheAsync(BackgroundWorker worker)
+        private void UpdateLoadingLabel(string text)
+        {             
+            if(text == null)
+            {
+                loadingLabel.Invoke(new MethodInvoker(delegate
+                {
+                    loadingLabel.BringToFront();
+                }));
+            }
+            if(loadingLabel.InvokeRequired)
+            {
+                loadingLabel.BeginInvoke(new MethodInvoker(delegate
+                {
+                    loadingLabel.Text = text;
+                }));
+            } else
+            {
+                loadingLabel.Text = text;
+            }
+        }
+
+        private async Task BuildCacheAsync()
         {
             //worker.ReportProgress(0, "test");
             CancellationTokenSource source = new CancellationTokenSource();
@@ -1131,7 +1113,7 @@ namespace LocalVideoPlayer
                 {
                     //if id is not 0 expected to be init
                     if (media.Movies[i].Id != 0) continue;
-
+                    UpdateLoadingLabel("Processing: " + media.Movies[i].Name);
                     Movie movie = media.Movies[i];
                     string movieResourceString = client.DownloadString(movieSearch + movie.Name);
 
@@ -1300,8 +1282,11 @@ namespace LocalVideoPlayer
                     for (int j = 0; j < tvShow.Seasons.Length; j++)
                     {
                         Season season = tvShow.Seasons[j];
-
+                        
                         if (season.Id == -1) continue;
+
+                        string seasonLabel = tvShow.Seasons[j].Id == -1 ? "Extras" : j.ToString();
+                        UpdateLoadingLabel("Processing: " + tvShow.Name + " Season " + seasonLabel);
 
                         string seasonApiCall = tvSeasonGet.Replace("{tv_id}", tvShow.Id.ToString()).Replace("{season_number}", seasonIndex.ToString());
                         string seasonString = client.DownloadString(seasonApiCall);
@@ -1443,7 +1428,16 @@ namespace LocalVideoPlayer
         {
             string moviesDir = null;
             string tvDir = null;
-            string[] subdirectoryEntries = Directory.GetDirectories(targetDir);
+            string[] subdirectoryEntries;
+            try
+            {
+                subdirectoryEntries = Directory.GetDirectories(targetDir);
+            }
+            catch (Exception e)
+            {
+                //To-do: error dialog
+                throw e;
+            }
             foreach (string subDir in subdirectoryEntries)
             {
                 string[] subDirPath = subDir.Split('\\');
@@ -1577,6 +1571,48 @@ namespace LocalVideoPlayer
             if (seasonValueA == seasonValueB) return 0;
             if (seasonValueA < seasonValueB) return 1;
             return -1;
+        }
+
+        #endregion
+
+        #region Background worker
+
+        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+
+            string mediaPath = ConfigurationManager.AppSettings["mediaPath"];
+
+            ProcessDirectory(mediaPath);
+
+            if (media == null) throw new ArgumentNullException();
+
+            bool update = CheckForUpdates();
+
+            if (update)
+            {
+                //To-do: change to synchronous
+                //To-do: detect bad cache (null)
+                UpdateLoadingLabel(null);
+                Task buildCache = BuildCacheAsync();
+                buildCache.Wait();
+            }
+        }
+
+        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            loadingLabel.Text = e.ProgressPercentage.ToString() + "%  - " + e.UserState.ToString();
+        }
+
+        private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            //To-do: add some sort of text indicator for loading circle on initial launch
+            loadingCircle1.Dispose();
+            loadingLabel.Dispose();
+            this.Padding = new System.Windows.Forms.Padding(5, 20, 20, 20);
+
+            InitGui();
+            //tvShowBox_Click(null, null);
         }
 
         #endregion

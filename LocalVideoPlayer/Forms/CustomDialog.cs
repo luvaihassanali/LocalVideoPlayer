@@ -8,6 +8,8 @@ namespace LocalVideoPlayer.Forms
 {
     static class CustomDialog
     {
+        #region Show Options Form
+
         static internal int ShowOptions(string item, string[][] info, DateTime?[] dates, int width, int height)
         {
             CustomScrollbar customScrollbar = null;
@@ -168,6 +170,10 @@ namespace LocalVideoPlayer.Forms
             return id;
         }
 
+        #endregion
+
+        #region Show Message Form
+
         static internal void ShowMessage(string header, string message, int width, int height)
         {
             Form customMessageForm = new Form();
@@ -221,6 +227,8 @@ namespace LocalVideoPlayer.Forms
             customMessageForm.Dispose();
         }
 
+        #endregion
+
         static internal CustomScrollbar CreateScrollBar(Panel panel)
         {
             CustomScrollbar customScrollbar = new CustomScrollbar();
@@ -245,7 +253,7 @@ namespace LocalVideoPlayer.Forms
             {
                 
                 customScrollbar.Size = new Size(15, panel.Height - 1);
-                customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(panel.Height / 1.195);
+                customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(panel.Height / 1.068);
             }
             return customScrollbar;
         }

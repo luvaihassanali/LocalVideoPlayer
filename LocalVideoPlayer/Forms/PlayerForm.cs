@@ -18,6 +18,7 @@ namespace LocalVideoPlayer
         private long seekTime;
         private int runningTime;
         private Timer pollingTimer;
+
         private bool mouseDown = false;
         private bool timePanelActive = false;
         private Panel timePanel = null;
@@ -90,133 +91,7 @@ namespace LocalVideoPlayer
             pollingTimer.Interval = 2000;
         }
 
-        private void mediaPlayer_EndReached(object sender, EventArgs e)
-        {
-            if (currTvShow != null)
-            {
-                currEpisode.SavedTime = currEpisode.Length;
-                UpdateProgressBar();
-
-                if (currEpisode.Id == -1)
-                {                    
-                    if (this.InvokeRequired)
-                    {
-                        this.Invoke(new MethodInvoker(delegate { this.Dispose(); }));
-                    } else
-                    {
-                        this.Dispose();
-                    }
-                    return;
-                }
-
-                for (int i = 0; i < currTvShow.Seasons.Length; i++)
-                {
-                    Season currSeason = currTvShow.Seasons[i];
-                    for (int j = 0; j < currSeason.Episodes.Length; j++)
-                    {
-                        if (currEpisode.Name.Equals(currSeason.Episodes[j].Name))
-                        {
-                            if (j == currSeason.Episodes.Length - 1)
-                            {
-                                //To-do: reset progress bars
-                                if((i == currTvShow.Seasons.Length - 2 && currTvShow.Seasons[currTvShow.Seasons.Length - 1].Id == -1) ||
-                                    i == currTvShow.Seasons.Length - 1)
-                                {
-                                    if (this.InvokeRequired)
-                                    {
-                                        this.Invoke(new MethodInvoker(delegate { this.Dispose(); }));
-                                    }
-                                    else
-                                    {
-                                        this.Dispose();
-                                    }
-                                    return;
-                                } 
-                                else
-                                {
-                                    Console.WriteLine("going from season " + (i) + " to " + (i + 1));
-                                    currSeason = currTvShow.Seasons[i + 1];
-                                    currTvShow.CurrSeason++;
-                                    currEpisode = currSeason.Episodes[0];
-                                    path = currEpisode.Path;
-                                    timeline.Value = 0;
-                                    Media nextMedia = new Media(libVlc, path, FromType.FromPath);
-                                    //To-do: log?
-                                    Console.WriteLine("NEXT: " + path);
-                                    System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
-
-                                    foreach(Control c in tvForm.Controls)
-                                    {
-                                        Button b = c as Button;
-                                        if (b != null && b.Text.Contains("Season"))
-                                        {
-                                            if(b.InvokeRequired)
-                                            {
-                                                b.Invoke(new MethodInvoker(delegate { b.Text = "Season " + currTvShow.CurrSeason; }));
-                                            } else
-                                            {
-                                                b.Text = "Season " + currTvShow.CurrSeason;
-                                            }
-                                        }
-                                    }
-                                    MainForm mainForm = null;
-                                    FormCollection formCollection = Application.OpenForms;
-                                    foreach (Form f_ in formCollection)
-                                    {
-
-                                        if (f_.Name.Equals("MainForm"))
-                                        {
-                                            mainForm = (MainForm) f_;
-                                        }
-                                    }
-                                    if (mainForm == null) throw new ArgumentNullException();
-
-                                    if(mainForm.InvokeRequired)
-                                    {
-                                        mainForm.Invoke(new MethodInvoker(delegate { mainForm.UpdateTvForm(currTvShow); }));
-                                    } else
-                                    {
-                                        mainForm.UpdateTvForm(currTvShow);
-                                    }
-                                    
-                                    return;
-                                }
-                            }
-                            else
-                            { 
-                                currEpisode = currSeason.Episodes[j + 1];
-                                path = currEpisode.Path;
-                                timeline.Value = 0;
-                                Media nextMedia = new Media(libVlc, path, FromType.FromPath);
-                                Console.WriteLine("NEXT: " + path);
-                                System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
-                                return;
-                            }
-                        }
-                    }
-                }
-            } else
-            {
-                if (this.InvokeRequired)
-                {
-                    this.Invoke(new MethodInvoker(delegate { this.Dispose(); }));
-                }
-                else
-                {
-                    this.Dispose();
-                }
-            }
-        }
-
-        private void polling_Tick(object sender, EventArgs e)
-        {
-            //To-do: background colors for buttons
-            //To-do: change play button to pause on hover and opposite 
-            timeline.Visible = false;
-            playButton.Visible = false;
-            closeButton.Visible = false;
-            pollingTimer.Stop();
-        }
+        #region General form functions
 
         private void PlayerForm_Load(object sender, EventArgs e)
         {
@@ -287,19 +162,75 @@ namespace LocalVideoPlayer
                         currEpisode.SavedTime = endTime;
                     }
                 }
-            }
 
-            if (currEpisode.SavedTime > currEpisode.Length)
-            {
-                currEpisode.SavedTime = currEpisode.Length;
-            }
+                if (currEpisode.SavedTime > currEpisode.Length)
+                {
+                    currEpisode.SavedTime = currEpisode.Length;
+                }
 
-            UpdateProgressBar();
+                UpdateProgressBar();
+            }
 
             mediaPlayer.Dispose();
             libVlc.Dispose();
         }
 
+        private void closeButton_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void playButton_Click(object sender, EventArgs e)
+        {
+            if (mediaPlayer.IsPlaying)
+            {
+                playButton.BackgroundImage = Properties.Resources.pause64;
+                mediaPlayer.Pause();
+                pollingTimer.Stop();
+            }
+            else
+            {
+                playButton.BackgroundImage = Properties.Resources.play64;
+                mediaPlayer.Play();
+                pollingTimer.Start();
+            }
+        }
+
+        private void polling_Tick(object sender, EventArgs e)
+        {
+            //To-do: background colors for buttons
+            //To-do: change play button to pause on hover and opposite 
+            timeline.Visible = false;
+            playButton.Visible = false;
+            closeButton.Visible = false;
+            pollingTimer.Stop();
+        }
+
+        private void control_MouseEnter(object sender, EventArgs e)
+        {
+            pollingTimer.Stop();
+        }
+
+        private void control_MouseLeave(object sender, EventArgs e)
+        {
+            pollingTimer.Start();
+        }
+
+        #endregion
+
+        #region Progress bar
+
+        static public ProgressBar CreateProgressBar(long savedTime, long length)
+        {
+            //To-do: min time before showing and max time before filling completely
+            ProgressBar progressBar = new ProgressBar();
+            progressBar.Height = 10;
+            progressBar.Width = 300;
+            progressBar.Maximum = (int)length;
+            progressBar.Value = (int)savedTime;
+            progressBar.Name = "pBar";
+            return progressBar;
+        }
         private void UpdateProgressBar()
         {
             Panel episodePanel = null;
@@ -344,7 +275,7 @@ namespace LocalVideoPlayer
                 progressBar.Location = new Point(pBox.Location.X, pBox.Location.Y + pBox.Height);
                 if (episodePanel.InvokeRequired)
                 {
-                    //To-do: make sure right invoke
+                    //To-do: make sure right invoke https://stackoverflow.com/questions/229554/whats-the-difference-between-invoke-and-begininvoke
                     episodePanel.Invoke(new MethodInvoker(delegate
                     {
                         episodePanel.Controls.Add(progressBar);
@@ -381,37 +312,129 @@ namespace LocalVideoPlayer
             }
         }
 
+        #endregion
 
-        static public ProgressBar CreateProgressBar(long savedTime, long length)
-        {
-            //To-do: min time before showing and max time before filling completely
-            ProgressBar progressBar = new ProgressBar();
-            progressBar.Height = 10;
-            progressBar.Width = 300;
-            progressBar.Maximum = (int)length;
-            progressBar.Value = (int)savedTime;
-            progressBar.Name = "pBar";
-            return progressBar;
-        }
+        #region Media player 
 
-        private void closeButton_Click(object sender, EventArgs e)
+        private void mediaPlayer_EndReached(object sender, EventArgs e)
         {
-            this.Close();
-        }
-
-        private void playButton_Click(object sender, EventArgs e)
-        {
-            if (mediaPlayer.IsPlaying)
+            if (currTvShow != null)
             {
-                playButton.BackgroundImage = Properties.Resources.pause64;
-                mediaPlayer.Pause();
-                pollingTimer.Stop();
+                currEpisode.SavedTime = currEpisode.Length;
+                UpdateProgressBar();
+
+                if (currEpisode.Id == -1)
+                {
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new MethodInvoker(delegate { this.Dispose(); }));
+                    }
+                    else
+                    {
+                        this.Dispose();
+                    }
+                    return;
+                }
+
+                for (int i = 0; i < currTvShow.Seasons.Length; i++)
+                {
+                    Season currSeason = currTvShow.Seasons[i];
+                    for (int j = 0; j < currSeason.Episodes.Length; j++)
+                    {
+                        if (currEpisode.Name.Equals(currSeason.Episodes[j].Name))
+                        {
+                            if (j == currSeason.Episodes.Length - 1)
+                            {
+                                //To-do: reset progress bars
+                                if ((i == currTvShow.Seasons.Length - 2 && currTvShow.Seasons[currTvShow.Seasons.Length - 1].Id == -1) ||
+                                    i == currTvShow.Seasons.Length - 1)
+                                {
+                                    if (this.InvokeRequired)
+                                    {
+                                        this.Invoke(new MethodInvoker(delegate { this.Dispose(); }));
+                                    }
+                                    else
+                                    {
+                                        this.Dispose();
+                                    }
+                                    return;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("going from season " + (i) + " to " + (i + 1));
+                                    currSeason = currTvShow.Seasons[i + 1];
+                                    currTvShow.CurrSeason++;
+                                    currEpisode = currSeason.Episodes[0];
+                                    path = currEpisode.Path;
+                                    timeline.Value = 0;
+                                    Media nextMedia = new Media(libVlc, path, FromType.FromPath);
+                                    //To-do: log?
+                                    Console.WriteLine("NEXT: " + path);
+                                    System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
+
+                                    foreach (Control c in tvForm.Controls)
+                                    {
+                                        Button b = c as Button;
+                                        if (b != null && b.Text.Contains("Season"))
+                                        {
+                                            if (b.InvokeRequired)
+                                            {
+                                                b.Invoke(new MethodInvoker(delegate { b.Text = "Season " + currTvShow.CurrSeason; }));
+                                            }
+                                            else
+                                            {
+                                                b.Text = "Season " + currTvShow.CurrSeason;
+                                            }
+                                        }
+                                    }
+                                    MainForm mainForm = null;
+                                    FormCollection formCollection = Application.OpenForms;
+                                    foreach (Form f_ in formCollection)
+                                    {
+
+                                        if (f_.Name.Equals("MainForm"))
+                                        {
+                                            mainForm = (MainForm)f_;
+                                        }
+                                    }
+                                    if (mainForm == null) throw new ArgumentNullException();
+
+                                    if (mainForm.InvokeRequired)
+                                    {
+                                        mainForm.Invoke(new MethodInvoker(delegate { mainForm.UpdateTvForm(currTvShow); }));
+                                    }
+                                    else
+                                    {
+                                        mainForm.UpdateTvForm(currTvShow);
+                                    }
+
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                currEpisode = currSeason.Episodes[j + 1];
+                                path = currEpisode.Path;
+                                timeline.Value = 0;
+                                Media nextMedia = new Media(libVlc, path, FromType.FromPath);
+                                Console.WriteLine("NEXT: " + path);
+                                System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
+                                return;
+                            }
+                        }
+                    }
+                }
             }
             else
             {
-                playButton.BackgroundImage = Properties.Resources.play64;
-                mediaPlayer.Play();
-                pollingTimer.Start();
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new MethodInvoker(delegate { this.Dispose(); }));
+                }
+                else
+                {
+                    this.Dispose();
+                }
             }
         }
 
@@ -428,13 +451,17 @@ namespace LocalVideoPlayer
             }
         }
 
+        #endregion
+
+        #region Timeline
+
         private void timeline_ValueChanged(object sender, long value)
         {
             if (mouseDown)
             {
                 TimeSpan lengthTime = TimeSpan.FromMilliseconds(mediaPlayer.Length);
                 TimeSpan seekTime = TimeSpan.FromMilliseconds(value);
-                if(seekTime.TotalMilliseconds > lengthTime.TotalMilliseconds)
+                if (seekTime.TotalMilliseconds > lengthTime.TotalMilliseconds)
                 {
                     timeline.Value = (long)lengthTime.TotalMilliseconds;
                 }
@@ -516,15 +543,7 @@ namespace LocalVideoPlayer
             mouseDown = true;
         }
 
-        private void control_MouseEnter(object sender, EventArgs e)
-        {
-            pollingTimer.Stop();
-        }
-
-        private void control_MouseLeave(object sender, EventArgs e)
-        {
-            pollingTimer.Start();
-        }
+        #endregion
     }
 
     public class RoundButton : Button
