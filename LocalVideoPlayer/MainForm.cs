@@ -518,7 +518,8 @@ namespace LocalVideoPlayer
             }
 
             CustomDialog.UpdateScrollBar(customScrollbar, masterPanel);
-            tvForm.Refresh();
+
+            mainPanel.Refresh();
         }
 
         private List<Control> CreateEpisodePanels(TvShow tvShow)

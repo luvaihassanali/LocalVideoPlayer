@@ -231,6 +231,7 @@ namespace LocalVideoPlayer
             progressBar.Name = "pBar";
             return progressBar;
         }
+
         private void UpdateProgressBar()
         {
             Panel episodePanel = null;
@@ -275,7 +276,7 @@ namespace LocalVideoPlayer
                 progressBar.Location = new Point(pBox.Location.X, pBox.Location.Y + pBox.Height);
                 if (episodePanel.InvokeRequired)
                 {
-                    //To-do: make sure right invoke https://stackoverflow.com/questions/229554/whats-the-difference-between-invoke-and-begininvoke
+                    //https://stackoverflow.com/questions/229554/whats-the-difference-between-invoke-and-begininvoke
                     episodePanel.Invoke(new MethodInvoker(delegate
                     {
                         episodePanel.Controls.Add(progressBar);
@@ -401,7 +402,7 @@ namespace LocalVideoPlayer
 
                                     if (mainForm.InvokeRequired)
                                     {
-                                        mainForm.Invoke(new MethodInvoker(delegate { mainForm.UpdateTvForm(currTvShow); }));
+                                        mainForm.BeginInvoke(new MethodInvoker(delegate { mainForm.UpdateTvForm(currTvShow); }));
                                     }
                                     else
                                     {
