@@ -72,7 +72,7 @@ namespace LocalVideoPlayer
         private void MainForm_Load(object sender, EventArgs e)
         {
             loadingCircle1.Location = new Point(this.Width / 2 - loadingCircle1.Width / 2, this.Height / 2 - loadingCircle1.Height / 2);
-            loadingLabel.Location = new Point((int)(this.Width / 2 - loadingLabel.Width / 1.65), this.Height / 2 - loadingLabel.Height / 2); //loadingCircle1.Location.Y + loadingCircle1.Height);
+            loadingLabel.Location = new Point((int)(this.Width / 2 - loadingLabel.Width / 1.60), this.Height / 2 - loadingLabel.Height / 2); //loadingCircle1.Location.Y + loadingCircle1.Height);
             loadingLabel.Size = new Size(this.Width / 2, loadingLabel.Height);
         }
 
@@ -459,7 +459,7 @@ namespace LocalVideoPlayer
 
             foreach (Control c in tvForm.Controls)
             {
-                if(c.Name.Equals("customScrollbar"))
+                if (c.Name.Equals("customScrollbar"))
                 {
                     customScrollbar = (CustomScrollbar)c;
                 }
@@ -1081,21 +1081,23 @@ namespace LocalVideoPlayer
         }
 
         private void UpdateLoadingLabel(string text)
-        {             
-            if(text == null)
+        {
+            Console.WriteLine(text);
+            if (text == null)
             {
                 loadingLabel.Invoke(new MethodInvoker(delegate
                 {
                     loadingLabel.BringToFront();
                 }));
             }
-            if(loadingLabel.InvokeRequired)
+            if (loadingLabel.InvokeRequired)
             {
                 loadingLabel.BeginInvoke(new MethodInvoker(delegate
                 {
                     loadingLabel.Text = text;
                 }));
-            } else
+            }
+            else
             {
                 loadingLabel.Text = text;
             }
@@ -1283,17 +1285,17 @@ namespace LocalVideoPlayer
                     for (int j = 0; j < tvShow.Seasons.Length; j++)
                     {
                         Season season = tvShow.Seasons[j];
-                        
+
                         if (season.Id == -1) continue;
 
-                        string seasonLabel = tvShow.Seasons[j].Id == -1 ? "Extras" : j.ToString();
+                        string seasonLabel = tvShow.Seasons[j].Id == -1 ? "Extras" : (j + 1).ToString();
                         UpdateLoadingLabel("Processing: " + tvShow.Name + " Season " + seasonLabel);
 
                         string seasonApiCall = tvSeasonGet.Replace("{tv_id}", tvShow.Id.ToString()).Replace("{season_number}", seasonIndex.ToString());
                         string seasonString = client.DownloadString(seasonApiCall);
                         JObject seasonObject = JObject.Parse(seasonString);
 
-                        if (!((string)seasonObject["name"]).Contains("Season"))
+                        if (((string)seasonObject["name"]).Contains("Specials"))
                         {
                             seasonIndex++;
                             seasonString = client.DownloadString(tvSeasonGet.Replace("{tv_id}", tvShow.Id.ToString()).Replace("{season_number}", seasonIndex.ToString()));
@@ -1348,12 +1350,23 @@ namespace LocalVideoPlayer
 
                                 string oldPath = episode.Path;
                                 string newPath = oldPath.Replace(episode.Name, (string)jEpisode["name"]);
-                                string invalid = new string(Path.GetInvalidPathChars()) + '?';
+                                string invalid = new string(Path.GetInvalidPathChars()) + '?' + ':';
                                 foreach (char c in invalid)
                                 {
                                     newPath = newPath.Replace(c.ToString(), "");
                                 }
-                                File.Move(oldPath, newPath);
+                                try
+                                {
+                                    char drive = newPath[0];
+                                    string drivePath = drive + ":";
+                                    newPath = ReplaceFirst(newPath, drive.ToString(), drivePath);
+
+                                    File.Move(oldPath, newPath);
+                                }
+                                catch (Exception e)
+                                {
+                                    CustomDialog.ShowMessage("Error", e.Message, this.Width, this.Height);
+                                }
 
                                 episode.Path = newPath;
                                 episode.Name = (string)jEpisode["name"];
@@ -1370,13 +1383,23 @@ namespace LocalVideoPlayer
                                 }
                             }
                         }
-                        seasonIndex++; 
+                        seasonIndex++;
                     }
                 }
             }
 
             string jsonString = JsonConvert.SerializeObject(media);
             File.WriteAllText(jsonFile, jsonString);
+        }
+
+        private string ReplaceFirst(string text, string search, string replace)
+        {
+            int pos = text.IndexOf(search);
+            if (pos < 0)
+            {
+                return text;
+            }
+            return text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
         }
 
         private async Task DownloadImage(string imagePath, string name, bool isMovie, CancellationToken token)
@@ -1503,6 +1526,7 @@ namespace LocalVideoPlayer
                         extras.Episodes[j] = extraEpisodes[j];
                     }
                     show.Seasons[show.Seasons.Length - 1] = extras;
+                    continue;
                 }
 
                 if (!seasonEntries[i].Contains("Season")) continue;

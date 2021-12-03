@@ -18,12 +18,12 @@ namespace LocalVideoPlayer
         private long seekTime;
         private int runningTime;
         private Timer pollingTimer;
-
+        private bool controlsVisible = false;
         private bool mouseDown = false;
         private bool timePanelActive = false;
         private Panel timePanel = null;
         private Label timeLabel = null;
-
+        
         public PlayerForm(string p, long s, int r, TvShow t, Episode ep, Form tf)
         {
             if (!DesignMode)
@@ -57,7 +57,7 @@ namespace LocalVideoPlayer
 
             mediaPlayer.TimeChanged += (sender, e) =>
             {
-                if (!mouseDown)
+                if (!mouseDown || controlsVisible)
                 {
                     timeline.Value = mediaPlayer.Time;
                 }
@@ -111,7 +111,7 @@ namespace LocalVideoPlayer
             Console.WriteLine("LOAD: " + path);
             if (seekTime != 0 && result)
             {
-                if (seekTime < mediaPlayer.Length)
+                if (seekTime < currEpisode.Length)
                 {
                     mediaPlayer.SeekTo(TimeSpan.FromMilliseconds(seekTime));
                 }
@@ -203,6 +203,7 @@ namespace LocalVideoPlayer
             timeline.Visible = false;
             playButton.Visible = false;
             closeButton.Visible = false;
+            controlsVisible = false;
             pollingTimer.Stop();
         }
 
@@ -235,6 +236,7 @@ namespace LocalVideoPlayer
         private void UpdateProgressBar()
         {
             Panel episodePanel = null;
+            Panel mainPanel = null;
             foreach (Control c in tvForm.Controls)
             {
                 Panel p_ = c as Panel;
@@ -245,6 +247,7 @@ namespace LocalVideoPlayer
                         Panel p = ctrl as Panel;
                         if (p != null && p.Name.Equals("mainPanel"))
                         {
+                            mainPanel = p;
                             foreach (Control c_ in p.Controls)
                             {
                                 Panel ePanel = c_ as Panel;
@@ -310,6 +313,17 @@ namespace LocalVideoPlayer
                         }
                     }
                 }
+            }
+            if (mainPanel.InvokeRequired)
+            {
+                mainPanel.Invoke(new MethodInvoker(delegate
+                {
+                    mainPanel.Refresh();
+                }));
+            }
+            else
+            {
+                mainPanel.Refresh();
             }
         }
 
@@ -449,6 +463,7 @@ namespace LocalVideoPlayer
                 playButton.Visible = true;
                 closeButton.Visible = true;
                 timeline.Visible = true;
+                controlsVisible = true;
             }
         }
 
