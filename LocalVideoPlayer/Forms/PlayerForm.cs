@@ -26,6 +26,7 @@ namespace LocalVideoPlayer
         
         public PlayerForm(string p, long s, int r, TvShow t, Episode ep, Form tf)
         {
+            //To-do: detect media load then play
             if (!DesignMode)
             {
                 Core.Initialize();
@@ -48,7 +49,7 @@ namespace LocalVideoPlayer
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
             libVlc = new LibVLC();
             mediaPlayer = new MediaPlayer(libVlc);
-
+            
             mediaPlayer.EnableMouseInput = false;
             mediaPlayer.EnableKeyInput = false;
 
@@ -107,6 +108,7 @@ namespace LocalVideoPlayer
 
             FileInfo media = new FileInfo(path);
             Media currentMedia = new Media(libVlc, path, FromType.FromPath);
+
             bool result = mediaPlayer.Play(currentMedia);
             Console.WriteLine("LOAD: " + path);
             if (seekTime != 0 && result)
