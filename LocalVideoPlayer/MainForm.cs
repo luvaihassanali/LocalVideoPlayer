@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
@@ -45,10 +46,13 @@ namespace LocalVideoPlayer
 
         public MainForm()
         {
+            //Process applicaitionProcess = Process.GetCurrentProcess();
+            //applicaitionProcess.PriorityClass = ProcessPriorityClass.High;
+
             InitializeComponent();
 
-            backgroundWorker1.DoWork += new DoWorkEventHandler(backgroundWorker1_DoWork);
-            backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(backgroundWorker1_RunWorkerCompleted);
+            backgroundWorker1.DoWork += new DoWorkEventHandler(BackgroundWorker1_DoWork);
+            backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BackgroundWorker1_RunWorkerCompleted);
             backgroundWorker1.RunWorkerAsync();
 
             loadingCircle1.Active = true;
@@ -82,7 +86,7 @@ namespace LocalVideoPlayer
             seasonDimmerForm.Close();
         }
 
-        private void closeButton_Click(object sender, EventArgs e)
+        private void CloseButton_Click(object sender, EventArgs e)
         {
             Button closeButton = sender as Button;
             Panel mainPanel = closeButton.Parent as Panel;
@@ -104,17 +108,17 @@ namespace LocalVideoPlayer
             closeButton.FlatStyle = FlatStyle.Flat;
             closeButton.Name = "closeButton";
             closeButton.Size = new Size(64, 64);
-            closeButton.Click += closeButton_Click;
+            closeButton.Click += CloseButton_Click;
             return closeButton;
         }
 
-        private void customScrollbar_Scroll(object sender, EventArgs e)
+        private void CustomScrollbar_Scroll(object sender, EventArgs e)
         {
             mainFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
             closeButton.Visible = customScrollbar.Value == 0 ? true : false;
         }
 
-        private void mainFormMainPanel_MouseWheel(object sender, MouseEventArgs e)
+        private void MainFormMainPanel_MouseWheel(object sender, MouseEventArgs e)
         {
             int newVal = -mainFormMainPanel.AutoScrollPosition.Y;
             closeButton.Visible = newVal == 0 ? true : false;
@@ -123,16 +127,16 @@ namespace LocalVideoPlayer
             Application.DoEvents();
         }
 
-        private void headerLabel_Paint(object sender, PaintEventArgs e)
+        private void HeaderLabel_Paint(object sender, PaintEventArgs e)
         {
-            float fontSize = newHeaderFontSize(e.Graphics, this.Bounds.Size, movieLabel.Font, movieLabel.Text);
+            float fontSize = GetHeaderFontSize(e.Graphics, this.Bounds.Size, movieLabel.Font, movieLabel.Text);
             Font f = new Font("Arial", fontSize, FontStyle.Bold);
             movieLabel.Font = f;
             tvLabel.Font = f;
         }
 
         //To-do: apply to all other fonts
-        public static float newHeaderFontSize(Graphics graphics, Size size, Font font, string str)
+        public static float GetHeaderFontSize(Graphics graphics, Size size, Font font, string str)
         {
             SizeF stringSize = graphics.MeasureString(str, font);
             float ratio = (size.Height / stringSize.Height) / 10;
@@ -143,7 +147,7 @@ namespace LocalVideoPlayer
 
         #region Tv
 
-        private void tvShowEpisodeBox_Click(object sender, EventArgs e)
+        private void TvShowEpisodeBox_Click(object sender, EventArgs e)
         {
             isPlaying = true;
             PictureBox p = sender as PictureBox;
@@ -166,7 +170,7 @@ namespace LocalVideoPlayer
             LaunchVlc(showName, episodeName, path, tvForm);
         }
 
-        private void tvShowBox_Click(object sender, EventArgs e)
+        private void TvShowBox_Click(object sender, EventArgs e)
         {
             Form tvForm = new TvForm();
 
@@ -224,7 +228,7 @@ namespace LocalVideoPlayer
                 }
             }
             if (closeButton == null) throw new ArgumentNullException();
-            closeButton.Click += closeButton_Click;
+            closeButton.Click += CloseButton_Click;
             closeButton.Location = new Point(tvForm.Width - (int)(closeButton.Width * 1.45), (closeButton.Width / 8));
 
             Font mainHeaderFont = new Font("Arial", 26, FontStyle.Bold);
@@ -529,7 +533,7 @@ namespace LocalVideoPlayer
                 episodeBox.BackColor = SystemColors.Desktop;
                 episodeBox.Cursor = Cursors.Hand;
                 episodeBox.SizeMode = PictureBoxSizeMode.CenterImage;
-                episodeBox.Click += tvShowEpisodeBox_Click;
+                episodeBox.Click += TvShowEpisodeBox_Click;
                 episodeBox.Name = currEpisode.Path;
 
                 //To-do: set minimum time for bar to show up
@@ -812,7 +816,7 @@ namespace LocalVideoPlayer
 
         #region Movies
 
-        private void movieBackdropBox_Click(object sender, EventArgs e)
+        private void MovieBackdropBox_Click(object sender, EventArgs e)
         {
             PictureBox p = sender as PictureBox;
             string path = p.Name;
@@ -821,7 +825,7 @@ namespace LocalVideoPlayer
             LaunchVlc(movieName, null, path, null);
         }
 
-        private void movieBox_Click(object sender, EventArgs e)
+        private void MovieBox_Click(object sender, EventArgs e)
         {
             Form movieForm = new Form();
             PictureBox p = sender as PictureBox;
@@ -853,7 +857,7 @@ namespace LocalVideoPlayer
             movieBackdropBox.Cursor = Cursors.Hand;
             movieBackdropBox.SizeMode = PictureBoxSizeMode.CenterImage;
             movieBackdropBox.Name = movie.Path;
-            movieBackdropBox.Click += movieBackdropBox_Click;
+            movieBackdropBox.Click += MovieBackdropBox_Click;
 
             movieBackdropBox.MouseEnter += (s, ev) =>
             {
@@ -918,7 +922,7 @@ namespace LocalVideoPlayer
             mainFormMainPanel.Size = this.Size;
             mainFormMainPanel.AutoScroll = true;
             mainFormMainPanel.Name = "mainFormMainPanel";
-            mainFormMainPanel.MouseWheel += mainFormMainPanel_MouseWheel;
+            mainFormMainPanel.MouseWheel += MainFormMainPanel_MouseWheel;
 
             closeButton.Visible = true;
             closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 8));
@@ -955,7 +959,7 @@ namespace LocalVideoPlayer
                 movieBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 movieBox.Padding = new Padding(20);
                 movieBox.Name = media.Movies[i].Name;
-                movieBox.Click += movieBox_Click;
+                movieBox.Click += MovieBox_Click;
                 currentPanel.Controls.Add(movieBox);
                 count++;
             }
@@ -963,7 +967,7 @@ namespace LocalVideoPlayer
             movieLabel = new Label();
             movieLabel.Text = "Movies";
             movieLabel.Dock = DockStyle.Top;
-            movieLabel.Paint += headerLabel_Paint;
+            movieLabel.Paint += HeaderLabel_Paint;
             movieLabel.AutoSize = true;
             movieLabel.Name = "movieLabel";
             mainFormMainPanel.Controls.Add(movieLabel);
@@ -997,7 +1001,7 @@ namespace LocalVideoPlayer
                 tvShowBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 tvShowBox.Padding = new Padding(20);
                 tvShowBox.Name = media.TvShows[i].Name;
-                tvShowBox.Click += tvShowBox_Click;
+                tvShowBox.Click += TvShowBox_Click;
                 currentPanel.Controls.Add(tvShowBox);
                 count++;
             }
@@ -1005,7 +1009,7 @@ namespace LocalVideoPlayer
             tvLabel = new Label();
             tvLabel.Text = "TV Shows";
             tvLabel.Dock = DockStyle.Top;
-            tvLabel.Paint += headerLabel_Paint;
+            tvLabel.Paint += HeaderLabel_Paint;
             tvLabel.AutoSize = true;
             tvLabel.Name = "tvLabel";
 
@@ -1013,7 +1017,7 @@ namespace LocalVideoPlayer
             mainFormMainPanel.Width -= 4;
             this.Controls.Add(mainFormMainPanel);
             customScrollbar = CustomDialog.CreateScrollBar(mainFormMainPanel);
-            customScrollbar.Scroll += customScrollbar_Scroll;
+            customScrollbar.Scroll += CustomScrollbar_Scroll;
             this.Controls.Add(customScrollbar);
             customScrollbar.BringToFront();
         }
@@ -1490,7 +1494,7 @@ namespace LocalVideoPlayer
             string name = path[path.Length - 1].Split('%')[0];
             TvShow show = new TvShow(name.Trim());
             string[] seasonEntries = Directory.GetDirectories(targetDir);
-            Array.Sort(seasonEntries, seasonComparer);
+            Array.Sort(seasonEntries, SeasonComparer);
             show.Seasons = new Season[seasonEntries.Length];
             for (int i = 0; i < seasonEntries.Length; i++)
             {
@@ -1558,7 +1562,7 @@ namespace LocalVideoPlayer
             }
         }
 
-        private int seasonComparer(string seasonB, string seasonA)
+        private int SeasonComparer(string seasonB, string seasonA)
         {
             if (seasonB.Contains("Extras"))
             {
@@ -1581,7 +1585,7 @@ namespace LocalVideoPlayer
 
         #region Background worker
 
-        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
+        private void BackgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker worker = sender as BackgroundWorker;
 
@@ -1603,12 +1607,7 @@ namespace LocalVideoPlayer
             }
         }
 
-        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            loadingLabel.Text = e.ProgressPercentage.ToString() + "%  - " + e.UserState.ToString();
-        }
-
-        private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private void BackgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             //To-do: add some sort of text indicator for loading circle on initial launch
             loadingCircle1.Dispose();
@@ -1679,10 +1678,12 @@ namespace LocalVideoPlayer
         private const string genericSingleQuoteSymbol = "â€™";
         private const string openSingleQuoteSymbol = "â€˜";
         private const string closeSingleQuoteSymbol = "â€™";
-
+        private const string frenchAccentAigu = "Ã©";
+        private const string frenchAccentGrave = "Ã";
         public static string fixBrokenQuotes(this string str)
         {
-            return str.Replace(genericSingleQuoteSymbol, targetSingleQuoteSymbol).Replace(openSingleQuoteSymbol, targetSingleQuoteSymbol).Replace(closeSingleQuoteSymbol, targetSingleQuoteSymbol);
+            return str.Replace(genericSingleQuoteSymbol, targetSingleQuoteSymbol).Replace(openSingleQuoteSymbol, targetSingleQuoteSymbol)
+                .Replace(closeSingleQuoteSymbol, targetSingleQuoteSymbol).Replace(frenchAccentAigu, "e").Replace(frenchAccentGrave, "a");
         }
     }
 }

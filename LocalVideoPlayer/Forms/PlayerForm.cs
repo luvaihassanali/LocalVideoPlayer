@@ -1,4 +1,5 @@
 ﻿using LibVLCSharp.Shared;
+using LocalVideoPlayer.Forms;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -18,12 +19,11 @@ namespace LocalVideoPlayer
         private long seekTime;
         private int runningTime;
         private Timer pollingTimer;
-        private bool controlsVisible = false;
         private bool mouseDown = false;
         private bool timePanelActive = false;
         private Panel timePanel = null;
         private Label timeLabel = null;
-        
+
         public PlayerForm(string p, long s, int r, TvShow t, Episode ep, Form tf)
         {
             //To-do: detect media load then play
@@ -47,9 +47,11 @@ namespace LocalVideoPlayer
             timeline.Value = seekTime;
 
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
-            libVlc = new LibVLC();
+            libVlc = new LibVLC(); // "--verbose=2");
+            //libVlc.SetLogFile("vlclog.txt");
+            //libVlc.Log += (sender, e) => Console.WriteLine($"[{e.Level}] {e.Module}:{e.Message}");
+
             mediaPlayer = new MediaPlayer(libVlc);
-            
             mediaPlayer.EnableMouseInput = false;
             mediaPlayer.EnableKeyInput = false;
 
@@ -58,11 +60,11 @@ namespace LocalVideoPlayer
 
             mediaPlayer.TimeChanged += (sender, e) =>
             {
-                if (!mouseDown || controlsVisible)
+                if (!mouseDown)
                 {
                     timeline.Value = mediaPlayer.Time;
-                }
 
+                }
             };
 
             mediaPlayer.LengthChanged += (sender, e) =>
@@ -80,7 +82,7 @@ namespace LocalVideoPlayer
                 throw new Exception("VLC error");
             };
 
-            mediaPlayer.EndReached += mediaPlayer_EndReached;
+            mediaPlayer.EndReached += MediaPlayer_EndReached;
 
             /*mediaPlayer.Buffering += (sender, e) =>
             {
@@ -88,7 +90,7 @@ namespace LocalVideoPlayer
             };*/
 
             pollingTimer = new Timer();
-            pollingTimer.Tick += new EventHandler(polling_Tick);
+            pollingTimer.Tick += new EventHandler(Polling_Tick);
             pollingTimer.Interval = 2000;
         }
 
@@ -97,17 +99,19 @@ namespace LocalVideoPlayer
         private void PlayerForm_Load(object sender, EventArgs e)
         {
             closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.25), (closeButton.Width / 4));
+            closeButton.BringToFront();
             playButton.Location = new Point(playButton.Width / 4, this.Height - (int)(playButton.Width * 1.25));
+            playButton.BringToFront();
             timeline.Size = new Size(this.Width - (int)(playButton.Width * 4), playButton.Height / 2);
             timeline.Location = new Point(playButton.Width * 2, this.Height - playButton.Height);
+            //timePanel.Location = new Point(this.Width - timeLabel.Width, this.Height - timeLabel.Height);
 
-
-            this.Cursor = new Cursor(Cursor.Current.Handle);
-            Cursor.Position = new Point(0, this.Height * 2);
-            this.Cursor = Cursors.Default;
+            //this.Cursor = new Cursor(Cursor.Current.Handle);
+            //Cursor.Position = new Point(0, this.Height * 2);
+            //this.Cursor = Cursors.Default;
 
             FileInfo media = new FileInfo(path);
-            Media currentMedia = new Media(libVlc, path, FromType.FromPath);
+            Media currentMedia = CreateMedia(libVlc, path, FromType.FromPath);
 
             bool result = mediaPlayer.Play(currentMedia);
             Console.WriteLine("LOAD: " + path);
@@ -177,12 +181,12 @@ namespace LocalVideoPlayer
             libVlc.Dispose();
         }
 
-        private void closeButton_Click(object sender, EventArgs e)
+        private void CloseButton_Click(object sender, EventArgs e)
         {
             this.Close();
         }
 
-        private void playButton_Click(object sender, EventArgs e)
+        private void PlayButton_Click(object sender, EventArgs e)
         {
             if (mediaPlayer.IsPlaying)
             {
@@ -198,23 +202,23 @@ namespace LocalVideoPlayer
             }
         }
 
-        private void polling_Tick(object sender, EventArgs e)
+        private void Polling_Tick(object sender, EventArgs e)
         {
             //To-do: background colors for buttons
             //To-do: change play button to pause on hover and opposite 
+            //timePanel.Visible = false;
             timeline.Visible = false;
             playButton.Visible = false;
             closeButton.Visible = false;
-            controlsVisible = false;
             pollingTimer.Stop();
         }
 
-        private void control_MouseEnter(object sender, EventArgs e)
+        private void Control_MouseEnter(object sender, EventArgs e)
         {
             pollingTimer.Stop();
         }
 
-        private void control_MouseLeave(object sender, EventArgs e)
+        private void Control_MouseLeave(object sender, EventArgs e)
         {
             pollingTimer.Start();
         }
@@ -333,7 +337,15 @@ namespace LocalVideoPlayer
 
         #region Media player 
 
-        private void mediaPlayer_EndReached(object sender, EventArgs e)
+        private Media CreateMedia(LibVLC libVlc, string path, FromType fromPath)
+        {
+            Media media = new Media(libVlc, path, FromType.FromPath);
+            media.AddOption(":avcodec-threads=6");
+            media.AddOption(":no-mkv-preload-local-dir");
+            return media;
+        }
+
+        private void MediaPlayer_EndReached(object sender, EventArgs e)
         {
             if (currTvShow != null)
             {
@@ -384,7 +396,7 @@ namespace LocalVideoPlayer
                                     currEpisode = currSeason.Episodes[0];
                                     path = currEpisode.Path;
                                     timeline.Value = 0;
-                                    Media nextMedia = new Media(libVlc, path, FromType.FromPath);
+                                    Media nextMedia = CreateMedia(libVlc, path, FromType.FromPath);
                                     //To-do: log?
                                     Console.WriteLine("NEXT: " + path);
                                     System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
@@ -433,7 +445,7 @@ namespace LocalVideoPlayer
                                 currEpisode = currSeason.Episodes[j + 1];
                                 path = currEpisode.Path;
                                 timeline.Value = 0;
-                                Media nextMedia = new Media(libVlc, path, FromType.FromPath);
+                                Media nextMedia = CreateMedia(libVlc, path, FromType.FromPath);
                                 Console.WriteLine("NEXT: " + path);
                                 System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
                                 return;
@@ -455,7 +467,7 @@ namespace LocalVideoPlayer
             }
         }
 
-        private void videoView1_MouseMove(object sender, MouseEventArgs e)
+        private void VideoView1_MouseMove(object sender, MouseEventArgs e)
         {
             Point p = PointToClient(Cursor.Position);
             if (p.Y < this.Height / 6)
@@ -465,7 +477,7 @@ namespace LocalVideoPlayer
                 playButton.Visible = true;
                 closeButton.Visible = true;
                 timeline.Visible = true;
-                controlsVisible = true;
+                //timePanel.Visible = true;
             }
         }
 
@@ -473,7 +485,7 @@ namespace LocalVideoPlayer
 
         #region Timeline
 
-        private void timeline_ValueChanged(object sender, long value)
+        private void Timeline_ValueChanged(object sender, long value)
         {
             if (mouseDown)
             {
@@ -483,7 +495,7 @@ namespace LocalVideoPlayer
                 {
                     timeline.Value = (long)lengthTime.TotalMilliseconds;
                 }
-                mediaPlayer.SeekTo(seekTime);
+                //mediaPlayer.SeekTo(seekTime);
                 string timeString;
 
                 if (value > 3600000) //hour in ms
@@ -494,18 +506,17 @@ namespace LocalVideoPlayer
                 {
                     timeString = seekTime.ToString(@"mm\:ss") + "/" + lengthTime.ToString(@"mm\:ss");
                 }
-
+#pragma warning disable CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
                 if (timePanelActive)
                 {
                     try
                     {
-#pragma warning disable CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
+
                         timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width * 2.25), timeline.Location.Y - timePanel.Height - 10);
-#pragma warning restore CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
                     }
                     catch (Exception e)
                     {
-                        throw e;
+                        CustomDialog.ShowMessage("Error", e.Message, this.Width, this.Height);
                     }
                     timeLabel.Text = timeString;
                 }
@@ -514,14 +525,15 @@ namespace LocalVideoPlayer
                     timePanel = new Panel();
                     try
                     {
-#pragma warning disable CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
                         timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width * 2.25), timeline.Location.Y - timePanel.Height - 10);
-#pragma warning restore CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
+
                     }
                     catch (Exception e)
                     {
-                        throw e;
+                        CustomDialog.ShowMessage("Error", e.Message, this.Width, this.Height);
                     }
+#pragma warning restore CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
+
                     Font f = new Font("Arial", 12, FontStyle.Bold);
                     timeLabel = new Label();
                     timeLabel.Text = timeString;
@@ -540,11 +552,49 @@ namespace LocalVideoPlayer
                     timePanelActive = true;
                 }
             }
+            /*
+                        if (mediaPlayer != null)
+                        {
+                            TimeSpan seekTime = TimeSpan.FromMilliseconds(value);
+                            TimeSpan lengthTime = TimeSpan.FromMilliseconds(mediaPlayer.Length);
+                            string timeString;
+
+                            if (value > 3600000) //hour in ms
+                            {
+                                timeString = seekTime.ToString(@"hh\:mm\:ss") + "/" + lengthTime.ToString(@"hh\:mm\:ss");
+                            }
+                            else
+                            {
+                                timeString = seekTime.ToString(@"mm\:ss") + "/" + lengthTime.ToString(@"mm\:ss");
+                            }
+
+                            if (timeLabel.InvokeRequired)
+                            {
+                                timeLabel.BeginInvoke(new MethodInvoker(delegate { timeLabel.Text = timeString; }));
+                            }
+                            else
+                            {
+                                timeLabel.Text = timeString;
+                            }
+
+                            if (mouseDown)
+                            {
+                                if (seekTime.TotalMilliseconds > lengthTime.TotalMilliseconds)
+                                {
+                                    mediaPlayer.SeekTo(lengthTime);
+                                } else
+                                {
+                                    mediaPlayer.SeekTo(seekTime);
+                                }
+                            }
+                        }
+            */
         }
 
-        private void timeline_MouseUp(object sender, MouseEventArgs e)
+        private void Timeline_MouseUp(object sender, MouseEventArgs e)
         {
             mouseDown = false;
+
             timePanelActive = false;
 
             if (timePanel != null)
@@ -556,7 +606,7 @@ namespace LocalVideoPlayer
             mediaPlayer.SeekTo(ts);
         }
 
-        private void timeline_MouseDown(object sender, MouseEventArgs e)
+        private void Timeline_MouseDown(object sender, MouseEventArgs e)
         {
             mouseDown = true;
         }

@@ -60,7 +60,7 @@ namespace LocalVideoPlayer
             this.closeButton.TabIndex = 10;
             this.closeButton.UseVisualStyleBackColor = true;
             this.closeButton.Visible = false;
-            this.closeButton.Click += new System.EventHandler(this.closeButton_Click);
+            this.closeButton.Click += new System.EventHandler(this.CloseButton_Click);
             // 
             // loadingCircle1
             // 
