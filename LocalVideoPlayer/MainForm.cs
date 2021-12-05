@@ -46,10 +46,13 @@ namespace LocalVideoPlayer
 
         public MainForm()
         {
-            //Process applicaitionProcess = Process.GetCurrentProcess();
-            //applicaitionProcess.PriorityClass = ProcessPriorityClass.High;
+            Process applicaitionProcess = Process.GetCurrentProcess();
+            applicaitionProcess.PriorityClass = ProcessPriorityClass.High;
 
             InitializeComponent();
+
+            Cursor cur = new Cursor(Properties.Resources.cursor.Handle);
+            this.Cursor = cur;
 
             backgroundWorker1.DoWork += new DoWorkEventHandler(BackgroundWorker1_DoWork);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BackgroundWorker1_RunWorkerCompleted);
