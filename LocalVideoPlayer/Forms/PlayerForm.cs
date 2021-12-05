@@ -23,6 +23,7 @@ namespace LocalVideoPlayer
         private bool timePanelActive = false;
         private Panel timePanel = null;
         private Label timeLabel = null;
+        private bool controlsVisible = false;
 
         public PlayerForm(string p, long s, int r, TvShow t, Episode ep, Form tf)
         {
@@ -60,7 +61,7 @@ namespace LocalVideoPlayer
 
             mediaPlayer.TimeChanged += (sender, e) =>
             {
-                if (!mouseDown)
+                if (!mouseDown && controlsVisible)
                 {
                     timeline.Value = mediaPlayer.Time;
 
@@ -210,6 +211,7 @@ namespace LocalVideoPlayer
             timeline.Visible = false;
             playButton.Visible = false;
             closeButton.Visible = false;
+            controlsVisible = false;
             pollingTimer.Stop();
         }
 
@@ -477,6 +479,7 @@ namespace LocalVideoPlayer
                 playButton.Visible = true;
                 closeButton.Visible = true;
                 timeline.Visible = true;
+                controlsVisible = true;
                 //timePanel.Visible = true;
             }
         }
@@ -499,7 +502,7 @@ namespace LocalVideoPlayer
                 string timeString;
 
                 if (value > 3600000) //hour in ms
-                { //To-do: show end time
+                {
                     timeString = seekTime.ToString(@"hh\:mm\:ss") + "/" + lengthTime.ToString(@"hh\:mm\:ss");
                 }
                 else
@@ -513,6 +516,7 @@ namespace LocalVideoPlayer
                     {
 
                         timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width * 2.25), timeline.Location.Y - timePanel.Height - 10);
+
                     }
                     catch (Exception e)
                     {
@@ -526,7 +530,6 @@ namespace LocalVideoPlayer
                     try
                     {
                         timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width * 2.25), timeline.Location.Y - timePanel.Height - 10);
-
                     }
                     catch (Exception e)
                     {
@@ -542,10 +545,8 @@ namespace LocalVideoPlayer
 
                     timePanel.Controls.Add(timeLabel);
                     timePanel.ForeColor = SystemColors.Control;
-
                     this.Controls.Add(timePanel);
                     timePanel.BringToFront();
-
                     timePanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
                     timePanel.AutoSize = true;
                     timeLabel.AutoSize = true;
