@@ -27,7 +27,6 @@ namespace LocalVideoPlayer
 
         public PlayerForm(string p, long s, int r, TvShow t, Episode ep, Form tf)
         {
-            //To-do: detect media load then play
             if (!DesignMode)
             {
                 Core.Initialize();
@@ -56,7 +55,6 @@ namespace LocalVideoPlayer
             mediaPlayer.EnableMouseInput = false;
             mediaPlayer.EnableKeyInput = false;
 
-            //To-do: button pop up on hover? instead of color
             videoView1.MediaPlayer = mediaPlayer;
 
             mediaPlayer.TimeChanged += (sender, e) =>
@@ -79,7 +77,6 @@ namespace LocalVideoPlayer
 
             mediaPlayer.EncounteredError += (sender, e) =>
             {
-                //To-do: error dialog
                 throw new Exception("VLC error");
             };
 
@@ -106,7 +103,6 @@ namespace LocalVideoPlayer
             playButton.BringToFront();
             timeline.Size = new Size(this.Width - (int)(playButton.Width * 1.75), playButton.Height / 2);
             timeline.Location = new Point(playButton.Width + 20, this.Height - (int)(playButton.Height * 1.025));
-            //timePanel.Location = new Point(this.Width - timeLabel.Width, this.Height - timeLabel.Height);
 
             this.Cursor = new Cursor(Cursor.Current.Handle);
             Cursor.Position = new Point(0, this.Height * 2);
@@ -205,9 +201,6 @@ namespace LocalVideoPlayer
 
         private void Polling_Tick(object sender, EventArgs e)
         {
-            //To-do: background colors for buttons
-            //To-do: change play button to pause on hover and opposite 
-            //timePanel.Visible = false;
             timeline.Visible = false;
             playButton.Visible = false;
             closeButton.Visible = false;
@@ -231,7 +224,6 @@ namespace LocalVideoPlayer
 
         static public ProgressBar CreateProgressBar(long savedTime, long length)
         {
-            //To-do: min time before showing and max time before filling completely
             ProgressBar progressBar = new ProgressBar();
             progressBar.Height = 10;
             progressBar.Width = 300;
@@ -481,7 +473,6 @@ namespace LocalVideoPlayer
             closeButton.Visible = true;
             timeline.Visible = true;
             controlsVisible = true;
-            //timePanel.Visible = true;
             }
         }
 
@@ -554,43 +545,6 @@ namespace LocalVideoPlayer
                     timePanelActive = true;
                 }
             }
-            /*
-                        if (mediaPlayer != null)
-                        {
-                            TimeSpan seekTime = TimeSpan.FromMilliseconds(value);
-                            TimeSpan lengthTime = TimeSpan.FromMilliseconds(mediaPlayer.Length);
-                            string timeString;
-
-                            if (value > 3600000) //hour in ms
-                            {
-                                timeString = seekTime.ToString(@"hh\:mm\:ss") + "/" + lengthTime.ToString(@"hh\:mm\:ss");
-                            }
-                            else
-                            {
-                                timeString = seekTime.ToString(@"mm\:ss") + "/" + lengthTime.ToString(@"mm\:ss");
-                            }
-
-                            if (timeLabel.InvokeRequired)
-                            {
-                                timeLabel.BeginInvoke(new MethodInvoker(delegate { timeLabel.Text = timeString; }));
-                            }
-                            else
-                            {
-                                timeLabel.Text = timeString;
-                            }
-
-                            if (mouseDown)
-                            {
-                                if (seekTime.TotalMilliseconds > lengthTime.TotalMilliseconds)
-                                {
-                                    mediaPlayer.SeekTo(lengthTime);
-                                } else
-                                {
-                                    mediaPlayer.SeekTo(seekTime);
-                                }
-                            }
-                        }
-            */
         }
 
         private void Timeline_MouseUp(object sender, MouseEventArgs e)

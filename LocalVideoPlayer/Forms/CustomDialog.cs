@@ -12,8 +12,12 @@ namespace LocalVideoPlayer.Forms
 
         static internal int ShowOptions(string item, string[][] info, DateTime?[] dates, int width, int height)
         {
-            CustomScrollbar customScrollbar = null;
+            Font headerFont = new Font("Arial", 16, FontStyle.Bold);
+            Font textFont = new Font("Arial", 12, FontStyle.Regular);
             Form optionsForm = new Form();
+            CustomScrollbar customScrollbar = null;
+            List<Control> controls = new List<Control>();
+
             optionsForm.Width = (int)(width / 1.5);
             optionsForm.Height = (int)(height / 1.5);
             optionsForm.MaximumSize = new Size(width, height - 100);
@@ -41,10 +45,8 @@ namespace LocalVideoPlayer.Forms
                 optionsForm.Activate();
                 return;
             };
-            Font headerFont = new Font("Arial", 16, FontStyle.Bold);
-            Font textFont = new Font("Arial", 12, FontStyle.Regular);
 
-            Label headerLabel = new Label() { Text = "Choose a selection for: " + item };
+            Label headerLabel = new Label() { Text = item + "?" };
             headerLabel.Dock = DockStyle.Top;
             headerLabel.Font = headerFont;
             headerLabel.AutoSize = true;
@@ -52,14 +54,13 @@ namespace LocalVideoPlayer.Forms
             Size maxSize = new Size(width / 2, height);
             headerLabel.MaximumSize = maxSize;
 
-            List<Control> controls = new List<Control>();
-
             Button confirmation = new Button() { Text = "OK" };
             confirmation.AutoSize = true;
             confirmation.Font = textFont;
             confirmation.Dock = DockStyle.Bottom;
             confirmation.FlatStyle = FlatStyle.Flat;
             confirmation.Cursor = Cursors.Hand;
+
             confirmation.Click += (sender, e) =>
             {
                 bool selection = false;
@@ -83,41 +84,41 @@ namespace LocalVideoPlayer.Forms
 
             for (int i = 0; i < info[0].Length; i++)
             {
-                RadioButton r1 = new RadioButton { Text = info[0][i] + " (" + dates[i].GetValueOrDefault().Year + ")" };
-                r1.Dock = DockStyle.Top;
-                r1.Font = textFont;
-                r1.AutoSize = true;
-                r1.Cursor = Cursors.Hand;
-                r1.Padding = new Padding(20, 20, 20, 0);
-                r1.Name = info[1][i];
-                r1.Click += (sender, e) =>
+                RadioButton radioBtn = new RadioButton { Text = info[0][i] + " (" + dates[i].GetValueOrDefault().Year + ")" };
+                radioBtn.Dock = DockStyle.Top;
+                radioBtn.Font = textFont;
+                radioBtn.AutoSize = true;
+                radioBtn.Cursor = Cursors.Hand;
+                radioBtn.Padding = new Padding(20, 20, 20, 0);
+                radioBtn.Name = info[1][i];
+                radioBtn.Click += (sender, e) =>
                 {
-                    optionsFormMainPanel.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
-                    if(customScrollbar != null)
-                    {
-                        customScrollbar.Value = -optionsFormMainPanel.AutoScrollPosition.Y;
-                    }
-                };
-                controls.Add(r1);
-
-                Label l1 = new Label() { Text = info[2][i].Equals(String.Empty) ? "No description." : info[2][i] };
-                l1.Dock = DockStyle.Top;
-                l1.Font = textFont;
-                l1.AutoSize = true;
-                l1.Padding = new Padding(20);
-                Size s = new Size(optionsForm.Width - (l1.Width / 2), optionsForm.Height);
-                l1.MaximumSize = s;
-                l1.Cursor = Cursors.Hand;
-                l1.Click += (sender, e) =>
-                {
-                    r1.Checked = true;
                     optionsFormMainPanel.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
                     if (customScrollbar != null)
                     {
                         customScrollbar.Value = -optionsFormMainPanel.AutoScrollPosition.Y;
                     }
                 };
-                controls.Add(l1);
+                controls.Add(radioBtn);
+
+                Label descLabel = new Label() { Text = info[2][i].Equals(String.Empty) ? "No description." : info[2][i] };
+                descLabel.Dock = DockStyle.Top;
+                descLabel.Font = textFont;
+                descLabel.AutoSize = true;
+                descLabel.Padding = new Padding(20);
+                Size s = new Size(optionsForm.Width - (descLabel.Width / 2), optionsForm.Height);
+                descLabel.MaximumSize = s;
+                descLabel.Cursor = Cursors.Hand;
+                descLabel.Click += (sender, e) =>
+                {
+                    radioBtn.Checked = true;
+                    optionsFormMainPanel.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
+                    if (customScrollbar != null)
+                    {
+                        customScrollbar.Value = -optionsFormMainPanel.AutoScrollPosition.Y;
+                    }
+                };
+                controls.Add(descLabel);
             }
 
             optionsFormMainPanel.Controls.Add(headerLabel);
@@ -176,7 +177,10 @@ namespace LocalVideoPlayer.Forms
 
         static internal void ShowMessage(string header, string message, int width, int height)
         {
+            Font headerFont = new Font("Arial", 16, FontStyle.Bold);
+            Font textFont = new Font("Arial", 12, FontStyle.Regular);
             Form customMessageForm = new Form();
+
             customMessageForm.Width = width / 2;
             customMessageForm.Height = height / 6;
             customMessageForm.MaximumSize = new Size(width, height);
@@ -189,14 +193,11 @@ namespace LocalVideoPlayer.Forms
             customMessageForm.FormBorderStyle = FormBorderStyle.FixedSingle;
             customMessageForm.ControlBox = false;
 
-            Font headerFont = new Font("Arial", 16, FontStyle.Bold);
-            Font textFont = new Font("Arial", 12, FontStyle.Regular);
-
             Label textLabel = new Label() { Text = message };
             textLabel.Dock = DockStyle.Top;
             textLabel.Font = textFont;
             textLabel.AutoSize = true;
-            textLabel.Padding = new Padding(20);
+            textLabel.Padding = new Padding(20, 20, 20, 20);
             Size maxSize = new Size(width / 2, height);
             textLabel.MaximumSize = maxSize;
             customMessageForm.Controls.Add(textLabel);
@@ -249,12 +250,12 @@ namespace LocalVideoPlayer.Forms
             customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + panel.Height;
             customScrollbar.Value = Math.Abs(panel.AutoScrollPosition.Y);
 
-            if(panel.Name.Equals("mainFormMainPanel"))
+            if (panel.Name.Equals("mainFormMainPanel"))
             {
-                
                 customScrollbar.Size = new Size(15, panel.Height - 1);
                 customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(panel.Height / 1.068);
             }
+
             return customScrollbar;
         }
 

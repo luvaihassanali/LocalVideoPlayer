@@ -51,9 +51,6 @@ namespace LocalVideoPlayer
 
             InitializeComponent();
 
-            Cursor cur = new Cursor(Properties.Resources.cursor.Handle);
-            this.Cursor = cur;
-
             backgroundWorker1.DoWork += new DoWorkEventHandler(BackgroundWorker1_DoWork);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BackgroundWorker1_RunWorkerCompleted);
             backgroundWorker1.RunWorkerAsync();
@@ -77,7 +74,7 @@ namespace LocalVideoPlayer
         private void MainForm_Load(object sender, EventArgs e)
         {
             loadingCircle1.Location = new Point(this.Width / 2 - loadingCircle1.Width / 2, this.Height / 2 - loadingCircle1.Height / 2);
-            loadingLabel.Location = new Point(0, this.Height / 2 - loadingLabel.Height / 2);
+            loadingLabel.Location = new Point(0, this.Height / 2 - loadingLabel.Height / 2 + 2);
             loadingLabel.Size = new Size(this.Width, loadingLabel.Height);
         }
 
@@ -1329,8 +1326,8 @@ namespace LocalVideoPlayer
                             }
                             else
                             {
-                                string message = "Local episode name does not match retrieved data. Renaming file '" + episode.Name + "' to '" + jEpisodeName.fixBrokenQuotes() + "' (Season " + season.Id + ").";
-                                CustomDialog.ShowMessage("Warning", message, this.Width, this.Height);
+                                string message = "Local episode name for does not match retrieved data. Renaming file '" + episode.Name + "' to '" + jEpisodeName.fixBrokenQuotes() + "' (Season " + season.Id + ").";
+                                CustomDialog.ShowMessage("Warning: " + tvShow.Name, message, this.Width, this.Height);
 
                                 string oldPath = episode.Path;
                                 jEpisodeName = (string)jEpisode["name"];
@@ -1661,6 +1658,7 @@ namespace LocalVideoPlayer
                 runningTime = currMovie.RunningTime;
             }
 
+            //can be removed from dialog by remove deactivate function for tv/movie box
             Form playerForm = new PlayerForm(path, savedTime, runningTime, currTvShow, currEpisode, tvForm);
             playerForm.ShowDialog();
 
