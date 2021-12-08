@@ -137,10 +137,12 @@ namespace LocalVideoPlayer.Forms
             {
                 customScrollbar = CreateScrollBar(optionsFormMainPanel);
                 optionsForm.Width += 2;
+
                 customScrollbar.Scroll += (s, e) =>
                 {
                     optionsFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
                 };
+
                 optionsFormMainPanel.MouseWheel += (s, e) =>
                 {
                     int newVal = -optionsFormMainPanel.AutoScrollPosition.Y;
@@ -148,6 +150,7 @@ namespace LocalVideoPlayer.Forms
                     customScrollbar.Invalidate();
                     Application.DoEvents();
                 };
+
                 optionsForm.Controls.Add(customScrollbar);
                 customScrollbar.BringToFront();
             }
@@ -236,8 +239,8 @@ namespace LocalVideoPlayer.Forms
         {
             CustomScrollbar customScrollbar = new CustomScrollbar();
             customScrollbar.ChannelColor = Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(88)))), ((int)(((byte)(140))))); //green 51 166 3 //blue 22 88 14
-            customScrollbar.Location = new Point(panel.Width - 16, 0);
-            customScrollbar.Size = new Size(15, panel.Height);
+            customScrollbar.Location = new Point(panel.Width - 30, 0);
+            customScrollbar.Size = new Size(30, panel.Height);
             customScrollbar.DownArrowImage = Properties.Resources.downarrow;
             customScrollbar.ThumbBottomImage = Properties.Resources.ThumbBottom;
             customScrollbar.ThumbBottomSpanImage = Properties.Resources.ThumbSpanBottom;
@@ -252,10 +255,12 @@ namespace LocalVideoPlayer.Forms
             customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + panel.Height;
             customScrollbar.Value = Math.Abs(panel.AutoScrollPosition.Y);
             customScrollbar.Cursor = blueHandCursor;
+
             if (panel.Name.Equals("mainFormMainPanel"))
             {
-                customScrollbar.Size = new Size(15, panel.Height - 1);
+                customScrollbar.Size = new Size(30, panel.Height - 1);
                 customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(panel.Height / 1.068);
+                customScrollbar.Location = new Point(panel.Width - 32, 0);
             }
 
             return customScrollbar;

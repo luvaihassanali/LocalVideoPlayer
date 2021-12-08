@@ -81,10 +81,9 @@ namespace LocalVideoPlayer
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.AutoSize = true;
             this.BackColor = System.Drawing.SystemColors.Desktop;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.ControlBox = true;
+            this.ControlBox = false;
             this.Controls.Add(this.loadingCircle1);
             this.Controls.Add(this.loadingLabel);
             this.Controls.Add(this.closeButton);

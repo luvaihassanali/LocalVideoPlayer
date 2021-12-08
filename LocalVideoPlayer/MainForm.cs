@@ -997,7 +997,7 @@ namespace LocalVideoPlayer
             mainFormMainPanel.MouseWheel += MainFormMainPanel_MouseWheel;
 
             closeButton.Visible = true;
-            closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 8));
+            closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.6), (closeButton.Width / 8));
             closeButton.Cursor = blueHandCursor;
 
             Panel currentPanel = null;
@@ -1087,7 +1087,6 @@ namespace LocalVideoPlayer
             tvLabel.Name = "tvLabel";
 
             mainFormMainPanel.Controls.Add(tvLabel);
-            mainFormMainPanel.Width -= 4;
             this.Controls.Add(mainFormMainPanel);
             customScrollbar = CustomDialog.CreateScrollBar(mainFormMainPanel);
             customScrollbar.Scroll += CustomScrollbar_Scroll;
@@ -1098,6 +1097,7 @@ namespace LocalVideoPlayer
         private bool CheckForUpdates()
         {
             MediaModel prevMedia = null;
+
             if (File.Exists(jsonFile))
             {
                 string jsonString = File.ReadAllText(jsonFile);
@@ -1149,6 +1149,7 @@ namespace LocalVideoPlayer
         //To-do: arrange alphabetically
         private async Task BuildCacheAsync()
         {
+            //To-do: Hover over button change this function fucks up blue-link
             this.UseWaitCursor = true;
             CancellationTokenSource source = new CancellationTokenSource();
             CancellationToken token = source.Token;
@@ -1690,7 +1691,7 @@ namespace LocalVideoPlayer
             this.Padding = new System.Windows.Forms.Padding(5, 20, 20, 20);
 
             InitGui();
-            //tvShowBox_Click(null, null);
+            TvShowBox_Click(null, null);
         }
 
         #endregion
