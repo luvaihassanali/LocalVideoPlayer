@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using CustomControls;
 using LocalVideoPlayer.Forms;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -21,6 +22,9 @@ namespace LocalVideoPlayer
 {
     public partial class MainForm : Form
     {
+        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "SystemParametersInfo")]
+        public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, uint pvParam, uint fWinIni);
+
         private const string jsonFile = "Media.json";
         //To-do: put in app.config
         private const string apiKey = "?api_key=c69c4effc7beb9c473d22b8f85d59e4c";
@@ -28,6 +32,9 @@ namespace LocalVideoPlayer
         private const string apiImageUrl = "http://image.tmdb.org/t/p/original";
         private const string tvSearch = apiUrl + "search/tv" + apiKey + "&query=";
         private const string movieSearch = apiUrl + "search/movie" + apiKey + "&query=";
+        private const int SPI_SETCURSORS = 0x0057;
+        private const int SPIF_UPDATEINIFILE = 0x01;
+        private const int SPIF_SENDCHANGE = 0x02;
 
         private string tvGet = apiUrl + "tv/{tv_id}" + apiKey;
         private string tvSeasonGet = apiUrl + "tv/{tv_id}/season/{season_number}" + apiKey;
@@ -43,12 +50,14 @@ namespace LocalVideoPlayer
         private CustomScrollbar customScrollbar = null;
         private bool seasonFormOpen = false;
         private bool isPlaying = false;
+        private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
 
         public MainForm()
         {
             Process applicaitionProcess = Process.GetCurrentProcess();
             applicaitionProcess.PriorityClass = ProcessPriorityClass.High;
 
+            UpdateSystemCursor();
             InitializeComponent();
 
             backgroundWorker1.DoWork += new DoWorkEventHandler(BackgroundWorker1_DoWork);
@@ -80,10 +89,15 @@ namespace LocalVideoPlayer
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            string jsonString = JsonConvert.SerializeObject(media);
-            File.WriteAllText(jsonFile, jsonString);
+            if (media != null)
+            {
+                string jsonString = JsonConvert.SerializeObject(media);
+                File.WriteAllText(jsonFile, jsonString);
+            }
+
             dimmerForm.Close();
             seasonDimmerForm.Close();
+            RestoreSystemCursor();
         }
 
         private void CloseButton_Click(object sender, EventArgs e)
@@ -96,20 +110,6 @@ namespace LocalVideoPlayer
             {
                 Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
             }
-        }
-
-        private RoundButton CreateCloseButton()
-        {
-            RoundButton closeButton = new RoundButton();
-            closeButton.BackgroundImage = Properties.Resources.close;
-            closeButton.BackgroundImageLayout = ImageLayout.Zoom;
-            closeButton.FlatAppearance.BorderSize = 0;
-            closeButton.FlatAppearance.MouseOverBackColor = Color.Red;
-            closeButton.FlatStyle = FlatStyle.Flat;
-            closeButton.Name = "closeButton";
-            closeButton.Size = new Size(64, 64);
-            closeButton.Click += CloseButton_Click;
-            return closeButton;
         }
 
         private void CustomScrollbar_Scroll(object sender, EventArgs e)
@@ -141,6 +141,33 @@ namespace LocalVideoPlayer
             SizeF stringSize = graphics.MeasureString(str, font);
             float ratio = (size.Height / stringSize.Height) / 10;
             return font.Size * ratio;
+        }
+
+        private void RestoreSystemCursor()
+        {
+            string[] keys = Properties.Resources.keys_backup.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+            foreach (string key in keys)
+            {
+                string[] keyValuePair = key.Split('=');
+                Registry.SetValue(@"HKEY_CURRENT_USER\Control Panel\Cursors\", keyValuePair[0], keyValuePair[1]);
+            }
+
+            SystemParametersInfo(SPI_SETCURSORS, 0, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+            SystemParametersInfo(0x2029, 0, 32, 0x01);
+        }
+        
+        private void UpdateSystemCursor()
+        {
+            string cursorPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
+            string[] keys = Properties.Resources.keys_custom.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+            foreach (string key in keys)
+            {
+                string[] keyValuePair = key.Split('=');
+                Registry.SetValue(@"HKEY_CURRENT_USER\Control Panel\Cursors\", keyValuePair[0], cursorPath + keyValuePair[1]);
+            }
+
+            SystemParametersInfo(SPI_SETCURSORS, 0, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+            SystemParametersInfo(0x2029, 0, 128, 0x01);
         }
 
         #endregion
@@ -270,6 +297,7 @@ namespace LocalVideoPlayer
                     LaunchVlc(tvShow.Name, lastEpisode.Name, lastEpisode.Path, tvForm);
                     isPlaying = false;
                 };
+                resumeButton.Cursor = blueHandCursor;
             }
 
             Panel mainPanel = new Panel();
@@ -407,6 +435,7 @@ namespace LocalVideoPlayer
             seasonButton.Click += SeasonButton_Click;
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
             seasonButton.Size = new Size(episodePanelList[0].Width - 18, seasonButton.Height);
+            seasonButton.Cursor = blueHandCursor;
 
             tvForm.Show();
         }
@@ -531,7 +560,7 @@ namespace LocalVideoPlayer
                     episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
                 }
                 episodeBox.BackColor = SystemColors.Desktop;
-                episodeBox.Cursor = Cursors.Hand;
+                episodeBox.Cursor = blueHandCursor;
                 episodeBox.SizeMode = PictureBoxSizeMode.CenterImage;
                 episodeBox.Click += TvShowEpisodeBox_Click;
                 episodeBox.Name = currEpisode.Path;
@@ -674,7 +703,7 @@ namespace LocalVideoPlayer
 
                 seasonBox.BackColor = SystemColors.Desktop;
                 seasonBox.Left = seasonBox.Width * currentPanel.Controls.Count;
-                seasonBox.Cursor = Cursors.Hand;
+                seasonBox.Cursor = blueHandCursor;
                 seasonBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 seasonBox.Padding = new Padding(5);
                 seasonBox.Name = (i + 1).ToString();
@@ -840,7 +869,16 @@ namespace LocalVideoPlayer
             movieForm.ForeColor = SystemColors.Control;
             typeof(Form).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, movieForm, new object[] { true });
 
-            RoundButton closeButton = CreateCloseButton();
+            closeButton.BackgroundImage = Properties.Resources.close;
+            closeButton.BackgroundImageLayout = ImageLayout.Zoom;
+            closeButton.FlatAppearance.BorderSize = 0;
+            closeButton.FlatAppearance.MouseOverBackColor = Color.Red;
+            closeButton.FlatStyle = FlatStyle.Flat;
+            closeButton.Name = "closeButton";
+            closeButton.Size = new Size(64, 64);
+            closeButton.Click += CloseButton_Click;
+            closeButton.Cursor = blueHandCursor;
+
             movieForm.Controls.Add(closeButton);
             closeButton.Location = new Point(movieForm.Width - (int)(closeButton.Width * 1.165), (closeButton.Width / 8));
 
@@ -854,7 +892,7 @@ namespace LocalVideoPlayer
             movieBackdropBox.BackgroundImageLayout = ImageLayout.Stretch;
             movieBackdropBox.BackColor = SystemColors.Desktop;
             movieBackdropBox.Dock = DockStyle.Top;
-            movieBackdropBox.Cursor = Cursors.Hand;
+            movieBackdropBox.Cursor = blueHandCursor;
             movieBackdropBox.SizeMode = PictureBoxSizeMode.CenterImage;
             movieBackdropBox.Name = movie.Path;
             movieBackdropBox.Click += MovieBackdropBox_Click;
@@ -915,7 +953,7 @@ namespace LocalVideoPlayer
         #endregion 
 
         #region Startup
-
+        //To-do: Implement on hover for hand cursor
         private void InitGui()
         {
             mainFormMainPanel = new Panel();
@@ -926,6 +964,7 @@ namespace LocalVideoPlayer
 
             closeButton.Visible = true;
             closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.5), (closeButton.Width / 8));
+            closeButton.Cursor = blueHandCursor;
 
             Panel currentPanel = null;
             int count = 0;
@@ -955,7 +994,7 @@ namespace LocalVideoPlayer
                 movieBox.Image = Image.FromFile(imagePath);
                 movieBox.BackColor = SystemColors.Desktop;
                 movieBox.Left = movieBox.Width * currentPanel.Controls.Count;
-                movieBox.Cursor = Cursors.Hand;
+                movieBox.Cursor = blueHandCursor;
                 movieBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 movieBox.Padding = new Padding(20);
                 movieBox.Name = media.Movies[i].Name;
@@ -997,7 +1036,7 @@ namespace LocalVideoPlayer
                 tvShowBox.Image = Image.FromFile(imagePath);
                 tvShowBox.BackColor = SystemColors.Desktop;
                 tvShowBox.Left = tvShowBox.Width * currentPanel.Controls.Count;
-                tvShowBox.Cursor = Cursors.Hand;
+                tvShowBox.Cursor = blueHandCursor;
                 tvShowBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 tvShowBox.Padding = new Padding(20);
                 tvShowBox.Name = media.TvShows[i].Name;
@@ -1076,6 +1115,7 @@ namespace LocalVideoPlayer
         //To-do: arrange alphabetically
         private async Task BuildCacheAsync()
         {
+            this.UseWaitCursor = true;
             CancellationTokenSource source = new CancellationTokenSource();
             CancellationToken token = source.Token;
 
@@ -1373,6 +1413,7 @@ namespace LocalVideoPlayer
 
             string jsonString = JsonConvert.SerializeObject(media);
             File.WriteAllText(jsonFile, jsonString);
+            this.UseWaitCursor = false;
         }
 
         private string ReplaceFirst(string text, string search, string replace)

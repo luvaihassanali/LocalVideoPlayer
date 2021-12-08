@@ -8,6 +8,8 @@ namespace LocalVideoPlayer.Forms
 {
     static class CustomDialog
     {
+        static private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
+
         #region Show Options Form
 
         static internal int ShowOptions(string item, string[][] info, DateTime?[] dates, int width, int height)
@@ -59,7 +61,7 @@ namespace LocalVideoPlayer.Forms
             confirmation.Font = textFont;
             confirmation.Dock = DockStyle.Bottom;
             confirmation.FlatStyle = FlatStyle.Flat;
-            confirmation.Cursor = Cursors.Hand;
+            confirmation.Cursor = blueHandCursor;
 
             confirmation.Click += (sender, e) =>
             {
@@ -88,7 +90,7 @@ namespace LocalVideoPlayer.Forms
                 radioBtn.Dock = DockStyle.Top;
                 radioBtn.Font = textFont;
                 radioBtn.AutoSize = true;
-                radioBtn.Cursor = Cursors.Hand;
+                radioBtn.Cursor = blueHandCursor;
                 radioBtn.Padding = new Padding(20, 20, 20, 0);
                 radioBtn.Name = info[1][i];
                 radioBtn.Click += (sender, e) =>
@@ -108,7 +110,7 @@ namespace LocalVideoPlayer.Forms
                 descLabel.Padding = new Padding(20);
                 Size s = new Size(optionsForm.Width - (descLabel.Width / 2), optionsForm.Height);
                 descLabel.MaximumSize = s;
-                descLabel.Cursor = Cursors.Hand;
+                descLabel.Cursor = blueHandCursor;
                 descLabel.Click += (sender, e) =>
                 {
                     radioBtn.Checked = true;
@@ -214,7 +216,7 @@ namespace LocalVideoPlayer.Forms
             confirmation.Font = textFont;
             confirmation.Dock = DockStyle.Bottom;
             confirmation.FlatStyle = FlatStyle.Flat;
-            confirmation.Cursor = Cursors.Hand;
+            confirmation.Cursor = blueHandCursor;
             confirmation.Click += (sender, e) => { customMessageForm.Close(); };
             customMessageForm.Controls.Add(confirmation);
 
@@ -249,7 +251,7 @@ namespace LocalVideoPlayer.Forms
             customScrollbar.SmallChange = 15;
             customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + panel.Height;
             customScrollbar.Value = Math.Abs(panel.AutoScrollPosition.Y);
-
+            customScrollbar.Cursor = blueHandCursor;
             if (panel.Name.Equals("mainFormMainPanel"))
             {
                 customScrollbar.Size = new Size(15, panel.Height - 1);

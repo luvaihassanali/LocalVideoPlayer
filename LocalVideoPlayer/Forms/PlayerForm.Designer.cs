@@ -53,7 +53,6 @@ namespace LocalVideoPlayer
             // 
             this.timeline.BackColor = System.Drawing.SystemColors.Desktop;
             this.timeline.BorderColor = System.Drawing.SystemColors.ActiveBorder;
-            this.timeline.Cursor = System.Windows.Forms.Cursors.Hand;
             this.timeline.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.timeline.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(123)))), ((int)(((byte)(125)))), ((int)(((byte)(123)))));
             this.timeline.IndentHeight = 3;
@@ -83,7 +82,6 @@ namespace LocalVideoPlayer
             // 
             this.playButton.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("playButton.BackgroundImage")));
             this.playButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
-            this.playButton.Cursor = System.Windows.Forms.Cursors.Hand;
             this.playButton.FlatAppearance.BorderSize = 0;
             this.playButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Red;
             this.playButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
@@ -101,7 +99,6 @@ namespace LocalVideoPlayer
             // 
             this.closeButton.BackgroundImage = global::LocalVideoPlayer.Properties.Resources.close;
             this.closeButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.closeButton.Cursor = System.Windows.Forms.Cursors.Hand;
             this.closeButton.FlatAppearance.BorderSize = 0;
             this.closeButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Red;
             this.closeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;

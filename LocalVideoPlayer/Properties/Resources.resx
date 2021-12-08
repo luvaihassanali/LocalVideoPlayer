@@ -118,6 +118,9 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="blue_link" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\blue-link.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="close" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\close.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -126,6 +129,36 @@
   </data>
   <data name="extras" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\extras.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="keys_backup" xml:space="preserve">
+    <value>AppStarting=C:\Windows\cursors\aero_working.ani
+Arrow=C:\Windows\cursors\aero_arrow.cur
+Hand=C:\Windows\cursors\aero_link.cur
+Help=C:\Windows\cursors\aero_helpsel.cur
+No=C:\Windows\cursors\aero_unavail.cur
+NWPen=C:\Windows\cursors\aero_pen.cur
+SizeAll=C:\Windows\cursors\aero_move.cur
+SizeNESW=C:\Windows\cursors\aero_nesw.cur
+SizeNS=C:\Windows\cursors\aero_ns.cur
+SizeNWSE=C:\Windows\cursors\aero_nwse.cur
+SizeWE=C:\Windows\cursors\aero_ew.cur
+UpArrow=C:\Windows\cursors\aero_up.cur
+Wait=C:\Windows\cursors\aero_busy.ani</value>
+  </data>
+  <data name="keys_custom" xml:space="preserve">
+    <value>AppStarting=\Resources\blue_cursors_xl\blue_working_xl.ani
+Arrow=\Resources\blue_cursors_xl\blue_arrow_xl.cur
+Hand=\Resources\blue_cursors_xl\blue_link_xl.cur
+Help=\Resources\blue_cursors_xl\blue_helpsel_xl.cur
+No=\Resources\blue_cursors_xl\blue_unavail_xl.cur
+NWPen=\Resources\blue_cursors_xl\blue_pen_xl.cur
+SizeAll=\Resources\blue_cursors_xl\blue_move_xl.cur
+SizeNESW=\Resources\blue_cursors_xl\blue_nesw_xl.cur
+SizeNS=\Resources\blue_cursors_xl\blue_ns_xl.cur
+SizeNWSE=\Resources\blue_cursors_xl\blue_nwse_xl.cur
+SizeWE=\Resources\blue_cursors_xl\blue_ew_xl.cur
+UpArrow=\Resources\blue_cursors_xl\blue_up_xl.cur
+Wait=\Resources\blue_cursors_xl\blue_busy_xl.ani</value>
   </data>
   <data name="noprevSeason" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\noprev.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

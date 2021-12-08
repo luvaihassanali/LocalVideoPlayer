@@ -37,7 +37,6 @@ namespace LocalVideoPlayer.Forms
             // seasonButton
             // 
             this.seasonButton.AutoSize = true;
-            this.seasonButton.Cursor = System.Windows.Forms.Cursors.Hand;
             this.seasonButton.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.seasonButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.seasonButton.Location = new System.Drawing.Point(168, 328);
@@ -50,7 +49,6 @@ namespace LocalVideoPlayer.Forms
             // resumeButton
             // 
             this.resumeButton.AutoSize = true;
-            this.resumeButton.Cursor = System.Windows.Forms.Cursors.Hand;
             this.resumeButton.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.resumeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.resumeButton.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));

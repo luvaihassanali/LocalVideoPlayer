@@ -24,6 +24,7 @@ namespace LocalVideoPlayer
         private Panel timePanel = null;
         private Label timeLabel = null;
         private bool controlsVisible = false;
+        private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
 
         public PlayerForm(string p, long s, int r, TvShow t, Episode ep, Form tf)
         {
@@ -33,6 +34,9 @@ namespace LocalVideoPlayer
             }
 
             InitializeComponent();
+            closeButton.Cursor = blueHandCursor;
+            timeline.Cursor = blueHandCursor;
+            playButton.Cursor = blueHandCursor;
 
             //some parameters are in tv object > remove
             tvForm = tf;
@@ -84,7 +88,7 @@ namespace LocalVideoPlayer
 
             /*mediaPlayer.Buffering += (sender, e) =>
             {
-                //Console.WriteLine("buffering");
+                //To-do: progress bar or wait cursor
                 //cast to MediaPlayer.Event.Buffering -> e.GetBuffering();
             };*/
 
@@ -106,7 +110,6 @@ namespace LocalVideoPlayer
 
             this.Cursor = new Cursor(Cursor.Current.Handle);
             Cursor.Position = new Point(0, this.Height * 2);
-            this.Cursor = Cursors.Default;
 
             FileInfo media = new FileInfo(path);
             Media currentMedia = CreateMedia(libVlc, path, FromType.FromPath);

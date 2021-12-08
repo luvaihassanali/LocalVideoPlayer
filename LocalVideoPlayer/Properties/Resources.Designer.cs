@@ -61,6 +61,16 @@ namespace LocalVideoPlayer.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon blue_link {
+            get {
+                object obj = ResourceManager.GetObject("blue_link", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap close {
@@ -87,6 +97,45 @@ namespace LocalVideoPlayer.Properties {
             get {
                 object obj = ResourceManager.GetObject("extras", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AppStarting=C:\Windows\cursors\aero_working.ani
+        ///Arrow=C:\Windows\cursors\aero_arrow.cur
+        ///Hand=C:\Windows\cursors\aero_link.cur
+        ///Help=C:\Windows\cursors\aero_helpsel.cur
+        ///No=C:\Windows\cursors\aero_unavail.cur
+        ///NWPen=C:\Windows\cursors\aero_pen.cur
+        ///SizeAll=C:\Windows\cursors\aero_move.cur
+        ///SizeNESW=C:\Windows\cursors\aero_nesw.cur
+        ///SizeNS=C:\Windows\cursors\aero_ns.cur
+        ///SizeNWSE=C:\Windows\cursors\aero_nwse.cur
+        ///SizeWE=C:\Windows\cursors\aero_ew.cur
+        ///UpArrow=C:\Windows\cursors\aero_up.cur
+        ///Wait=C:\Windows\ [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string keys_backup {
+            get {
+                return ResourceManager.GetString("keys_backup", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to AppStarting=\Resources\blue_cursors_xl\blue_working_xl.ani
+        ///Arrow=\Resources\blue_cursors_xl\blue_arrow_xl.cur
+        ///Hand=\Resources\blue_cursors_xl\blue_link_xl.cur
+        ///Help=\Resources\blue_cursors_xl\blue_helpsel_xl.cur
+        ///No=\Resources\blue_cursors_xl\blue_unavail_xl.cur
+        ///NWPen=\Resources\blue_cursors_xl\blue_pen_xl.cur
+        ///SizeAll=\Resources\blue_cursors_xl\blue_move_xl.cur
+        ///SizeNESW=\Resources\blue_cursors_xl\blue_nesw_xl.cur
+        ///SizeNS=\Resources\blue_cursors_xl\blue_ns_xl.cur
+        ///SizeNWSE=\Resources\blue_cursors_xl\blu [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string keys_custom {
+            get {
+                return ResourceManager.GetString("keys_custom", resourceCulture);
             }
         }
         
