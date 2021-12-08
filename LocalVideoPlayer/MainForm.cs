@@ -52,6 +52,7 @@ namespace LocalVideoPlayer
         private bool isPlaying = false;
         private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
 
+        //To-do: too big need to split code
         public MainForm()
         {
             Process applicaitionProcess = Process.GetCurrentProcess();
@@ -105,6 +106,7 @@ namespace LocalVideoPlayer
             Button closeButton = sender as Button;
             Panel mainPanel = closeButton.Parent as Panel;
             Form currentForm = mainPanel != null ? (Form)mainPanel.Parent : (Form)closeButton.Parent;
+
             currentForm.Close();
             if (!currentForm.Name.Equals("MainForm"))
             {
@@ -145,6 +147,7 @@ namespace LocalVideoPlayer
 
         private void RestoreSystemCursor()
         {
+            //To-do: backup existing keys for restore
             string[] keys = Properties.Resources.keys_backup.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
             foreach (string key in keys)
             {
@@ -436,6 +439,19 @@ namespace LocalVideoPlayer
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
             seasonButton.Size = new Size(episodePanelList[0].Width - 18, seasonButton.Height);
             seasonButton.Cursor = blueHandCursor;
+            
+            seasonButton.MouseWheel += (s, e_) =>
+            {
+                if (e_.Delta < 0) //if scrolling downwards
+                {
+                    this.Cursor = new Cursor(Cursor.Current.Handle);
+                    Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y + 50);
+                } else
+                {
+                    this.Cursor = new Cursor(Cursor.Current.Handle);
+                    Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y - 50);
+                }
+            };
 
             tvForm.Show();
         }
@@ -453,16 +469,24 @@ namespace LocalVideoPlayer
                 }
             }
 
+            List<Control> toRemove = new List<Control>();
             Panel masterPanel = null;
             Panel mainPanel = null;
             CustomScrollbar customScrollbar = null;
-            List<Control> toRemove = new List<Control>();
+            Label overviewLabel = null;
+            Button seasonButton = null;
 
             foreach (Control c in tvForm.Controls)
             {
                 if (c.Name.Equals("customScrollbar"))
                 {
                     customScrollbar = (CustomScrollbar)c;
+                }
+
+                Button tempButton = c as Button;
+                if (tempButton != null && tempButton.Name.Contains("seasonButton"))
+                {
+                    seasonButton = tempButton;
                 }
 
                 //To-do: remove cast and just check names
@@ -472,6 +496,12 @@ namespace LocalVideoPlayer
                     masterPanel = p_;
                     foreach (Control ctrl in p_.Controls)
                     {
+                        Label tempLabel = ctrl as Label;
+                        if (tempLabel != null && tempLabel.Name.Equals("overviewLabel"))
+                        {
+                            overviewLabel = tempLabel;
+                        }
+ 
                         Panel p = ctrl as Panel;
                         if (p != null && p.Name.Equals("mainPanel"))
                         {
@@ -519,6 +549,8 @@ namespace LocalVideoPlayer
             }
 
             CustomDialog.UpdateScrollBar(customScrollbar, masterPanel);
+            seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
+
             mainPanel.Refresh();
         }
 
@@ -643,7 +675,7 @@ namespace LocalVideoPlayer
                 //To-do: Closing animation?
             };*/
 
-            Panel seasonFormMainPanel = new Panel();
+                Panel seasonFormMainPanel = new Panel();
             seasonFormMainPanel.Size = seasonForm.Size;
             seasonFormMainPanel.AutoScroll = true;
             seasonFormMainPanel.Name = "seasonFormMainPanel";
@@ -867,8 +899,10 @@ namespace LocalVideoPlayer
             movieForm.StartPosition = FormStartPosition.CenterScreen;
             movieForm.BackColor = SystemColors.Desktop;
             movieForm.ForeColor = SystemColors.Control;
+            movieForm.Name = "movieForm";
             typeof(Form).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, movieForm, new object[] { true });
 
+            RoundButton closeButton = new RoundButton();
             closeButton.BackgroundImage = Properties.Resources.close;
             closeButton.BackgroundImageLayout = ImageLayout.Zoom;
             closeButton.FlatAppearance.BorderSize = 0;

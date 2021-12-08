@@ -130,6 +130,21 @@
   <data name="extras" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\extras.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="keys_aero_xl" xml:space="preserve">
+    <value>AppStarting=C:\Windows\cursors\aero_working_xl.ani
+Arrow=C:\Windows\cursors\aero_arrow_xl.cur
+Hand=C:\Windows\cursors\aero_link_xl.cur
+Help=C:\Windows\cursors\aero_helpsel_xl.cur
+No=C:\Windows\cursors\aero_unavail_xl.cur
+NWPen=C:\Windows\cursors\aero_pen_xl.cur
+SizeAll=C:\Windows\cursors\aero_move_xl.cur
+SizeNESW=C:\Windows\cursors\aero_nesw_xl.cur
+SizeNS=C:\Windows\cursors\aero_ns_xl.cur
+SizeNWSE=C:\Windows\cursors\aero_nwse_xl.cur
+SizeWE=C:\Windows\cursors\aero_ew_xl.cur
+UpArrow=C:\Windows\cursors\aero_up_xl.cur
+Wait=C:\Windows\cursors\aero_busy_xl.ani</value>
+  </data>
   <data name="keys_backup" xml:space="preserve">
     <value>AppStarting=C:\Windows\cursors\aero_working.ani
 Arrow=C:\Windows\cursors\aero_arrow.cur

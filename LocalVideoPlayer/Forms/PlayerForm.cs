@@ -37,6 +37,7 @@ namespace LocalVideoPlayer
             closeButton.Cursor = blueHandCursor;
             timeline.Cursor = blueHandCursor;
             playButton.Cursor = blueHandCursor;
+            videoView1.Cursor = Cursors.Default;
 
             //some parameters are in tv object > remove
             tvForm = tf;

@@ -101,6 +101,26 @@ namespace LocalVideoPlayer.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to AppStarting=C:\Windows\cursors\aero_working_xl.ani
+        ///Arrow=C:\Windows\cursors\aero_arrow_xl.cur
+        ///Hand=C:\Windows\cursors\aero_link_xl.cur
+        ///Help=C:\Windows\cursors\aero_helpsel_xl.cur
+        ///No=C:\Windows\cursors\aero_unavail_xl.cur
+        ///NWPen=C:\Windows\cursors\aero_pen_xl.cur
+        ///SizeAll=C:\Windows\cursors\aero_move_xl.cur
+        ///SizeNESW=C:\Windows\cursors\aero_nesw_xl.cur
+        ///SizeNS=C:\Windows\cursors\aero_ns_xl.cur
+        ///SizeNWSE=C:\Windows\cursors\aero_nwse_xl.cur
+        ///SizeWE=C:\Windows\cursors\aero_ew_xl.cur
+        ///UpArrow=C:\Windows\curs [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string keys_aero_xl {
+            get {
+                return ResourceManager.GetString("keys_aero_xl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to AppStarting=C:\Windows\cursors\aero_working.ani
         ///Arrow=C:\Windows\cursors\aero_arrow.cur
         ///Hand=C:\Windows\cursors\aero_link.cur
