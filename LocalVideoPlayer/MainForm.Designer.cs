@@ -31,8 +31,10 @@ namespace LocalVideoPlayer
         {
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.loadingLabel = new System.Windows.Forms.Label();
-            this.closeButton = new LocalVideoPlayer.RoundButton();
+            this.remotePictureBox = new System.Windows.Forms.PictureBox();
             this.loadingCircle1 = new MRG.Controls.UI.LoadingCircle();
+            this.closeButton = new LocalVideoPlayer.RoundButton();
+            ((System.ComponentModel.ISupportInitialize)(this.remotePictureBox)).BeginInit();
             this.SuspendLayout();
             // 
             // loadingLabel
@@ -46,20 +48,18 @@ namespace LocalVideoPlayer
             this.loadingLabel.Text = "...";
             this.loadingLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
-            // closeButton
+            // remotePictureBox
             // 
-            this.closeButton.BackgroundImage = global::LocalVideoPlayer.Properties.Resources.close;
-            this.closeButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.closeButton.FlatAppearance.BorderSize = 0;
-            this.closeButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Red;
-            this.closeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.closeButton.Location = new System.Drawing.Point(736, 0);
-            this.closeButton.Name = "closeButton";
-            this.closeButton.Size = new System.Drawing.Size(64, 64);
-            this.closeButton.TabIndex = 10;
-            this.closeButton.UseVisualStyleBackColor = true;
-            this.closeButton.Visible = false;
-            this.closeButton.Click += new System.EventHandler(this.CloseButton_Click);
+            this.remotePictureBox.BackColor = System.Drawing.SystemColors.Desktop;
+            this.remotePictureBox.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this.remotePictureBox.Image = global::LocalVideoPlayer.Properties.Resources.ripple_red;
+            this.remotePictureBox.Location = new System.Drawing.Point(776, 424);
+            this.remotePictureBox.Name = "remotePictureBox";
+            this.remotePictureBox.Size = new System.Drawing.Size(26, 26);
+            this.remotePictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.remotePictureBox.TabIndex = 12;
+            this.remotePictureBox.TabStop = false;
+            this.remotePictureBox.Visible = false;
             // 
             // loadingCircle1
             // 
@@ -77,6 +77,21 @@ namespace LocalVideoPlayer
             this.loadingCircle1.TabIndex = 0;
             this.loadingCircle1.Text = "loadingCircle1";
             // 
+            // closeButton
+            // 
+            this.closeButton.BackgroundImage = global::LocalVideoPlayer.Properties.Resources.close;
+            this.closeButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.closeButton.FlatAppearance.BorderSize = 0;
+            this.closeButton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.Red;
+            this.closeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.closeButton.Location = new System.Drawing.Point(736, 0);
+            this.closeButton.Name = "closeButton";
+            this.closeButton.Size = new System.Drawing.Size(64, 64);
+            this.closeButton.TabIndex = 10;
+            this.closeButton.UseVisualStyleBackColor = true;
+            this.closeButton.Visible = false;
+            this.closeButton.Click += new System.EventHandler(this.CloseButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -84,6 +99,7 @@ namespace LocalVideoPlayer
             this.BackColor = System.Drawing.SystemColors.Desktop;
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.ControlBox = false;
+            this.Controls.Add(this.remotePictureBox);
             this.Controls.Add(this.loadingCircle1);
             this.Controls.Add(this.loadingLabel);
             this.Controls.Add(this.closeButton);
@@ -96,6 +112,7 @@ namespace LocalVideoPlayer
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.remotePictureBox)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -106,6 +123,7 @@ namespace LocalVideoPlayer
         private RoundButton closeButton;
         private MRG.Controls.UI.LoadingCircle loadingCircle1;
         private System.Windows.Forms.Label loadingLabel;
+        private System.Windows.Forms.PictureBox remotePictureBox;
     }
 }
 

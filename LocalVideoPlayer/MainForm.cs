@@ -4,10 +4,11 @@ using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.Drawing;
-using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,7 +50,8 @@ namespace LocalVideoPlayer
         private Panel mainFormMainPanel = null;
         private CustomScrollbar customScrollbar = null;
         private bool seasonFormOpen = false;
-        private bool isPlaying = false;
+        private bool isPlaying = false; 
+        private MouseWorker worker = null;
         private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
 
         //To-do: too big need to split code
@@ -64,6 +66,9 @@ namespace LocalVideoPlayer
             backgroundWorker1.DoWork += new DoWorkEventHandler(BackgroundWorker1_DoWork);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BackgroundWorker1_RunWorkerCompleted);
             backgroundWorker1.RunWorkerAsync();
+
+            worker = new MouseWorker(this);
+            worker.Start();
 
             loadingCircle1.Active = true;
             loadingLabel.Text = "";
@@ -86,6 +91,7 @@ namespace LocalVideoPlayer
             loadingCircle1.Location = new Point(this.Width / 2 - loadingCircle1.Width / 2, this.Height / 2 - loadingCircle1.Height / 2);
             loadingLabel.Location = new Point(0, this.Height / 2 - loadingLabel.Height / 2 + 2);
             loadingLabel.Size = new Size(this.Width, loadingLabel.Height);
+            remotePictureBox.Location = new Point(this.Width - remotePictureBox.Width * 2, this.Height - remotePictureBox.Height);
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -96,11 +102,14 @@ namespace LocalVideoPlayer
                 File.WriteAllText(jsonFile, jsonString);
             }
 
+            worker.Stop();
+            
             dimmerForm.Close();
             seasonDimmerForm.Close();
             RestoreSystemCursor();
         }
 
+        //To-do: A blocking operation was interrupted by a call to WSACancelBlockingCalls
         private void CloseButton_Click(object sender, EventArgs e)
         {
             Button closeButton = sender as Button;
@@ -143,34 +152,6 @@ namespace LocalVideoPlayer
             SizeF stringSize = graphics.MeasureString(str, font);
             float ratio = (size.Height / stringSize.Height) / 10;
             return font.Size * ratio;
-        }
-
-        private void RestoreSystemCursor()
-        {
-            //To-do: backup existing keys for restore
-            string[] keys = Properties.Resources.keys_backup.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
-            foreach (string key in keys)
-            {
-                string[] keyValuePair = key.Split('=');
-                Registry.SetValue(@"HKEY_CURRENT_USER\Control Panel\Cursors\", keyValuePair[0], keyValuePair[1]);
-            }
-
-            SystemParametersInfo(SPI_SETCURSORS, 0, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
-            SystemParametersInfo(0x2029, 0, 32, 0x01);
-        }
-        
-        private void UpdateSystemCursor()
-        {
-            string cursorPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
-            string[] keys = Properties.Resources.keys_custom.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
-            foreach (string key in keys)
-            {
-                string[] keyValuePair = key.Split('=');
-                Registry.SetValue(@"HKEY_CURRENT_USER\Control Panel\Cursors\", keyValuePair[0], cursorPath + keyValuePair[1]);
-            }
-
-            SystemParametersInfo(SPI_SETCURSORS, 0, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
-            SystemParametersInfo(0x2029, 0, 128, 0x01);
         }
 
         #endregion
@@ -259,7 +240,7 @@ namespace LocalVideoPlayer
             }
             if (closeButton == null) throw new ArgumentNullException();
             closeButton.Click += CloseButton_Click;
-            closeButton.Location = new Point(tvForm.Width - (int)(closeButton.Width * 1.45), (closeButton.Width / 8));
+            closeButton.Location = new Point(tvForm.Width - (int)(closeButton.Width * 1.65), (closeButton.Width / 8));
 
             Font mainHeaderFont = new Font("Arial", 26, FontStyle.Bold);
             Font episodeHeaderFont = new Font("Arial", 16, FontStyle.Bold);
@@ -290,6 +271,7 @@ namespace LocalVideoPlayer
                 resumeButton.Visible = true;
                 resumeButton.BringToFront();
                 resumeButton.Text = "Resume";
+                resumeButton.Padding = new Padding(3, 0, 0, 0);
                 resumeButton.Font = mainHeaderFont;
                 resumeButton.AutoSize = true;
                 resumeButton.Location = new Point(tvShowBackdropBox.Location.X + 10, tvShowBackdropBox.Location.Y + 10);
@@ -439,14 +421,15 @@ namespace LocalVideoPlayer
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
             seasonButton.Size = new Size(episodePanelList[0].Width - 18, seasonButton.Height);
             seasonButton.Cursor = blueHandCursor;
-            
+
             seasonButton.MouseWheel += (s, e_) =>
             {
                 if (e_.Delta < 0) //if scrolling downwards
                 {
                     this.Cursor = new Cursor(Cursor.Current.Handle);
                     Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y + 50);
-                } else
+                }
+                else
                 {
                     this.Cursor = new Cursor(Cursor.Current.Handle);
                     Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y - 50);
@@ -501,7 +484,7 @@ namespace LocalVideoPlayer
                         {
                             overviewLabel = tempLabel;
                         }
- 
+
                         Panel p = ctrl as Panel;
                         if (p != null && p.Name.Equals("mainPanel"))
                         {
@@ -675,7 +658,7 @@ namespace LocalVideoPlayer
                 //To-do: Closing animation?
             };*/
 
-                Panel seasonFormMainPanel = new Panel();
+            Panel seasonFormMainPanel = new Panel();
             seasonFormMainPanel.Size = seasonForm.Size;
             seasonFormMainPanel.AutoScroll = true;
             seasonFormMainPanel.Name = "seasonFormMainPanel";
@@ -996,8 +979,9 @@ namespace LocalVideoPlayer
             mainFormMainPanel.Name = "mainFormMainPanel";
             mainFormMainPanel.MouseWheel += MainFormMainPanel_MouseWheel;
 
+            remotePictureBox.Visible = true;
             closeButton.Visible = true;
-            closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.6), (closeButton.Width / 8));
+            closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.75), (closeButton.Width / 6));
             closeButton.Cursor = blueHandCursor;
 
             Panel currentPanel = null;
@@ -1048,6 +1032,7 @@ namespace LocalVideoPlayer
             currentPanel = null;
             count = 0;
             panelCount = 0;
+
             for (int i = 0; i < media.TvShows.Length; i++)
             {
                 if (count == 6) count = 0;
@@ -1685,13 +1670,128 @@ namespace LocalVideoPlayer
 
         private void BackgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            //To-do: add some sort of text indicator for loading circle on initial launch
             loadingCircle1.Dispose();
             loadingLabel.Dispose();
             this.Padding = new System.Windows.Forms.Padding(5, 20, 20, 20);
-
             InitGui();
-            TvShowBox_Click(null, null);
+            //TvShowBox_Click(null, null);
+        }
+
+        #endregion
+
+        #region Mouse control
+
+        private void RestoreSystemCursor()
+        {
+            //To-do: backup existing keys for restore
+            string[] keys = Properties.Resources.keys_backup.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+            foreach (string key in keys)
+            {
+                string[] keyValuePair = key.Split('=');
+                Registry.SetValue(@"HKEY_CURRENT_USER\Control Panel\Cursors\", keyValuePair[0], keyValuePair[1]);
+            }
+
+            SystemParametersInfo(SPI_SETCURSORS, 0, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+            SystemParametersInfo(0x2029, 0, 32, 0x01);
+        }
+
+        private void UpdateSystemCursor()
+        {
+            string cursorPath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
+            string[] keys = Properties.Resources.keys_custom.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+            foreach (string key in keys)
+            {
+                string[] keyValuePair = key.Split('=');
+                Registry.SetValue(@"HKEY_CURRENT_USER\Control Panel\Cursors\", keyValuePair[0], cursorPath + keyValuePair[1]);
+            }
+
+            SystemParametersInfo(SPI_SETCURSORS, 0, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+            SystemParametersInfo(0x2029, 0, 128, 0x01);
+        }
+
+        public async Task ListenForMouseMovement(CancellationToken token)
+        {
+            TcpListener server = null;
+            try
+            {
+                // Set the TcpListener on port 13000.
+                Int32 port = 3000;
+                IPAddress localAddr = GetLocalIPAddress();
+                Console.WriteLine("Starting server on " + localAddr.ToString());
+                // TcpListener server = new TcpListener(port);
+                server = new TcpListener(localAddr, port);
+
+                // Start listening for client requests.
+                server.Start();
+
+                // Buffer for reading data
+                Byte[] bytes = new Byte[256];
+                String data = null;
+
+                // Enter the listening loop.
+                while (true)
+                {
+                    data = null;
+
+                    // Perform a blocking call to accept requests.
+                    // You could also use server.AcceptSocket() here.
+                    Console.WriteLine("Waiting for a connection... ");
+
+                    TcpClient client = server.AcceptTcpClient();
+                    Console.WriteLine("Connected!");
+
+                    // Get a stream object for reading and writing
+                    NetworkStream stream = client.GetStream();
+
+                    int i;
+
+                    // Loop to receive all the data sent by the client.
+                    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+                    {
+                        // Translate data bytes to a ASCII string.
+                        data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
+                        Console.WriteLine("Received: {0}", data);
+
+                        // Process the data sent by the client.
+                        data = data.ToUpper();
+                        if (data.Equals("CLOSE")) { break; }
+
+                        byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
+                        stream.Write(msg, 0, msg.Length);
+                        //Console.WriteLine("Sending back: {0}", data);
+                    }
+
+                    // Shutdown and end connection
+                    client.Close();
+                }
+
+            }
+            catch (SocketException e)
+            {
+                Console.WriteLine("SocketException: {0}", e);
+            }
+            finally
+            {
+                // Stop listening for new clients.
+                server.Stop();
+            }
+
+            Console.WriteLine("\nHit enter to continue...");
+            Console.Read();
+        }
+
+        public IPAddress GetLocalIPAddress()
+        {
+            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+            return host.AddressList[host.AddressList.Length - 1];
+            /*foreach (IPAddress ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip;
+                }
+            }
+            throw new Exception("No network adapters with an IPv4 address in the system!");*/
         }
 
         #endregion

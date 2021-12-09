@@ -212,9 +212,9 @@ namespace LocalVideoPlayer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap slider {
+        internal static System.Drawing.Bitmap ripple_green {
             get {
-                object obj = ResourceManager.GetObject("slider", resourceCulture);
+                object obj = ResourceManager.GetObject("ripple_green", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -222,9 +222,9 @@ namespace LocalVideoPlayer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap slider32 {
+        internal static System.Drawing.Bitmap ripple_red {
             get {
-                object obj = ResourceManager.GetObject("slider32", resourceCulture);
+                object obj = ResourceManager.GetObject("ripple_red", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
