@@ -38,18 +38,19 @@ int counter = 0;
 
 void setup() {
   Serial.begin(9600);
-  Serial.println("starting es8266...");
   esp8266.begin(9600);
+
+  //Serial.println("starting es8266...");
   esp8266Data("AT+RST\r\n", 2000, DEBUG); //reset module
   esp8266Data("AT+CWMODE=3\r\n", 1000, DEBUG); //set station mode
   esp8266Data("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000, DEBUG);   //connect wifi network
   while (!esp8266.find("OK")) {
     /*wait for connection*/
   }
-  esp8266Data("AT+CIFSR\r\n", 1000, DEBUG);
-  //To-do: only for sound?
+  //esp8266Data("AT+CIFSR\r\n", 1000, DEBUG);
+  //To-do: only for sound
   //To-do: button for scrolling
-  esp8266Data("AT+CIPSTART=\"TCP\",\"192.168.0.153\",3000\r\n", 3000, DEBUG);
+  esp8266Data("AT+CIPSTART=\"TCP\",\"192.168.0.153\",3000\r\n", 2000, DEBUG);
   Serial.println("esp8266 connected");
   
   pinMode(powerPin, INPUT_PULLUP);
@@ -61,7 +62,7 @@ void setup() {
   pinMode(joystickButtonPin, INPUT_PULLUP);
   
   IrSender.begin(IR_SEND_PIN, ENABLE_LED_FEEDBACK); // Specify send pin and enable feedback LED at default feedback LED pin
-  Serial.print(F("> ready to send IR signals at pin "));
+  Serial.print(F("ready to send IR signals at pin "));
   Serial.println(IR_SEND_PIN);
 
 }
@@ -81,13 +82,14 @@ void loop() {
   Serial.println(joystickPinState);*/
 
   if(joystickPinState == 0 ||
-     mapX == 512 || mapX == -512 ||
-     mapY == 512 || mapY == -512) {
+     mapX > 50 || mapX < -50 ||
+     mapY > 50 || mapY < -50) {
       output = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "\r\n";
       sendLength = "AT+CIPSEND=" + String(output.length()) + "\r\n";
       esp8266Data(sendLength, 100, DEBUG);
       esp8266Data(output, 100, DEBUG);
   }
+  
   /*output = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "\r\n";
   sendLength = "AT+CIPSEND=" + String(output.length()) + "\r\n";
   esp8266Data(sendLength, 100, DEBUG);
@@ -141,7 +143,7 @@ String esp8266Data(String command, const int timeout, boolean debug) {
     }
   }
   if (debug) { //  && timeout > 999
-    Serial.println(response);
+    Serial.print(response);
   }
   return response;
 }

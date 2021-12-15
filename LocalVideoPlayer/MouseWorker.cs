@@ -1,12 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Forms;
 
@@ -57,17 +52,20 @@ namespace LocalVideoPlayer
         private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
 
-            Console.WriteLine("{0:HH:mm:ss.fff} event raised: {1}", e.SignalTime, client.Connected);
+            //Console.WriteLine("{0:HH:mm:ss.fff} event raised: {1}", e.SignalTime, client.Connected);
             try
             {
                 NetworkStream stream = client.GetStream();
-                byte[] msg = System.Text.Encoding.ASCII.GetBytes("test");
+                byte[] msg = System.Text.Encoding.ASCII.GetBytes("ka");
                 stream.Write(msg, 0, msg.Length);
             }
-            catch (Exception ex)
+            catch
             {
+                //CustomDialog.ShowMessage("Error", "Lost controller connection.", mainForm.Width, mainForm.Height);
                 Stop();
                 Start();
+                pollingTimer.Enabled = false;
+                pollingTimer.Stop();
             }
         }
 
@@ -140,7 +138,7 @@ namespace LocalVideoPlayer
 
                                 MoveMouse(data);
 
-                                byte[] msg = System.Text.Encoding.ASCII.GetBytes(data);
+                                byte[] msg = System.Text.Encoding.ASCII.GetBytes("OK");
                                 stream.Write(msg, 0, msg.Length);
                                 //Console.WriteLine("Sending back: {0}", data);
                             }
@@ -206,6 +204,7 @@ namespace LocalVideoPlayer
                 {
                     mainForm.Cursor = new Cursor(Cursor.Current.Handle);
                     Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
+                    
                 }));
             }
             else
