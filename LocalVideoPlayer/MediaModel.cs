@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 
 namespace LocalVideoPlayer
 {
@@ -178,6 +179,21 @@ namespace LocalVideoPlayer
 
             return true;
         }
+
+        public static IComparer SortMoviesAlphabetically()
+        {
+            return (IComparer)new SortMoviesAlphabeticallyHelper();
+        }
+
+        private class SortMoviesAlphabeticallyHelper : IComparer
+        {
+            int IComparer.Compare(object a, object b)
+            {
+                Movie m1 = (Movie)a;
+                Movie m2 = (Movie)b;
+                return String.Compare(m1.Name, m2.name);
+            }
+        }
     }
 
     public class TvShow
@@ -268,6 +284,21 @@ namespace LocalVideoPlayer
                 if (!this.seasons[i].Compare(localShow.seasons[i])) return false;
             }
             return true;
+        }
+
+        public static IComparer SortTvShowsAlphabetically()
+        {
+            return (IComparer)new SortTvShowsAlphabeticallyHelper();
+        }
+
+        private class SortTvShowsAlphabeticallyHelper : IComparer
+        {
+            int IComparer.Compare(object a, object b)
+            {
+                TvShow t1 = (TvShow)a;
+                TvShow t2 = (TvShow)b;
+                return String.Compare(t1.Name, t2.name);
+            }
         }
     }
 

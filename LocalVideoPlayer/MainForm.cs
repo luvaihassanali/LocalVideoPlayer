@@ -1119,7 +1119,7 @@ namespace LocalVideoPlayer
 
             if (loadingLabel.InvokeRequired)
             {
-                loadingLabel.BeginInvoke(new MethodInvoker(delegate
+                loadingLabel.Invoke(new MethodInvoker(delegate
                 {
                     loadingLabel.Text = text;
                 }));
@@ -1429,6 +1429,9 @@ namespace LocalVideoPlayer
                     }
                 }
             }
+
+            Array.Sort(media.Movies, Movie.SortMoviesAlphabetically());
+            Array.Sort(media.TvShows, TvShow.SortTvShowsAlphabetically());
 
             string jsonString = JsonConvert.SerializeObject(media);
             File.WriteAllText(jsonFile, jsonString);
