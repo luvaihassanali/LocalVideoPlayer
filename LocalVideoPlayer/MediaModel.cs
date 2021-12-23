@@ -28,6 +28,9 @@ namespace LocalVideoPlayer
 
         internal bool Compare(MediaModel prevMedia)
         {
+            Array.Sort(this.Movies, Movie.SortMoviesAlphabetically());
+            Array.Sort(this.TvShows, TvShow.SortTvShowsAlphabetically());
+
             if (this.movies.Length != prevMedia.movies.Length) return false;
             if (this.tvShows.Length != prevMedia.tvShows.Length) return false;
 
