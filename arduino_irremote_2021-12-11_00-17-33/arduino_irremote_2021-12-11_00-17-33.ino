@@ -7,21 +7,35 @@
 
 //#define SEND_PWM_BY_TIMER
 //#define USE_NO_SEND_PWM
-#define POWER 0xE0E040BF
-#define VOLUME_UP 0xE0E0E01F
-#define VOLUME_DOWN 0xE0E0D02F
-#define IR_CODE_NUM_BITS 32
+//#define POWER 0xE0E040BF
+//#define VOLUME_UP 0xE0E0E01F
+//#define VOLUME_DOWN 0xE0E0D02F
+//#define IR_CODE_NUM_BITS 32
 #define DEBUG true
 
 const int powerPin = 12;
-const int volUpPin = 10;
-const int volDownPin = 11;
+const int potentiometerPin = A5;
+const int volOvPin = 11;
+const int redLedPin = 13;
+const int opticalPin = 10;
+const int bluetoothPin = 9;
+const int scrollPin = 6;
+const int blueLedPin = 5;
 const int joystickRxPin = A0;
 const int joystickRyPin = A1;
 const int joystickButtonPin = 2;
 
-IRsend irsend;
-SoftwareSerial esp8266(9, 8);
+//IRsend irsend;
+int powerPinState = 0;
+int pAnalogValue = 0;
+int volumeLevel = 1;
+int currentRange = 1;
+int volOvPinState = 0;
+int opticalPinState = 0;
+int bluetoothPinState = 0;
+int scrollPinState = 0;
+
+SoftwareSerial esp8266(8, 7);
 String output = "";
 String sendLength = "";
 int xPosition = 0;
@@ -29,110 +43,151 @@ int yPosition = 0;
 int joystickPinState = 0;
 int mapX = 0;
 int mapY = 0;
-
-int powerPinState = 0;
-int volUpPinState = 0;
-int volDownPinState = 0;
-int analogValue = 0;
-int counter = 0;
+bool initiateInternet = true;
 
 void setup() {
-  Serial.begin(9600);
-  esp8266.begin(9600);
 
-  //Serial.println("starting es8266...");
-  esp8266Data("AT+RST\r\n", 2000, DEBUG); //reset module
-  esp8266Data("AT+CWMODE=3\r\n", 1000, DEBUG); //set station mode
-  esp8266Data("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000, DEBUG);   //connect wifi network
-  while (!esp8266.find("OK")) {
-    /*wait for connection*/
+  Serial.begin(9600);
+
+  if (DEBUG) {
+    Serial.println("Serial ready");
   }
-  //esp8266Data("AT+CIFSR\r\n", 1000, DEBUG);
-  //To-do: only for sound
-  //To-do: button for scrolling
-  esp8266Data("AT+CIPSTART=\"TCP\",\"192.168.0.153\",3000\r\n", 2000, DEBUG);
-  Serial.println("esp8266 connected");
-  
+
   pinMode(powerPin, INPUT_PULLUP);
-  pinMode(volUpPin, INPUT_PULLUP);
-  pinMode(volDownPin, INPUT_PULLUP);
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(volOvPin, INPUT_PULLUP);
+  pinMode(opticalPin, INPUT_PULLUP);
+  pinMode(bluetoothPin, INPUT_PULLUP);
+  pinMode(scrollPin, INPUT_PULLUP);
+  pinMode(redLedPin, OUTPUT);
+  pinMode(blueLedPin, OUTPUT);
   pinMode(joystickRxPin, INPUT);
   pinMode(joystickRyPin, INPUT);
   pinMode(joystickButtonPin, INPUT_PULLUP);
-  
-  IrSender.begin(IR_SEND_PIN, ENABLE_LED_FEEDBACK); // Specify send pin and enable feedback LED at default feedback LED pin
-  Serial.print(F("ready to send IR signals at pin "));
-  Serial.println(IR_SEND_PIN);
 
+  //IrSender.begin(IR_SEND_PIN, ENABLE_LED_FEEDBACK); // Specify send pin and enable feedback LED at default feedback LED pin
+  //Serial.print(("Infared ready");
+  digitalWrite(redLedPin, HIGH);
 }
 
 void loop() {
+
+  powerPinState = digitalRead(powerPin);
+  if (powerPinState == LOW) {
+    if (DEBUG) {
+      Serial.println("Power on sound bar");
+    }
+    digitalWrite(redLedPin, LOW);
+    //irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
+  }
+
+  pAnalogValue = analogRead(potentiometerPin);
+  volumeLevel = pAnalogValue / 64;
+
+  if (volumeLevel != currentRange) {
+    if (volumeLevel < currentRange) {
+      if (DEBUG) {
+        Serial.print("p vol down: ");
+        Serial.print(pAnalogValue);
+        Serial.print("  ");
+        Serial.println(volumeLevel);
+      }
+      digitalWrite(redLedPin, LOW);
+      //irsend.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
+      currentRange = volumeLevel;
+    } else {
+      if (DEBUG) {
+        Serial.print("p vol up: ");
+        Serial.print(pAnalogValue);
+        Serial.print("  ");
+        Serial.println(volumeLevel);
+      }
+      digitalWrite(redLedPin, LOW);
+      //irsend.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
+      currentRange = volumeLevel;
+    }
+  }
+
+  volOvPinState = digitalRead(volOvPin);
+  if (volOvPinState == LOW) {
+    if (volumeLevel < 7) {
+      if (DEBUG) {
+        Serial.println("b vol down");
+      }
+      digitalWrite(redLedPin, LOW);
+      //irsend.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
+    } else {
+      if (DEBUG) {
+        Serial.println("b vol up");
+      }
+      digitalWrite(redLedPin, LOW);
+      //irsend.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
+    }
+  }
+
+  opticalPinState = digitalRead(opticalPin);
+  if (opticalPinState == LOW) {
+    if (DEBUG) {
+      Serial.println("optical");
+    }
+    digitalWrite(redLedPin, LOW);
+    //irsend.sendNEC(0x807F926DU, IR_CODE_NUM_BITS);
+  }
+
+  bluetoothPinState = digitalRead(bluetoothPin);
+  if (bluetoothPinState == LOW) {
+    if (DEBUG) {
+      Serial.println("bluetooth");
+    }
+    digitalWrite(redLedPin, LOW);
+    //irsend.sendNEC(0x807F926DU, IR_CODE_NUM_BITS);
+  }
+
   xPosition = analogRead(joystickRxPin);
   yPosition = analogRead(joystickRyPin);
   joystickPinState = digitalRead(joystickButtonPin);
   mapX = map(xPosition, 0, 1023, -512, 512);
   mapY = map(yPosition, 0, 1023, -512, 512);
 
-  /*Serial.print("X: ");
-  Serial.print(mapX);
-  Serial.print(" | Y: ");
-  Serial.print(mapY);
-  Serial.print(" | Button: ");
-  Serial.println(joystickPinState);*/
-
-  if(joystickPinState == 0 ||
-     mapX > 50 || mapX < -50 ||
-     mapY > 50 || mapY < -50) {
-      output = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "\r\n";
-      sendLength = "AT+CIPSEND=" + String(output.length()) + "\r\n";
-      esp8266Data(sendLength, 100, DEBUG);
-      esp8266Data(output, 100, DEBUG);
+  if (joystickPinState == 0 && initiateInternet) {
+    //To-do: add bluelight..?
+    if (DEBUG) {
+      Serial.println("Starting es8266...");
+    }
+    esp8266.begin(9600);
+    esp8266Data("AT+RST\r\n", 2000); //reset module
+    esp8266Data("AT+CWMODE=3\r\n", 1000); //set station mode
+    esp8266Data("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000);   //connect wifi network
+    while (!esp8266.find("OK")) {
+    }
+    //esp8266Data("AT+CIFSR\r\n", 1000);
+    //To-do: only for sound
+    //To-do: button for scrolling
+    esp8266Data("AT+CIPSTART=\"TCP\",\"192.168.0.153\",3000\r\n", 2000);
+    if (DEBUG) {
+      Serial.println("Esp8266 connected");
+    }
+    initiateInternet = false;
   }
-  
-  /*output = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "\r\n";
-  sendLength = "AT+CIPSEND=" + String(output.length()) + "\r\n";
-  esp8266Data(sendLength, 100, DEBUG);
-  esp8266Data(output, 100, DEBUG);
-  counter++;
-  
-  if (counter == 10) {
-    esp8266Data("AT+CIPSEND=5\r\n", 1000, DEBUG);
-    esp8266Data("close", 200, DEBUG);
-    esp8266Data("AT+CIPCLOSE\r\n", 1000, DEBUG);
-    while (1) {  } //idle
-  }*/
-
-  delay(100);
-
-  /*
-    powerPinState = digitalRead(powerPin);
-    if (powerPinState == LOW) {
-      irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
-      delay(250);
+  scrollPinState = digitalRead(scrollPin);
+  if ((joystickPinState == 0 || scrollPinState == 0 || mapX > 50 || mapX < -50 || mapY > 50 || mapY < -50) && !initiateInternet) {
+    output = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "," + String(scrollPinState) + "\r\n";
+    sendLength = "AT+CIPSEND=" + String(output.length()) + "\r\n";
+    esp8266Data(sendLength, 100);
+    esp8266Data(output, 100);
+    if (DEBUG) {
+      Serial.print(output);
     }
+    digitalWrite(blueLedPin, LOW);
+  }
 
-    volUpPinState = digitalRead(volUpPin);
-    if (volUpPinState == LOW) {
-      irsend.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
-      delay(250);
-    }
-
-    volDownPinState = digitalRead(volDownPin);
-    if (volDownPinState == LOW) {
-      irsend.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
-      delay(250);
-    }
-
-    analogValue = analogRead(A5);
-    //~30 volume levels map that to 1023 into ranges
-    //variable for current range and if potentiometer value is below then - volume update current range and vice versa
-    Serial.println(analogValue);
-    //delay(250);
-  */
+  delay(200);
+  digitalWrite(redLedPin, HIGH);
+  if (!initiateInternet) {
+    digitalWrite(blueLedPin, HIGH);
+  }
 }
 
-String esp8266Data(String command, const int timeout, boolean debug) {
+String esp8266Data(String command, const int timeout) {
   String response = "";
   esp8266.print(command);
   long int time = millis();
@@ -142,18 +197,19 @@ String esp8266Data(String command, const int timeout, boolean debug) {
       response += c;
     }
   }
-  if (debug) { //  && timeout > 999
+  if (DEBUG) { //  && timeout > 999
     Serial.print(response);
   }
   return response;
 }
 
-// Rescale analog read value to potentiometer's voltage (from 0V to 5V):
-// float voltage = floatMap(analogValue, 0, 1023, 0, 5);
-float floatMap(float x, float in_min, float in_max, float out_min, float out_max) {
+/*
+  // Rescale analog read value to potentiometer's voltage (from 0V to 5V):
+  // float voltage = floatMap(analogValue, 0, 1023, 0, 5);
+  float floatMap(float x, float in_min, float in_max, float out_min, float out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
+  }
+*/
 /*
   Serial.println(F("Enter number of signal to send (1 .. 20)"));
   long commandno = Serial.parseInt();
@@ -219,9 +275,6 @@ float floatMap(float x, float in_min, float in_max, float out_min, float out_max
     irsend.sendNEC(0x807F728DU, IR_CODE_NUM_BITS);
     break;
   case 21L:
-    Serial.println("power tv");
-    //resistor 47 ... distance at lower?
-    //try inctructables setup with transistor?
     irsend.sendSAMSUNG(POWER, IR_CODE_NUM_BITS);
     break;
   case 22L:

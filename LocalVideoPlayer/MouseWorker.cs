@@ -11,11 +11,13 @@ namespace LocalVideoPlayer
     {
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, CallingConvention = System.Runtime.InteropServices.CallingConvention.StdCall)]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
+
         //Mouse actions
         private const int MOUSEEVENTF_LEFTDOWN = 0x02;
         private const int MOUSEEVENTF_LEFTUP = 0x04;
         private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
         private const int MOUSEEVENTF_RIGHTUP = 0x10;
+        private const int MOUSEEVENTF_WHEEL = 0x0800;
 
         private Thread workerThread = null;
         private bool workerThreadRunning = false;
@@ -179,12 +181,21 @@ namespace LocalVideoPlayer
             }
         }
 
+        bool ignoreFirst = true;
+
         private void MoveMouse(string data)
         {
+            if(ignoreFirst)
+            {
+                ignoreFirst = false;
+                return;
+            }
+
             string[] dataSplit = data.Split(',');
             int x = Int32.Parse(dataSplit[0]);
             int y = Int32.Parse(dataSplit[1]);
-            int buttonState = Int32.Parse(dataSplit[2].Replace("\r\n", ""));
+            int buttonState = Int32.Parse(dataSplit[2]);
+            int scrollState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
             if (buttonState == 0)
             {
@@ -193,25 +204,34 @@ namespace LocalVideoPlayer
             }
 
             //adjust for less than -512/512
-            x = x / 4;
-            y = y / 4;
+            x = -x / 4;
+            y = -y / 4;
 
-            if (mainForm.InvokeRequired)
+            if(scrollState == 0)
             {
-                //To-do: Go over invokes one more time
-                //To-do: Create polling timer to detect disconnect
-                mainForm.BeginInvoke(new MethodInvoker(delegate
+                y = y * -2;
+                mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)y, 0);
+            } 
+            else
+            {
+                if (mainForm.InvokeRequired)
+                {
+                    //To-do: Go over invokes one more time
+                    //To-do: Create polling timer to detect disconnect
+                    mainForm.BeginInvoke(new MethodInvoker(delegate
+                    {
+                        mainForm.Cursor = new Cursor(Cursor.Current.Handle);
+                        Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
+
+                    }));
+                }
+                else
                 {
                     mainForm.Cursor = new Cursor(Cursor.Current.Handle);
                     Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
-                    
-                }));
+                }
             }
-            else
-            {
-                mainForm.Cursor = new Cursor(Cursor.Current.Handle);
-                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
-            }
+
         }
 
         public void DoMouseClick()

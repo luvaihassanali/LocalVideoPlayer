@@ -155,10 +155,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\blue_cursors_xl\blue_busy_xl.ani">
+    <None Include="Resources\blue_cursors_xl\blue_busy_xl_clean.ani">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Resources\blue_cursors_xl\blue_working_xl.ani">
+    <None Include="Resources\blue_cursors_xl\blue_working_xl_clean.ani">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="Resources\pause.png" />
