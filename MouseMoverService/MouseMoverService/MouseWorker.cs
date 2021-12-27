@@ -5,7 +5,7 @@ using System.Threading;
 using System.Timers;
 using System.Windows.Forms;
 
-namespace LocalVideoPlayer
+namespace MouseMoverService
 {
     class MouseWorker
     {
@@ -22,23 +22,9 @@ namespace LocalVideoPlayer
         private Thread workerThread = null;
         private bool workerThreadRunning = false;
         private int stopTimeout = 10000;
-        private MainForm mainForm;
-        private PictureBox remotePictureBox;
         TcpListener server;
         TcpClient client;
         private System.Timers.Timer pollingTimer;
-
-        public MouseWorker(MainForm m)
-        {
-            mainForm = m;
-            foreach (Control c in mainForm.Controls)
-            {
-                if (c.Name.Equals("remotePictureBox"))
-                {
-                    remotePictureBox = c as PictureBox;
-                }
-            }
-        }
 
         private void SetTimer()
         {
@@ -99,14 +85,6 @@ namespace LocalVideoPlayer
                         {
                             data = null;
 
-                            if (remotePictureBox.InvokeRequired)
-                            {
-                                remotePictureBox.BeginInvoke(new MethodInvoker(delegate { remotePictureBox.Image = Properties.Resources.ripple_red; }));
-                            }
-                            else
-                            {
-                                remotePictureBox.Image = Properties.Resources.ripple_red;
-                            }
                             // Perform a blocking call to accept requests.
                             // You could also use server.AcceptSocket() here.
                             Console.WriteLine("Waiting for a connection... ");
@@ -115,15 +93,6 @@ namespace LocalVideoPlayer
                             Console.WriteLine("Connected!");
 
                             SetTimer();
-
-                            if (remotePictureBox.InvokeRequired)
-                            {
-                                remotePictureBox.BeginInvoke(new MethodInvoker(delegate { remotePictureBox.Image = Properties.Resources.ripple_green; }));
-                            }
-                            else
-                            {
-                                remotePictureBox.Image = Properties.Resources.ripple_green;
-                            }
 
                             // Get a stream object for reading and writing
                             NetworkStream stream = client.GetStream();
@@ -185,7 +154,7 @@ namespace LocalVideoPlayer
 
         private void MoveMouse(string data)
         {
-            if(ignoreCount < 2)
+            if (ignoreCount < 2)
             {
                 ignoreCount++;
                 return;
@@ -207,31 +176,15 @@ namespace LocalVideoPlayer
             x = -x / 4;
             y = -y / 4;
 
-            if(scrollState == 0)
+            if (scrollState == 0)
             {
                 y = y * -2;
                 mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)y, 0);
-            } 
+            }
             else
             {
-                if (mainForm.InvokeRequired)
-                {
-                    //To-do: Go over invokes one more time
-                    //To-do: Create polling timer to detect disconnect
-                    mainForm.BeginInvoke(new MethodInvoker(delegate
-                    {
-                        mainForm.Cursor = new Cursor(Cursor.Current.Handle);
-                        Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
-
-                    }));
-                }
-                else
-                {
-                    mainForm.Cursor = new Cursor(Cursor.Current.Handle);
-                    Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
-                }
+                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
             }
-
         }
 
         public void DoMouseClick()
@@ -251,7 +204,7 @@ namespace LocalVideoPlayer
                     workerThread = new Thread(new ThreadStart(this.DoWork));
                     //workerThread.Priority = ThreadPriority.Normal;
                     workerThread.IsBackground = true;
-                    workerThread.Name = "LocalVideoPlayer mouse thread";
+                    workerThread.Name = "MouseMoverService thread";
                     workerThreadRunning = true;
                     workerThread.Start();
                 }
@@ -269,15 +222,6 @@ namespace LocalVideoPlayer
 
         public void Stop(int stopTimeout)
         {
-            if (remotePictureBox.InvokeRequired)
-            {
-                remotePictureBox.BeginInvoke(new MethodInvoker(delegate { remotePictureBox.Image = Properties.Resources.ripple_red; }));
-            }
-            else
-            {
-                remotePictureBox.Image = Properties.Resources.ripple_red;
-            }
-
             if (pollingTimer != null)
             {
                 pollingTimer.Stop();
@@ -315,15 +259,6 @@ namespace LocalVideoPlayer
 
         public void StopImmediately()
         {
-            if (remotePictureBox.InvokeRequired)
-            {
-                remotePictureBox.BeginInvoke(new MethodInvoker(delegate { remotePictureBox.Image = Properties.Resources.ripple_red; }));
-            }
-            else
-            {
-                remotePictureBox.Image = Properties.Resources.ripple_red;
-            }
-
             if (pollingTimer != null)
             {
                 pollingTimer.Stop();

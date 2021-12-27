@@ -52,6 +52,7 @@ namespace LocalVideoPlayer
         private bool isPlaying = false; 
         private MouseWorker worker = null;
         private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
+        private bool mouseMoverServiceKill = false;
 
         //To-do: too big need to split code
         public MainForm()
@@ -66,6 +67,12 @@ namespace LocalVideoPlayer
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BackgroundWorker1_RunWorkerCompleted);
             backgroundWorker1.RunWorkerAsync();
 
+            Process[] p = Process.GetProcessesByName("MouseMoverServiceDebugger");
+            if (p.Length != 0)
+            {
+                Process.GetProcessesByName("MouseMoverServiceDebugger")[0].Kill();
+                mouseMoverServiceKill = true;
+            }
             worker = new MouseWorker(this);
             worker.Start();
 
@@ -102,7 +109,13 @@ namespace LocalVideoPlayer
             }
 
             worker.Stop();
-            
+
+            if(mouseMoverServiceKill)
+            {
+                string mouseMoverPath = ConfigurationManager.AppSettings["mouseMoverPath"];
+                Process.Start(mouseMoverPath);
+            }
+
             dimmerForm.Close();
             seasonDimmerForm.Close();
             RestoreSystemCursor();
