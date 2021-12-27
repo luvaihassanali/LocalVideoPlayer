@@ -49,7 +49,7 @@ namespace LocalVideoPlayer
         private Panel mainFormMainPanel = null;
         private CustomScrollbar customScrollbar = null;
         private bool seasonFormOpen = false;
-        private bool isPlaying = false; 
+        private static bool isPlaying = false; 
         private MouseWorker worker = null;
         private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         private bool mouseMoverServiceKill = false;

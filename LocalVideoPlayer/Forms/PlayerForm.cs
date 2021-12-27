@@ -95,7 +95,7 @@ namespace LocalVideoPlayer
 
             pollingTimer = new Timer();
             pollingTimer.Tick += new EventHandler(Polling_Tick);
-            pollingTimer.Interval = 2000;
+            pollingTimer.Interval = 10000;
         }
 
         #region General form functions
@@ -106,8 +106,10 @@ namespace LocalVideoPlayer
             closeButton.BringToFront();
             playButton.Location = new Point(playButton.Width / 4, this.Height - (int)(playButton.Width * 1.25));
             playButton.BringToFront();
-            timeline.Size = new Size(this.Width - (int)(playButton.Width * 1.75), playButton.Height / 2);
+            timeline.Size = new Size(this.Width - (int)(playButton.Width * 3), playButton.Height / 2);
             timeline.Location = new Point(playButton.Width + 20, this.Height - (int)(playButton.Height * 1.025));
+            timeLbl.Location = new Point(timeline.Location.X + timeline.Width, timeline.Location.Y);
+            timeLbl.BringToFront();
 
             this.Cursor = new Cursor(Cursor.Current.Handle);
             Cursor.Position = new Point(0, this.Height * 2);
@@ -206,6 +208,7 @@ namespace LocalVideoPlayer
         private void Polling_Tick(object sender, EventArgs e)
         {
             timeline.Visible = false;
+            timeLbl.Visible = false;
             playButton.Visible = false;
             closeButton.Visible = false;
             controlsVisible = false;
@@ -215,6 +218,7 @@ namespace LocalVideoPlayer
         private void Control_MouseEnter(object sender, EventArgs e)
         {
             pollingTimer.Stop();
+
         }
 
         private void Control_MouseLeave(object sender, EventArgs e)
@@ -468,15 +472,19 @@ namespace LocalVideoPlayer
         private void VideoView1_MouseMove(object sender, MouseEventArgs e)
         {
             Point p = PointToClient(Cursor.Position);
-            if (p.Y < this.Height / 3)
+            if (p.Y < this.Height - 50)
             {
-            if (!pollingTimer.Enabled)
-                pollingTimer.Enabled = true;
-            pollingTimer.Start();
-            playButton.Visible = true;
-            closeButton.Visible = true;
-            timeline.Visible = true;
-            controlsVisible = true;
+                if (!pollingTimer.Enabled)
+                {
+                    pollingTimer.Enabled = true;
+                    pollingTimer.Start();
+                }
+
+                playButton.Visible = true;
+                closeButton.Visible = true;
+                timeline.Visible = true;
+                timeLbl.Visible = true;
+                controlsVisible = true;
             }
         }
 
@@ -486,69 +494,39 @@ namespace LocalVideoPlayer
 
         private void Timeline_ValueChanged(object sender, long value)
         {
-            if (mouseDown)
+            string timeString;
+
+            if (mediaPlayer != null)
             {
                 TimeSpan lengthTime = TimeSpan.FromMilliseconds(mediaPlayer.Length);
-                TimeSpan seekTime = TimeSpan.FromMilliseconds(value);
-                if (seekTime.TotalMilliseconds > lengthTime.TotalMilliseconds)
-                {
-                    timeline.Value = (long)lengthTime.TotalMilliseconds;
-                }
-                mediaPlayer.SeekTo(seekTime);
-                string timeString;
+                TimeSpan currTime = TimeSpan.FromMilliseconds(mediaPlayer.Time);
 
                 if (value > 3600000) //hour in ms
                 {
-                    timeString = seekTime.ToString(@"hh\:mm\:ss") + "/" + lengthTime.ToString(@"hh\:mm\:ss");
+                    timeString = currTime.ToString(@"hh\:mm\:ss") + "/" + lengthTime.ToString(@"hh\:mm\:ss");
                 }
                 else
                 {
-                    timeString = seekTime.ToString(@"mm\:ss") + "/" + lengthTime.ToString(@"mm\:ss");
+                    timeString = currTime.ToString(@"mm\:ss") + "/" + lengthTime.ToString(@"mm\:ss");
                 }
 
-
-                if (timePanelActive)
+                timeLbl.Invoke(new MethodInvoker(delegate
                 {
-#pragma warning disable CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
-                    try
-                    {
-                        timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width - 10), timeline.Location.Y - timePanel.Height - 10);
-                    }
-                    catch (Exception e)
-                    {
-                        CustomDialog.ShowMessage("Error", e.Message, this.Width, this.Height);
-                    }
-                    timeLabel.Text = timeString;
-                }
-                else
+                    timeLbl.Text = timeString;
+                }));
+
+                if (mouseDown)
                 {
-                    timePanel = new Panel();
-                    try
-                    {
-                        timePanel.Location = new Point((int)(timeline._trackerRect.Location.X + timePanel.Width * 2.25), timeline.Location.Y - timePanel.Height - 10);
-                    }
-                    catch (Exception e)
-                    {
-                        CustomDialog.ShowMessage("Error", e.Message, this.Width, this.Height);
-                    }
-#pragma warning restore CS1690 // Accessing a member on a field of a marshal-by-reference class may cause a runtime exception
 
-                    Font f = new Font("Arial", 12, FontStyle.Bold);
-                    timeLabel = new Label();
-                    timeLabel.Text = timeString;
-                    timeLabel.Font = f;
-                    timeLabel.Padding = new Padding(2, 2, 0, 2);
-
-                    timePanel.Controls.Add(timeLabel);
-                    timePanel.ForeColor = SystemColors.Control;
-                    this.Controls.Add(timePanel);
-                    timePanel.BringToFront();
-                    timePanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-                    timePanel.AutoSize = true;
-                    timeLabel.AutoSize = true;
-                    timePanelActive = true;
+                    TimeSpan seekTime = TimeSpan.FromMilliseconds(value);
+                    if (seekTime.TotalMilliseconds > lengthTime.TotalMilliseconds)
+                    {
+                        timeline.Value = (long)lengthTime.TotalMilliseconds;
+                    }
+                    mediaPlayer.SeekTo(seekTime);
                 }
             }
+
         }
 
         private void Timeline_MouseUp(object sender, MouseEventArgs e)

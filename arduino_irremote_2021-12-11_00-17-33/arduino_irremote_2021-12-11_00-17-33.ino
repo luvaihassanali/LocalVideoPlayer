@@ -163,7 +163,7 @@ void loop() {
     //esp8266Data("AT+CIFSR\r\n", 1000);
     //To-do: only for sound
     //To-do: button for scrolling
-    esp8266Data("AT+CIPSTART=\"TCP\",\"192.168.0.154\",3000\r\n", 2000);
+    esp8266Data("AT+CIPSTART=\"TCP\",\"192.168.0.153\",3000\r\n", 2000);
     if (DEBUG) {
       Serial.println("Esp8266 connected");
     }

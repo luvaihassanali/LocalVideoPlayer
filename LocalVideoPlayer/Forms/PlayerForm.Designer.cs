@@ -34,6 +34,7 @@ namespace LocalVideoPlayer
             this.timeline = new XComponent.SliderBar.MACTrackBar();
             this.playButton = new LocalVideoPlayer.RoundButton();
             this.closeButton = new LocalVideoPlayer.RoundButton();
+            this.timeLbl = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.videoView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -112,6 +113,20 @@ namespace LocalVideoPlayer
             this.closeButton.MouseEnter += new System.EventHandler(this.Control_MouseEnter);
             this.closeButton.MouseLeave += new System.EventHandler(this.Control_MouseLeave);
             // 
+            // timeLbl
+            // 
+            this.timeLbl.AutoSize = true;
+            this.timeLbl.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.timeLbl.ForeColor = System.Drawing.SystemColors.Control;
+            this.timeLbl.Location = new System.Drawing.Point(696, 416);
+            this.timeLbl.Name = "timeLbl";
+            this.timeLbl.Padding = new System.Windows.Forms.Padding(2, 10, 0, 9);
+            this.timeLbl.Size = new System.Drawing.Size(99, 23);
+            this.timeLbl.TabIndex = 11;
+            this.timeLbl.Tag = "";
+            this.timeLbl.Text = "00:00/00:00";
+            this.timeLbl.Visible = false;
+            // 
             // PlayerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -119,17 +134,18 @@ namespace LocalVideoPlayer
             this.AutoSize = true;
             this.BackColor = System.Drawing.SystemColors.Desktop;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.timeLbl);
             this.Controls.Add(this.playButton);
             this.Controls.Add(this.closeButton);
             this.Controls.Add(this.timeline);
             this.Controls.Add(this.videoView1);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Name = "PlayerForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.TopMost = true;
             this.TransparencyKey = System.Drawing.Color.DeepPink;
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PlayerForm_FormClosing);
             this.Load += new System.EventHandler(this.PlayerForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.videoView1)).EndInit();
@@ -143,5 +159,6 @@ namespace LocalVideoPlayer
         private XComponent.SliderBar.MACTrackBar timeline;
         private RoundButton closeButton;
         private RoundButton playButton;
+        private System.Windows.Forms.Label timeLbl;
     }
 }
