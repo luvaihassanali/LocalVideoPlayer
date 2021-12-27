@@ -19,6 +19,7 @@ const int blueLedPin = 5;
 const int joystickRxPin = A0;
 const int joystickRyPin = A1;
 const int joystickButtonPin = 2;
+const String ipAddr = "\"192.168.0.154\"";
 
 IRsend irsend;
 int powerPinState = 0;
@@ -163,7 +164,7 @@ void loop() {
     //esp8266Data("AT+CIFSR\r\n", 1000);
     //To-do: only for sound
     //To-do: button for scrolling
-    esp8266Data("AT+CIPSTART=\"TCP\",\"192.168.0.153\",3000\r\n", 2000);
+    esp8266Data("AT+CIPSTART=\"TCP\"," + ipAddr + ",3000\r\n", 2000);
     if (DEBUG) {
       Serial.println("Esp8266 connected");
     }
