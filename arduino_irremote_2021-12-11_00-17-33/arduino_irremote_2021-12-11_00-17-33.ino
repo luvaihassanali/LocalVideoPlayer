@@ -34,17 +34,17 @@ int scrollPinState = 0;
 SoftwareSerial esp8266(8, 7);
 String output = "";
 String sendLength = "";
+String result = "";
 int xPosition = 0;
 int yPosition = 0;
 int joystickPinState = 0;
 int mapX = 0;
 int mapY = 0;
 bool initiateInternet = true;
+bool volumeFirstRead = true;
 
 void setup() {
-
   Serial.begin(9600);
-
   if (DEBUG) {
     Serial.println("Serial ready");
   }
@@ -82,6 +82,11 @@ void loop() {
   pAnalogValue = analogRead(potentiometerPin);
   volumeLevel = pAnalogValue / 64;
 
+  if(volumeFirstRead) {
+    currentRange = volumeLevel;
+    volumeFirstRead = false;
+  }
+  
   if (volumeLevel != currentRange) {
     if (volumeLevel < currentRange) {
       if (DEBUG) {
@@ -105,7 +110,7 @@ void loop() {
       currentRange = volumeLevel;
     }
   }
-
+  
   volOvPinState = digitalRead(volOvPin);
   if (volOvPinState == LOW) {
     if (volumeLevel < 7) {
@@ -157,8 +162,8 @@ void loop() {
     esp8266Data("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000);   //connect wifi network
     long int time = millis();
     //while ((time + 5000) > millis()) {
-      while (!esp8266.find("OK")) {
-      }
+    while (!esp8266.find("OK")) {
+    }
     //}
 
     //esp8266Data("AT+CIFSR\r\n", 1000);
@@ -175,7 +180,10 @@ void loop() {
     output = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "," + String(scrollPinState) + "\r\n";
     sendLength = "AT+CIPSEND=" + String(output.length()) + "\r\n";
     esp8266Data(sendLength, 100);
-    esp8266Data(output, 100);
+    result = esp8266Data(output, 100);
+    if (result.indexOf("Error") > 0) {
+      ResetEsp8266();
+    }
     if (DEBUG) {
       Serial.print(output);
     }
@@ -187,6 +195,47 @@ void loop() {
   if (!initiateInternet) {
     digitalWrite(blueLedPin, HIGH);
   }
+}
+
+void ResetEsp8266() {
+  BlinkEsp8266Led();
+  if (DEBUG) {
+    Serial.println("Resetting esp8266");
+  }
+  esp8266Data("AT+RST\r\n", 2000); //reset module
+  esp8266Data("AT+CWMODE=3\r\n", 1000); //set station mode
+  esp8266Data("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000);   //connect wifi network
+  long int time = millis();
+  //while ((time + 5000) > millis()) {
+  while (!esp8266.find("OK")) {
+  }
+  //}
+
+  //esp8266Data("AT+CIFSR\r\n", 1000);
+  //To-do: only for sound
+  //To-do: button for scrolling
+  esp8266Data("AT+CIPSTART=\"TCP\"," + ipAddr + ",3000\r\n", 2000);
+  if (DEBUG) {
+    Serial.println("Esp8266 connected");
+  }
+}
+
+void BlinkEsp8266Led() {
+  digitalWrite(blueLedPin, LOW);
+  delay(250);
+  digitalWrite(blueLedPin, HIGH);
+  delay(250);
+  digitalWrite(blueLedPin, LOW);
+  delay(250);
+  digitalWrite(blueLedPin, HIGH);
+  delay(250);
+  digitalWrite(blueLedPin, LOW);
+  delay(250);
+  digitalWrite(blueLedPin, HIGH);
+  delay(250);
+  digitalWrite(blueLedPin, LOW);
+  delay(250);
+  digitalWrite(blueLedPin, HIGH);
 }
 
 String esp8266Data(String command, const int timeout) {
