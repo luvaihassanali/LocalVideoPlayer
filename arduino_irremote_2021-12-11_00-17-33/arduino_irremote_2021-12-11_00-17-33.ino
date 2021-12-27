@@ -82,11 +82,11 @@ void loop() {
   pAnalogValue = analogRead(potentiometerPin);
   volumeLevel = pAnalogValue / 64;
 
-  if(volumeFirstRead) {
+  if (volumeFirstRead) {
     currentRange = volumeLevel;
     volumeFirstRead = false;
   }
-  
+
   if (volumeLevel != currentRange) {
     if (volumeLevel < currentRange) {
       if (DEBUG) {
@@ -110,7 +110,7 @@ void loop() {
       currentRange = volumeLevel;
     }
   }
-  
+
   volOvPinState = digitalRead(volOvPin);
   if (volOvPinState == LOW) {
     if (volumeLevel < 7) {
@@ -218,6 +218,7 @@ void ResetEsp8266() {
   if (DEBUG) {
     Serial.println("Esp8266 connected");
   }
+  digitalWrite(blueLedPin, HIGH);
 }
 
 void BlinkEsp8266Led() {
@@ -236,6 +237,8 @@ void BlinkEsp8266Led() {
   digitalWrite(blueLedPin, LOW);
   delay(250);
   digitalWrite(blueLedPin, HIGH);
+  delay(250);
+  digitalWrite(blueLedPin, LOW);
 }
 
 String esp8266Data(String command, const int timeout) {
