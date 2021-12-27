@@ -164,7 +164,7 @@ namespace MouseMoverService
             int x = Int32.Parse(dataSplit[0]);
             int y = Int32.Parse(dataSplit[1]);
             int buttonState = Int32.Parse(dataSplit[2]);
-            int scrollState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
+            int buttonTwoState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
             if (buttonState == 0)
             {
@@ -176,10 +176,9 @@ namespace MouseMoverService
             x = -x / 4;
             y = -y / 4;
 
-            if (scrollState == 0)
+            if (buttonTwoState == 0)
             {
-                y = y * -2;
-                mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)y, 0);
+                DoMouseRightClick();
             }
             else
             {
@@ -193,6 +192,14 @@ namespace MouseMoverService
             uint X = (uint)Cursor.Position.X;
             uint Y = (uint)Cursor.Position.Y;
             mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, X, Y, 0, 0);
+        }
+
+        public void DoMouseRightClick()
+        {
+            //Call the imported function with the cursor's current position
+            uint X = (uint)Cursor.Position.X;
+            uint Y = (uint)Cursor.Position.Y;
+            mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP, X, Y, 0, 0);
         }
 
         public void Start()

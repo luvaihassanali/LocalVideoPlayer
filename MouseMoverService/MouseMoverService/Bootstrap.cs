@@ -20,7 +20,7 @@ namespace MouseMoverService
             //setup stuff
 
             //init logging
-            EventLogService.Instance = new EventLogManager("Luvai", "Mouse Mover Service", null);
+            //EventLogService.Instance = new EventLogManager("Luvai", "Mouse Mover Service", null);
 
             //app settings?
         }
@@ -42,13 +42,13 @@ namespace MouseMoverService
             }
             catch(Exception e)
             {
-                EventLogService.Instance.WriteEventError("Failed to start service: " + e.Message);
+                //EventLogService.Instance.WriteEventError("Failed to start service: " + e.Message);
             }
         }
 
         public void StartService()
         {
-            EventLogService.Instance.WriteEventInfo("Starting MouseMoverService");
+            //EventLogService.Instance.WriteEventInfo("Starting MouseMoverService");
             terminate = false;
 
             startupThread = new Thread(new ThreadStart(Startup));
@@ -59,7 +59,7 @@ namespace MouseMoverService
 
         public void StopService()
         {
-            EventLogService.Instance.WriteEventWarning("Stopping MouseMoverService");
+            //EventLogService.Instance.WriteEventWarning("Stopping MouseMoverService");
             try
             {
                 if (!IsStartupTerminated())
@@ -69,7 +69,7 @@ namespace MouseMoverService
                     result = startupThread.Join(stopTimeout); //wait 10 seconds max
                     if (!result)
                     {
-                        EventLogService.Instance.WriteEventError("Startup termination timeout occurred");
+                        //EventLogService.Instance.WriteEventError("Startup termination timeout occurred");
                     }
                     startupThread = null;
                 }
