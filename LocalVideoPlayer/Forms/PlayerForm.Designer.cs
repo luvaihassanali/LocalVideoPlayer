@@ -120,8 +120,8 @@ namespace LocalVideoPlayer
             this.timeLbl.ForeColor = System.Drawing.SystemColors.Control;
             this.timeLbl.Location = new System.Drawing.Point(696, 416);
             this.timeLbl.Name = "timeLbl";
-            this.timeLbl.Padding = new System.Windows.Forms.Padding(2, 10, 0, 9);
-            this.timeLbl.Size = new System.Drawing.Size(99, 23);
+            this.timeLbl.Padding = new System.Windows.Forms.Padding(2, 10, 5, 9);
+            this.timeLbl.Size = new System.Drawing.Size(104, 38);
             this.timeLbl.TabIndex = 11;
             this.timeLbl.Tag = "";
             this.timeLbl.Text = "00:00/00:00";

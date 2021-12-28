@@ -58,7 +58,7 @@ namespace LocalVideoPlayer
         public MainForm()
         {
             Process applicaitionProcess = Process.GetCurrentProcess();
-            applicaitionProcess.PriorityClass = ProcessPriorityClass.High;
+            applicaitionProcess.PriorityClass = ProcessPriorityClass.RealTime;
 
             UpdateSystemCursor();
             InitializeComponent();
