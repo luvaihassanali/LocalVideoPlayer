@@ -157,24 +157,21 @@ void loop() {
       Serial.println("Starting esp8266...");
     }
     esp8266.begin(9600);
-    esp8266Data("AT+RST\r\n", 2000); //reset module
+    esp8266Data("AT+RST\r\n", 3000); //reset module
     esp8266Data("AT+CWMODE=3\r\n", 1000); //set station mode
     esp8266Data("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000);   //connect wifi network
-    long int time = millis();
-    //while ((time + 5000) > millis()) {
     while (!esp8266.find("OK")) {
     }
-    //}
-
-    //esp8266Data("AT+CIFSR\r\n", 1000);
-    //To-do: only for sound
-    //To-do: button for scrolling
+    esp8266Data("AT+CIFSR\r\n", 1000);
     esp8266Data("AT+CIPSTART=\"TCP\"," + ipAddr + ",3000\r\n", 2000);
+    while (!esp8266.find("OK")) {
+    }
     if (DEBUG) {
       Serial.println("Esp8266 connected");
     }
     initiateInternet = false;
   }
+
   scrollPinState = digitalRead(scrollPin);
   if ((joystickPinState == 0 || scrollPinState == 0 || mapX > 50 || mapX < -50 || mapY > 50 || mapY < -50) && !initiateInternet) {
     output = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "," + String(scrollPinState) + "\r\n";
@@ -200,21 +197,18 @@ void loop() {
 void ResetEsp8266() {
   BlinkEsp8266Led();
   if (DEBUG) {
-    Serial.println("Resetting esp8266");
+    Serial.println("Starting esp8266...");
   }
-  esp8266Data("AT+RST\r\n", 2000); //reset module
+  esp8266.begin(9600);
+  esp8266Data("AT+RST\r\n", 3000); //reset module
   esp8266Data("AT+CWMODE=3\r\n", 1000); //set station mode
   esp8266Data("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000);   //connect wifi network
-  long int time = millis();
-  //while ((time + 5000) > millis()) {
   while (!esp8266.find("OK")) {
   }
-  //}
-
-  //esp8266Data("AT+CIFSR\r\n", 1000);
-  //To-do: only for sound
-  //To-do: button for scrolling
+  esp8266Data("AT+CIFSR\r\n", 1000);
   esp8266Data("AT+CIPSTART=\"TCP\"," + ipAddr + ",3000\r\n", 2000);
+  while (!esp8266.find("OK")) {
+  }
   if (DEBUG) {
     Serial.println("Esp8266 connected");
   }

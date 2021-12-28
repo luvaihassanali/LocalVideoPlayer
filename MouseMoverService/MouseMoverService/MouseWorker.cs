@@ -69,10 +69,10 @@ namespace MouseMoverService
                         // Set the TcpListener on port 13000.
                         Int32 port = 3000;
                         IPAddress localAddr = GetLocalIPAddress();
-                        Console.WriteLine("Starting server on " + localAddr.ToString());
+                        //Console.WriteLine("Starting server on " + localAddr.ToString());
                         // TcpListener server = new TcpListener(port);
                         server = new TcpListener(localAddr, port);
-
+                        Console.WriteLine("Starting server on " + server.LocalEndpoint);
                         // Start listening for client requests.
                         server.Start();
 

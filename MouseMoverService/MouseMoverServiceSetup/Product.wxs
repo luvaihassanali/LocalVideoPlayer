@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+    <?define ProductName = "MouseMoverService" ?>
+    <?define ProductUpgradeCode = "2e7f3f19-02b2-40bf-9e31-61ce1f29360e"?>
+    <?define Win64 = "yes" ?>
+
+    <Product Id="*"
+             Name="$(var.ProductName)"
+             Language="1033"
+             Version="1.0.0.0"
+             Manufacturer="Luvai"
+             UpgradeCode="4295f4a6-046d-4019-b106-d199becc4f6b">
+
+        <Package
+            Id="*"
+            Keywords="$(var.ProductName)"
+            Description="$(var.ProductName)"
+            Comments="Learning repo"
+            InstallPrivileges="elevated"
+            Manufacturer="Luvai"
+            InstallerVersion="200"
+            Compressed="yes"
+            InstallScope="perMachine"
+            SummaryCodepage="1252"
+            Platform="x64"/>
+
+        <Media Id="1" Cabinet="MouseMoverService.cab" EmbedCab="yes" DiskPrompt="CD-ROM #1"></Media>
+
+        <Icon Id="App.ico" SourceFile="$(var.MouseMoverService.TargetDir)Resources\icon.ico"/>
+
+        <Property Id="ARPPRODUCTICON" Value="App.ico" />
+        <Property Id="DiskPrompt" Value="MouseMoverService Installation [1]" />
+        <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
+        <Property Id="REMOVEEVERYTHING" Value="yes" />
+        <Property Id="PREVIOUSVERSIONSINSTALLED" Secure="yes" />
+
+        <Upgrade Id="$(var.ProductUpgradeCode)">
+            <UpgradeVersion
+                Minimum="0.0.0.0" Maximum="1.0.0.0"
+                Property="PREVIOUSVERSIONSINSTALLED"
+                IncludeMinimum="yes" IncludeMaximum="no" />
+        </Upgrade>
+
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <!--<Directory Id="ProgramMenuFolder">
+                <Directory Id="MouseMoverServiceProgramsFolder" Name="MouseMoverService" />
+            </Directory>
+            <Directory Id="DesktopFolder" Name="Desktop" />-->
+            <Directory Id="ProgramFiles64Folder" Name="PFDir">
+                <Directory Id="MouseMoverService_Folder" Name="MouseMoverService_Folder">
+                    <Directory Id="MouseMoverService.DIR" Name="MouseMoverService">
+                    </Directory>
+                </Directory>
+            </Directory>
+        </Directory>
+
+        <Feature Id="Complete" Level="1">
+            <Feature Id="MouseMoverService" Level="1">
+                <ComponentRef Id="RegistryKeysApp"/>
+                <ComponentRef Id="MouseMoverService"/>
+            </Feature>
+        </Feature>
+
+        <InstallExecuteSequence>
+            <RemoveExistingProducts After="InstallInitialize" />
+        </InstallExecuteSequence>
+
+        <Property Id="WIXUI_INSTALLDIR" Value="MouseMoverService.DIR"></Property>
+        <UI>
+            <UIRef Id="WixUI_InstallDir"/>
+            <!-- Skip license dialog -->
+            <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="2">1</Publish>
+            <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">1</Publish>
+        </UI>
+    </Product>
+
+    <Fragment>
+        <DirectoryRef Id="MouseMoverService.DIR">
+            <Component Id="RegistryKeysApp" Guid="*" Win64="$(var.Win64)">
+                <RegistryKey Id="AppRegistryKey" Root="HKLM" Key="Software\MouseMoverServiceLuvai\[ProductName]" ForceCreateOnInstall="yes">
+                    <RegistryValue Type="string" Name="Version" Value="[ProductVersion]" />
+                    <RegistryValue Type="string" Name="InstallationPath" Value="[MouseMoverService.DIR]" />
+                </RegistryKey>
+            </Component>
+            <Component Id="MouseMoverService" Guid="025fd49e-5c5c-4a89-8fec-df1a84c1f66b" Win64="$(var.Win64)">
+                <File Id="MouseMoverService" Name="MouseMoverService.exe" DiskId="1" Source="$(var.MouseMoverService.TargetPath)" KeyPath="yes"></File>
+                <File Id="MouseMoverServiceDebugger" Name="MouseMoverServiceDebugger.exe" DiskId="1" Source="$(var.MouseMoverServiceDebugger.TargetPath)" KeyPath="no"></File>
+                    <!--<Shortcut Id="shortcut" Directory="DesktopFolder" Name="MouseMoverService" WorkingDirectory="MouseMoverService.DIR" Advertise="yes" Icon="MouseMoverService.exe">
+                        <Icon Id="MouseMoverService.exe" SourceFile="$(var.MouseMoverService.TargetDir)MouseMoverService.exe" />
+                    </Shortcut>-->
+                
+                <File Id="MouseMoverService.exe.config" Name="MouseMoverService.exe.config" DiskId="1" Source="$(var.MouseMoverService.TargetDir)MouseMoverService.exe.config" KeyPath="no" />
+                <ServiceInstall Id="ServiceInstallerMouseMoverService" Type="ownProcess" Vital="yes"
+                                Name="MouseMoverService" DisplayName="Mouse Mover Service"
+                                Description="Mouse Mover Service description"
+                                Start="auto" ErrorControl="normal" Interactive="no">
+                <!-- <ServiceDependency Id="SomeService" />-->    
+                </ServiceInstall>
+                <ServiceControl Id="StartServiceMouseMoverService" Start="install" Stop="uninstall" Remove="uninstall" Name="MouseMoverService" Wait="yes" />
+            </Component>
+        </DirectoryRef>
+       
+        <!--<DirectoryRef Id="MouseMoverServiceProgramsFolder">
+            <Component Id="MouseMoverServiceShortcut" Guid="*">
+                <Shortcut Id="MouseMoverServiceShartMenuShortcut"
+                          Name="$(var.ProductName)"
+                          Description="$(var.ProductName)"
+                          Target="[MouseMoverService.DIR]$(var.MouseMoverService.TargetFileName)"
+                          WorkingDirectory="MouseMoverService.DIR"
+                          Icon="App.ico" />
+                <RemoveFolder Id="MouseMoverServicesProgramsFolder" On="uninstall"/>
+                <RegistryValue Root="HKCU" Key="Software\Microsoft\$(var.ProductName)" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+            </Component>
+        </DirectoryRef>-->
+    </Fragment>
+</Wix>
