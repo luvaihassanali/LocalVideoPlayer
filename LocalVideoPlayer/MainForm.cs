@@ -1745,6 +1745,7 @@ namespace LocalVideoPlayer
             TvShow currTvShow = null;
             Episode currEpisode = null;
             Movie currMovie = null;
+            //To-do remove this and fix function
             int currSeason = 0;
 
             //To-do: change to if episode name is null otherwise use media name to get movie + runningTime

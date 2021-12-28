@@ -20,9 +20,6 @@ namespace LocalVideoPlayer
         private int runningTime;
         private Timer pollingTimer;
         private bool mouseDown = false;
-        private bool timePanelActive = false;
-        private Panel timePanel = null;
-        private Label timeLabel = null;
         private bool controlsVisible = false;
         private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
 
@@ -186,6 +183,10 @@ namespace LocalVideoPlayer
 
         private void CloseButton_Click(object sender, EventArgs e)
         {
+            if(mediaPlayer.IsPlaying)
+            {
+                mediaPlayer.Pause();
+            }
             this.Close();
         }
 
@@ -532,14 +533,6 @@ namespace LocalVideoPlayer
         private void Timeline_MouseUp(object sender, MouseEventArgs e)
         {
             mouseDown = false;
-
-            timePanelActive = false;
-
-            if (timePanel != null)
-            {
-                timePanel.Dispose();
-            }
-
             TimeSpan ts = TimeSpan.FromMilliseconds((double)timeline.Value);
             mediaPlayer.SeekTo(ts);
         }
