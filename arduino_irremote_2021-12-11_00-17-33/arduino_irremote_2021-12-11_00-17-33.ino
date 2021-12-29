@@ -151,8 +151,9 @@ void loop() {
   joystickPinState = digitalRead(joystickButtonPin);
   mapX = map(xPosition, 0, 1023, -512, 512);
   mapY = map(yPosition, 0, 1023, -512, 512);
-
-  if (joystickPinState == 0 && initiateInternet) {
+  scrollPinState = digitalRead(scrollPin);
+  
+  if ((joystickPinState == 0 || scrollPinState == 0) && initiateInternet) {
     if (DEBUG) {
       Serial.println("Starting esp8266...");
     }
@@ -172,7 +173,6 @@ void loop() {
     initiateInternet = false;
   }
 
-  scrollPinState = digitalRead(scrollPin);
   if ((joystickPinState == 0 || scrollPinState == 0 || mapX > 50 || mapX < -50 || mapY > 50 || mapY < -50) && !initiateInternet) {
     output = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "," + String(scrollPinState) + "\r\n";
     sendLength = "AT+CIPSEND=" + String(output.length()) + "\r\n";
@@ -207,8 +207,7 @@ void ResetEsp8266() {
   }
   esp8266Data("AT+CIFSR\r\n", 1000);
   esp8266Data("AT+CIPSTART=\"TCP\"," + ipAddr + ",3000\r\n", 2000);
-  while (!esp8266.find("OK")) {
-  }
+
   if (DEBUG) {
     Serial.println("Esp8266 connected");
   }

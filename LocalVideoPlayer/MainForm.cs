@@ -98,6 +98,9 @@ namespace LocalVideoPlayer
             loadingLabel.Location = new Point(0, this.Height / 2 - loadingLabel.Height / 2 + 2);
             loadingLabel.Size = new Size(this.Width, loadingLabel.Height);
             remotePictureBox.Location = new Point(this.Width - remotePictureBox.Width * 2, this.Height - remotePictureBox.Height);
+
+            this.TopMost = true;
+            this.Activate();
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
