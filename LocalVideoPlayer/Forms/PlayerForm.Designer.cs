@@ -155,6 +155,7 @@ namespace LocalVideoPlayer
         }
 
         #endregion
+
         private LibVLCSharp.WinForms.VideoView videoView1;
         private XComponent.SliderBar.MACTrackBar timeline;
         private RoundButton closeButton;
