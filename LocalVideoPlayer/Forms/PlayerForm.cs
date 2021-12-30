@@ -49,9 +49,9 @@ namespace LocalVideoPlayer
             timeline.Value = seekTime;
 
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
-            libVlc = new LibVLC();  //"--verbose=2");
+            libVlc = new LibVLC("--verbose=2");
             //libVlc.SetLogFile("vlclog.txt");
-            //libVlc.Log += (sender, e) => Console.WriteLine($"[{e.Level}] {e.Module}:{e.Message}");
+            libVlc.Log += (sender, e) => Console.WriteLine($"[{e.Level}] {e.Module}:{e.Message}");
 
             mediaPlayer = new MediaPlayer(libVlc);
             mediaPlayer.EnableMouseInput = false;
@@ -342,8 +342,9 @@ namespace LocalVideoPlayer
 
         private Media CreateMedia(LibVLC libVlc, string path, FromType fromPath)
         {
+            //Add application and vlc .exe to Graphics Settings with High Performance NVIDIA GPU preference
             Media media = new Media(libVlc, path, FromType.FromPath);
-            media.AddOption(":avcodec-hw=auto");
+            //media.AddOption(":avcodec-hw=auto");
             //media.AddOption(":avcodec-threads=6");
             media.AddOption(":no-mkv-preload-local-dir");
             return media;
