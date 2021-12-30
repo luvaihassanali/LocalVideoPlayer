@@ -183,6 +183,7 @@ namespace MouseMoverService
             else
             {
                 Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
+                Console.WriteLine("Position: " + Cursor.Position.ToString());
             }
         }
 

@@ -343,6 +343,7 @@ namespace LocalVideoPlayer
         private Media CreateMedia(LibVLC libVlc, string path, FromType fromPath)
         {
             Media media = new Media(libVlc, path, FromType.FromPath);
+            //media.AddOption(":avcodec-hw=none");
             media.AddOption(":avcodec-threads=6");
             media.AddOption(":no-mkv-preload-local-dir");
             return media;
