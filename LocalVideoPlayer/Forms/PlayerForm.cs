@@ -49,7 +49,7 @@ namespace LocalVideoPlayer
             timeline.Value = seekTime;
 
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
-            libVlc = new LibVLC();  "--verbose=2");
+            libVlc = new LibVLC(); // "--verbose=2");
             //libVlc.SetLogFile("vlclog.txt");
             //libVlc.Log += (sender, e) => Console.WriteLine($"[{e.Level}] {e.Module}:{e.Message}");
 
