@@ -50,7 +50,6 @@ namespace LocalVideoPlayer
         private CustomScrollbar customScrollbar = null;
         private bool seasonFormOpen = false;
         private static bool isPlaying = false; 
-        private MouseWorker worker = null;
         private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         private bool mouseMoverServiceKill = false;
 
@@ -66,15 +65,6 @@ namespace LocalVideoPlayer
             backgroundWorker1.DoWork += new DoWorkEventHandler(BackgroundWorker1_DoWork);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BackgroundWorker1_RunWorkerCompleted);
             backgroundWorker1.RunWorkerAsync();
-
-            Process[] p = Process.GetProcessesByName("MouseMoverServiceDebugger");
-            if (p.Length != 0)
-            {
-                Process.GetProcessesByName("MouseMoverServiceDebugger")[0].Kill();
-                mouseMoverServiceKill = true;
-            }
-            worker = new MouseWorker(this);
-            worker.Start();
 
             loadingCircle1.Active = true;
             loadingLabel.Text = "";
@@ -97,7 +87,6 @@ namespace LocalVideoPlayer
             loadingCircle1.Location = new Point(this.Width / 2 - loadingCircle1.Width / 2, this.Height / 2 - loadingCircle1.Height / 2);
             loadingLabel.Location = new Point(0, this.Height / 2 - loadingLabel.Height / 2 + 2);
             loadingLabel.Size = new Size(this.Width, loadingLabel.Height);
-            remotePictureBox.Location = new Point(this.Width - remotePictureBox.Width * 2, this.Height - remotePictureBox.Height);
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -106,14 +95,6 @@ namespace LocalVideoPlayer
             {
                 string jsonString = JsonConvert.SerializeObject(media);
                 File.WriteAllText(jsonFile, jsonString);
-            }
-
-            worker.Stop();
-
-            if(mouseMoverServiceKill)
-            {
-                string mouseMoverPath = ConfigurationManager.AppSettings["mouseMoverPath"];
-                Process.Start(mouseMoverPath);
             }
 
             dimmerForm.Close();
@@ -991,7 +972,6 @@ namespace LocalVideoPlayer
             mainFormMainPanel.Name = "mainFormMainPanel";
             mainFormMainPanel.MouseWheel += MainFormMainPanel_MouseWheel;
 
-            remotePictureBox.Visible = true;
             closeButton.Visible = true;
             closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.75), (closeButton.Width / 6));
             closeButton.Cursor = blueHandCursor;

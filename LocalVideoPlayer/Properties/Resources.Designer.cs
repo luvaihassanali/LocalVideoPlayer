@@ -212,26 +212,6 @@ namespace LocalVideoPlayer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap ripple_green {
-            get {
-                object obj = ResourceManager.GetObject("ripple_green", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap ripple_red {
-            get {
-                object obj = ResourceManager.GetObject("ripple_red", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap smallPlay {
             get {
                 object obj = ResourceManager.GetObject("smallPlay", resourceCulture);

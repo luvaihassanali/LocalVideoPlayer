@@ -30,23 +30,15 @@ namespace MouseMoverClient
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Starting using ip address: " + serverIp);
+            Log("Starting using ip address: " + serverIp);
 
             while (!Console.KeyAvailable)
             {
                 CheckForServer();
-
-                Console.WriteLine("Wait for server init ");
-                for (int i = 0; i <= 10; i++)
-                {
-                    Console.Write(10 - i);
-                    if (i == 10) { Console.WriteLine(); } else { Console.Write("... "); Thread.Sleep(1000); }   
-                }
-
                 ConnectToServer();
             }
 
-            Console.WriteLine("Exiting");
+            Log("Exiting...");
 
             if (client != null)
             {
@@ -66,7 +58,7 @@ namespace MouseMoverClient
         static void ConnectToServer()
         {
 
-            Console.WriteLine("Initializing TCP connection...");
+            Log("Initializing TCP connection");
 
             try
             {
@@ -81,10 +73,10 @@ namespace MouseMoverClient
 
                     while (!success)
                     {
-                        Console.WriteLine("Cannot connect to server. Trying again...");
+                        Log("Cannot connect to server. Trying again");
                         return;
                     }
-                    
+
                     String message = "init";
                     Byte[] data = System.Text.Encoding.ASCII.GetBytes(message);
                     NetworkStream stream = null;
@@ -92,16 +84,17 @@ namespace MouseMoverClient
                     try
                     {
                         stream = client.GetStream();
-                        Console.WriteLine("Connected.");
+                        Log("Connected.");
+                        Thread.Sleep(2000);
                     }
                     catch (System.InvalidOperationException e)
                     {
-                        Console.WriteLine("Not initialized. Trying again");
+                        Log("Server not ready. Trying again");
                         return;
                     }
 
                     stream.Write(data, 0, data.Length);
-                    Console.WriteLine("Sent: {0}", message);
+                    Log("Sent: " + message);
 
                     SetTimer();
 
@@ -109,7 +102,6 @@ namespace MouseMoverClient
                     while (true)
                     {
                         int i;
-                        int counter = 1;
 
                         Byte[] bytes = new Byte[256];
                         String buffer = null;
@@ -119,11 +111,14 @@ namespace MouseMoverClient
                         {
                             // Translate data bytes to a ASCII string.
                             buffer = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
-                            Console.WriteLine("{0}: Received: {1}", counter++, buffer);
-                            //MoveMouse(data);
+                            Log("Received: " + buffer.Replace("\r\n", ""));
+                            if (!buffer.Contains("ok"))
+                            {
+                                MoveMouse(buffer);
+                            }
                         }
 
-                        Console.WriteLine("shutting down. Press a key");
+                        Log("Stream end. Press any key");
                         stream.Close();
                         client.EndConnect(result);
                         client.Close();
@@ -131,11 +126,11 @@ namespace MouseMoverClient
                 }
                 catch (ArgumentNullException e)
                 {
-                    Console.WriteLine("ArgumentNullException: {0}", e);
+                    Log("ArgumentNullException: " + e);
                 }
                 catch (SocketException e)
                 {
-                    Console.WriteLine("SocketException: {0}", e);
+                    Log("SocketException: " + e);
                 }
                 finally
                 {
@@ -152,13 +147,13 @@ namespace MouseMoverClient
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Log(e.Message);
             }
         }
 
         static void CheckForServer()
         {
-            Console.WriteLine("Pinging server...");
+            Log("Pinging server");
             serverOffline = true;
 
             Ping pingSender = new Ping();
@@ -173,12 +168,12 @@ namespace MouseMoverClient
                 PingReply reply = pingSender.Send(serverIp, timeout, buffer, options);
                 if (reply.Status == IPStatus.Success)
                 {
-                    Console.WriteLine("Ping success");
+                    Log("Ping success");
                     serverOffline = false;
                 }
                 else
                 {
-                    Console.WriteLine("Destination host unreachable...");
+                    Log("Destination host unreachable");
                 }
 
                 Thread.Sleep(1000);
@@ -196,7 +191,7 @@ namespace MouseMoverClient
         static void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
 
-            Console.WriteLine("{0:HH:mm:ss.fff} keep alive event raised", e.SignalTime);
+            Log("Send keep alive"); 
             try
             {
                 NetworkStream stream = client.GetStream();
@@ -205,7 +200,7 @@ namespace MouseMoverClient
             }
             catch
             {
-                Console.WriteLine("POLLING TIMER STOP");
+                Log("Polling timer stopped");
                 pollingTimer.Enabled = false;
                 pollingTimer.Stop();
             }
@@ -236,7 +231,7 @@ namespace MouseMoverClient
             else
             {
                 Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
-                Console.WriteLine("Position: " + Cursor.Position.ToString());
+                Log("Mouse position: " + Cursor.Position.ToString());
             }
         }
 
@@ -252,6 +247,11 @@ namespace MouseMoverClient
             uint X = (uint)Cursor.Position.X;
             uint Y = (uint)Cursor.Position.Y;
             mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP, X, Y, 0, 0);
+        }
+
+        static void Log(string message)
+        {
+            Console.WriteLine("{0}: {1}", DateTime.Now.ToString("0:HH:mm:ss.fff"), message);
         }
 
     }

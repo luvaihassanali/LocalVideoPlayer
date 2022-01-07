@@ -190,12 +190,6 @@ Wait=\Resources\blue_cursors_xl\blue_busy_xl_clean.ani</value>
   <data name="play64" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\play64.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="ripple_green" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ripple-green.gif;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="ripple_red" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ripple-red.gif;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="smallPlay" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\smallPlay.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
