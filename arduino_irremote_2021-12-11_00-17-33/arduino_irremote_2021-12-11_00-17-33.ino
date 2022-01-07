@@ -19,7 +19,6 @@ const int blueLedPin = 5;
 const int joystickRxPin = A0;
 const int joystickRyPin = A1;
 const int joystickButtonPin = 2;
-const String ipAddr = "\"192.168.0.154\"";
 
 IRsend irsend;
 int powerPinState = 0;
@@ -35,17 +34,22 @@ SoftwareSerial esp8266(8, 7);
 String output = "";
 String sendLength = "";
 String result = "";
+String dataInResponse = "";
+String dataOutResponse = "";
 int xPosition = 0;
 int yPosition = 0;
 int joystickPinState = 0;
 int mapX = 0;
 int mapY = 0;
-bool initiateInternet = true;
 bool volumeFirstRead = true;
+bool clientConnected = false;
+bool esp8266Init = false;
 
 void setup() {
-  Serial.begin(9600);
+
   if (DEBUG) {
+    //To-do: might cause issues
+    Serial.begin(9600);
     Serial.println("Serial ready");
   }
 
@@ -152,111 +156,158 @@ void loop() {
   mapX = map(xPosition, 0, 1023, -512, 512);
   mapY = map(yPosition, 0, 1023, -512, 512);
   scrollPinState = digitalRead(scrollPin);
-  
-  if ((joystickPinState == 0 || scrollPinState == 0) && initiateInternet) {
-    if (DEBUG) {
-      Serial.println("Starting esp8266...");
-    }
-    esp8266.begin(9600);
-    esp8266Data("AT+RST\r\n", 3000); //reset module
-    esp8266Data("AT+CWMODE=3\r\n", 1000); //set station mode
-    esp8266Data("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000);   //connect wifi network
-    while (!esp8266.find("OK")) {
-    }
-    esp8266Data("AT+CIFSR\r\n", 1000);
-    esp8266Data("AT+CIPSTART=\"TCP\"," + ipAddr + ",3000\r\n", 2000);
-    while (!esp8266.find("OK")) {
-    }
-    if (DEBUG) {
-      Serial.println("Esp8266 connected");
-    }
-    initiateInternet = false;
-  }
 
-  if ((joystickPinState == 0 || scrollPinState == 0 || mapX > 50 || mapX < -50 || mapY > 50 || mapY < -50) && !initiateInternet) {
+  //To-do: increase limit to avoid dummy reads?
+  if ((joystickPinState == 0 || scrollPinState == 0 || mapX > 50 || mapX < -50 || mapY > 50 || mapY < -50) && clientConnected) {
     output = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "," + String(scrollPinState) + "\r\n";
-    sendLength = "AT+CIPSEND=" + String(output.length()) + "\r\n";
-    esp8266Data(sendLength, 100);
-    result = esp8266Data(output, 100);
-    if (result.indexOf("Error") > 0) {
+    sendLength = "AT+CIPSEND=0," + String(output.length()) + "\r\n";
+    TcpDataOut(sendLength, 100);
+    TcpDataOut(output, 100);
+    //result = TcpDataOut(output, 100);
+    /*if (result.indexOf("Error") > 0 || result.indexOf("busy") > 0) {
+      initiateInternet = true;
       ResetEsp8266();
-    }
+      } else {
+      initiateInternet = false;
+      }*/
     if (DEBUG) {
       Serial.print(output);
     }
     digitalWrite(blueLedPin, LOW);
   }
 
-  delay(200);
+  if (scrollPinState == 0 && !esp8266Init) {
+    if (DEBUG) {
+      Serial.println("Starting esp8266...");
+    }
+
+    esp8266.begin(9600);
+    InitializeEsp8266();
+    esp8266Init = true;
+
+    if (DEBUG) {
+      Serial.println("Esp8266 ready");
+    }
+  }
+
+  if (esp8266Init) {
+    TcpDataIn(200);
+  }
+
   digitalWrite(redLedPin, HIGH);
-  if (!initiateInternet) {
+  if (clientConnected) {
     digitalWrite(blueLedPin, HIGH);
   }
 }
 
+void InitializeEsp8266() {
+  TcpDataOut("AT+RST\r\n", 2000); //reset module
+  TcpDataOut("AT+CWMODE=1\r\n", 1000);
+
+  result = TcpDataOut("AT+CIFSR\r\n", 1000);
+  if (result.indexOf("0.0") > 0) {
+    if (DEBUG) {
+      Serial.println("INVALID IP!!!");
+    }
+    ResetEsp8266();
+  }
+
+  TcpDataOut("AT+CIPMUX=1\r\n", 1000); //enable multiple connections
+  TcpDataOut("AT+CIPSERVER=1,3000\r\n", 2000);  //  default port  = 333
+}
+
 void ResetEsp8266() {
   BlinkEsp8266Led();
-  if (DEBUG) {
-    Serial.println("Starting esp8266...");
-  }
-  esp8266.begin(9600);
-  esp8266Data("AT+RST\r\n", 3000); //reset module
-  esp8266Data("AT+CWMODE=3\r\n", 1000); //set station mode
-  esp8266Data("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000);   //connect wifi network
-  while (!esp8266.find("OK")) {
-  }
-  esp8266Data("AT+CIFSR\r\n", 1000);
-  esp8266Data("AT+CIPSTART=\"TCP\"," + ipAddr + ",3000\r\n", 2000);
 
   if (DEBUG) {
-    Serial.println("Esp8266 connected");
+    Serial.println("REstarting esp8266...");
   }
-  digitalWrite(blueLedPin, HIGH);
+
+  InitializeEsp8266();
+
+  if (DEBUG) {
+    Serial.println("Esp8266 ready");
+  }
 }
 
 void BlinkEsp8266Led() {
   digitalWrite(blueLedPin, LOW);
-  delay(250);
+  delay(100);
   digitalWrite(blueLedPin, HIGH);
-  delay(250);
+  delay(100);
   digitalWrite(blueLedPin, LOW);
-  delay(250);
+  delay(100);
   digitalWrite(blueLedPin, HIGH);
-  delay(250);
+  delay(100);
   digitalWrite(blueLedPin, LOW);
-  delay(250);
+  delay(100);
   digitalWrite(blueLedPin, HIGH);
-  delay(250);
+  delay(100);
   digitalWrite(blueLedPin, LOW);
-  delay(250);
+  delay(100);
   digitalWrite(blueLedPin, HIGH);
-  delay(250);
+  delay(100);
   digitalWrite(blueLedPin, LOW);
 }
 
-String esp8266Data(String command, const int timeout) {
-  String response = "";
+void TcpDataIn(const int timeout) {
+  if (DEBUG) {
+    //Serial.println("tcp data in");
+  }
+
+  dataInResponse = "";
+  long int time = millis();
+  while ((time + timeout) > millis()) {
+    while (esp8266.available()) {
+      char c = esp8266.read();
+      dataInResponse += c;
+    }
+  }
+
+  if (dataInResponse.length() == 0) {
+    if (!clientConnected) {
+      digitalWrite(blueLedPin, HIGH);
+      delay(100);
+      digitalWrite(blueLedPin, LOW);
+      delay(100);
+    }
+    return;
+  }
+
+  if (DEBUG) {
+    Serial.println("received: " + dataInResponse);
+  }
+
+  //To-do: check for unlink / do keep alive from client end
+  if (dataInResponse.indexOf("init") > 0) {
+    clientConnected = true;
+    if (DEBUG) {
+      Serial.println("client connected");
+    }
+  }
+
+  output = "ok\r\n";
+  sendLength = "AT+CIPSEND=0," + String(output.length()) + "\r\n";
+  TcpDataOut(sendLength, 100);
+  TcpDataOut(output, 100);
+}
+
+String TcpDataOut(String command, const int timeout) {
+  dataOutResponse = "";
   esp8266.print(command);
   long int time = millis();
   while ((time + timeout) > millis()) {
     while (esp8266.available()) {
       char c = esp8266.read();
-      response += c;
+      dataOutResponse += c;
     }
   }
-  if (DEBUG) { //  && timeout > 999
-    Serial.print(response);
+  if (DEBUG) {
+    Serial.println(dataOutResponse);
   }
-  return response;
+  return dataOutResponse;
 }
 
-/*
-  // Rescale analog read value to potentiometer's voltage (from 0V to 5V):
-  // float voltage = floatMap(analogValue, 0, 1023, 0, 5);
-  float floatMap(float x, float in_min, float in_max, float out_min, float out_max) {
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-  }
-*/
 /*
   Serial.println(F("Enter number of signal to send (1 .. 20)"));
   long commandno = Serial.parseInt();

@@ -22,14 +22,13 @@ namespace MouseMoverService
         private Thread workerThread = null;
         private bool workerThreadRunning = false;
         private int stopTimeout = 10000;
-        TcpListener server;
         TcpClient client;
         private System.Timers.Timer pollingTimer;
 
         private void SetTimer()
         {
             // Create a timer with a two second interval.
-            pollingTimer = new System.Timers.Timer(1000);
+            pollingTimer = new System.Timers.Timer(5000);
             // Hook up the Elapsed event for the timer. 
             pollingTimer.Elapsed += OnTimedEvent;
             pollingTimer.AutoReset = true;
@@ -40,7 +39,7 @@ namespace MouseMoverService
         private void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
 
-            //Console.WriteLine("{0:HH:mm:ss.fff} event raised: {1}", e.SignalTime, client.Connected);
+            Console.WriteLine("{0:HH:mm:ss.fff} keep alive event raised", e.SignalTime);
             try
             {
                 NetworkStream stream = client.GetStream();
@@ -63,60 +62,60 @@ namespace MouseMoverService
             {
                 while (workerThreadRunning)
                 {
-                    server = null;
                     try
                     {
                         // Set the TcpListener on port 13000.
                         Int32 port = 3000;
-                        IPAddress localAddr = GetLocalIPAddress();
-                        //Console.WriteLine("Starting server on " + localAddr.ToString());
-                        // TcpListener server = new TcpListener(port);
-                        server = new TcpListener(localAddr, port);
-                        Console.WriteLine("Starting server on " + server.LocalEndpoint);
-                        // Start listening for client requests.
-                        server.Start();
+                        String server = "192.168.0.181";
+                        String message = "init";
+                        
+                        client = new TcpClient();
+                        System.IAsyncResult result = client.BeginConnect(server, port, null, null);
+                        bool success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(120));
+                        if (!success)
+                        {
+                            Console.WriteLine("Cannot connect to server. Exiting");
+                            Thread.Sleep(3000);
+                            System.Environment.Exit(0);
+                        }
+                        Console.WriteLine("Connected.");
+                        Byte[] data = System.Text.Encoding.ASCII.GetBytes(message);
+                        NetworkStream stream = client.GetStream();
+                        stream.Write(data, 0, data.Length);
+                        Console.WriteLine("Sent: {0}", message);
 
-                        // Buffer for reading data
-                        Byte[] bytes = new Byte[256];
-                        String data = null;
+                        SetTimer();
 
                         // Enter the listening loop.
                         while (true)
                         {
-                            data = null;
-
-                            // Perform a blocking call to accept requests.
-                            // You could also use server.AcceptSocket() here.
-                            Console.WriteLine("Waiting for a connection... ");
-                            //For intial load and close without connection add try/catch
-                            client = server.AcceptTcpClient();
-                            Console.WriteLine("Connected!");
-
-                            SetTimer();
-
-                            // Get a stream object for reading and writing
-                            NetworkStream stream = client.GetStream();
-
                             int i;
                             int counter = 1;
+
+                            Byte[] bytes = new Byte[256];
+                            String buffer = null;
 
                             // Loop to receive all the data sent by the client.
                             while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                             {
                                 // Translate data bytes to a ASCII string.
-                                data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
-                                Console.WriteLine("{0}: Received: {1}", counter++, data);
+                                buffer = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
+                                Console.WriteLine("{0}: Received: {1}", counter++, buffer);
 
-                                MoveMouse(data);
+                                //MoveMouse(data);
 
-                                byte[] msg = System.Text.Encoding.ASCII.GetBytes("OK");
-                                stream.Write(msg, 0, msg.Length);
-                                //Console.WriteLine("Sending back: {0}", data);
                             }
 
                             // Shutdown and end connection
+                            Console.WriteLine("shutting down. Press a key");
+                            //Console.ReadKey();
+                            stream.Close();
                             client.Close();
                         }
+                    }
+                    catch (ArgumentNullException e)
+                    {
+                        Console.WriteLine("ArgumentNullException: {0}", e);
                     }
                     catch (SocketException e)
                     {
@@ -126,16 +125,11 @@ namespace MouseMoverService
                     {
                         if (client != null)
                         {
-                            if (client.Connected)
-                            {
+                            //if (client.Connected)
+                            //{
                                 client.Close();
-                            }
+                            //}
                             client.Dispose();
-                        }
-                        // Stop listening for new clients.
-                        if (server != null)
-                        {
-                            server.Stop();
                         }
                     }
                 }
@@ -238,19 +232,12 @@ namespace MouseMoverService
 
             if (client != null)
             {
-                if (client.Connected)
-                {
+                //if (client.Connected)
+                //{
                     client.Close();
-                }
+                //}
                 client.Dispose();
             }
-
-            if (server != null)
-            {
-                server.Stop();
-                server = null;
-            }
-
             if (workerThread != null)
             {
                 workerThreadRunning = false;
@@ -260,7 +247,6 @@ namespace MouseMoverService
                 {
                     StopImmediately();
                 }
-                server = null;
                 workerThread = null;
             }
         }
@@ -275,17 +261,11 @@ namespace MouseMoverService
 
             if (client != null)
             {
-                if (client.Connected)
-                {
+                //if (client.Connected)
+                //{
                     client.Close();
-                }
+                //}
                 client.Dispose();
-            }
-
-            if (server != null)
-            {
-                server.Stop();
-                server = null;
             }
 
             if (workerThread != null)
