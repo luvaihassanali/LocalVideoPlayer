@@ -6,7 +6,7 @@
 #include <SoftwareSerial.h>
 
 #define IR_CODE_NUM_BITS 32
-#define DEBUG true
+#define DEBUG false
 
 const int powerPin = 12;
 const int potentiometerPin = A5;
@@ -190,6 +190,9 @@ void loop() {
 void InitializeEsp8266() {
   TcpDataOut("AT+RST\r\n", 3000); //reset module
   TcpDataOut("AT+CWMODE=1\r\n", 1000);
+  TcpDataOut("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000);
+  while (!esp8266.find("OK")) {
+  }
   result = TcpDataOut("AT+CIFSR\r\n", 1000);
   if (result.indexOf("0.0") > 0) {
     if (DEBUG) {
@@ -253,6 +256,14 @@ void TcpDataIn(const int timeout) {
   }
   if (DEBUG) {
     Serial.println("received: " + dataInResponse);
+  }
+
+  if (dataInResponse.indexOf("nlink") > 0) {
+    if (DEBUG) {
+      Serial.println("Unlink detected");
+    }
+    clientConnected = false;
+    return;
   }
   
   if (dataInResponse.indexOf("init") > 0) {

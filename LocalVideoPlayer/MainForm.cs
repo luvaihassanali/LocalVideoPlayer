@@ -26,12 +26,12 @@ namespace LocalVideoPlayer
         public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, uint pvParam, uint fWinIni);
 
         private const string jsonFile = "Media.json";
-        //To-do: put in app.config
         private const string apiKey = "?api_key=c69c4effc7beb9c473d22b8f85d59e4c";
         private const string apiUrl = "https://api.themoviedb.org/3/";
         private const string apiImageUrl = "http://image.tmdb.org/t/p/original";
         private const string tvSearch = apiUrl + "search/tv" + apiKey + "&query=";
         private const string movieSearch = apiUrl + "search/movie" + apiKey + "&query=";
+        
         private const int SPI_SETCURSORS = 0x0057;
         private const int SPIF_UPDATEINIFILE = 0x01;
         private const int SPIF_SENDCHANGE = 0x02;
@@ -41,23 +41,33 @@ namespace LocalVideoPlayer
         private string movieGet = apiUrl + "movie/{movie_id}" + apiKey;
         private string bufferString = "";
 
-        private MediaModel media;
-        private Label movieLabel;
-        private Label tvLabel;
+        private bool seasonFormOpen = false;
+        private bool isPlaying = false;
+        private bool mouseMoverClientKill = false;
+
         private Form dimmerForm;
         private Form seasonDimmerForm;
+        private Label movieLabel;
+        private Label tvLabel;
+        private MediaModel media;
         private Panel mainFormMainPanel = null;
         private CustomScrollbar customScrollbar = null;
-        private bool seasonFormOpen = false;
-        private static bool isPlaying = false; 
         private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
-        private bool mouseMoverServiceKill = false;
+        private MouseWorker worker = null;
 
-        //To-do: too big need to split code
         public MainForm()
         {
             Process applicaitionProcess = Process.GetCurrentProcess();
             applicaitionProcess.PriorityClass = ProcessPriorityClass.AboveNormal;
+
+            Process[] p = Process.GetProcessesByName("MouseMoverClient");
+            if (p.Length != 0)
+            {
+                Process.GetProcessesByName("MouseMoverClient")[0].Kill();
+                mouseMoverClientKill = true;
+            }
+            worker = new MouseWorker(this);
+            worker.Start();
 
             UpdateSystemCursor();
             InitializeComponent();
@@ -86,7 +96,7 @@ namespace LocalVideoPlayer
         {
             loadingCircle1.Location = new Point(this.Width / 2 - loadingCircle1.Width / 2, this.Height / 2 - loadingCircle1.Height / 2);
             loadingLabel.Location = new Point(0, this.Height / 2 - loadingLabel.Height / 2 + 2);
-            loadingLabel.Size = new Size(this.Width, loadingLabel.Height);
+            loadingLabel.Size = new Size(this.Width, loadingLabel.Height);;
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -100,6 +110,15 @@ namespace LocalVideoPlayer
             dimmerForm.Close();
             seasonDimmerForm.Close();
             RestoreSystemCursor();
+
+            worker.StopImmediately();
+            worker = null;
+
+            if (mouseMoverClientKill)
+            {
+                string mouseMoverPath = ConfigurationManager.AppSettings["mouseMoverPath"];
+                Process.Start(mouseMoverPath);
+            }
         }
 
         //To-do: A blocking operation was interrupted by a call to WSACancelBlockingCalls
@@ -687,7 +706,7 @@ namespace LocalVideoPlayer
 
                 if (numSeasons > 6)
                 {
-                    seasonBox.Width = (int)(seasonForm.Width / 3.07);
+                    seasonBox.Width = (int)(seasonForm.Width / 3.13);
                 }
                 else
                 {
@@ -822,8 +841,7 @@ namespace LocalVideoPlayer
             return null;
         }
 
-        //To-do: remove this...make get season func? apply everywhere else
-        private Episode GetTvEpisode(string showName, string episodeName, out int season)
+        public Episode GetTvEpisode(string showName, string episodeName, out int season)
         {
             for (int i = 0; i < media.TvShows.Length; i++)
             {
@@ -963,7 +981,7 @@ namespace LocalVideoPlayer
         #endregion 
 
         #region Startup
-        //To-do: Implement on hover for hand cursor
+
         private void InitGui()
         {
             mainFormMainPanel = new Panel();
@@ -1674,7 +1692,7 @@ namespace LocalVideoPlayer
 
         #endregion
 
-        #region Mouse control
+        #region Mouse
 
         private void RestoreSystemCursor()
         {
@@ -1702,20 +1720,6 @@ namespace LocalVideoPlayer
 
             SystemParametersInfo(SPI_SETCURSORS, 0, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
             SystemParametersInfo(0x2029, 0, 128, 0x01);
-        }
-
-        public IPAddress GetLocalIPAddress()
-        {
-            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
-            return host.AddressList[host.AddressList.Length - 1];
-            /*foreach (IPAddress ip in host.AddressList)
-            {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    return ip;
-                }
-            }
-            throw new Exception("No network adapters with an IPv4 address in the system!");*/
         }
 
         #endregion

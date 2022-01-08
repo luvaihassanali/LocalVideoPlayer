@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,9 +28,24 @@ namespace MouseMoverClient
         static bool serverOffline = true;
         static TcpClient client;
         static System.Timers.Timer pollingTimer;
+        const int SWP_NOSIZE = 0x0001;
+
+
+        [DllImport("kernel32.dll", ExactSpelling = true)]
+        private static extern IntPtr GetConsoleWindow();
+
+        private static IntPtr MyConsole = GetConsoleWindow();
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
+        public static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
 
         static void Main(string[] args)
         {
+            Console.Title = "Mouse";
+            Console.SetWindowSize(60, 20);
+            Console.ForegroundColor = ConsoleColor.Green;
+            SetWindowPos(MyConsole, 0, 650, 350, 0, 0, SWP_NOSIZE);
+
             Log("Starting using ip address: " + serverIp);
 
             while (!Console.KeyAvailable)
@@ -87,7 +103,7 @@ namespace MouseMoverClient
                         Log("Connected.");
                         Thread.Sleep(2000);
                     }
-                    catch (System.InvalidOperationException e)
+                    catch (System.InvalidOperationException)
                     {
                         Log("Server not ready. Trying again");
                         return;
@@ -153,7 +169,7 @@ namespace MouseMoverClient
 
         static void CheckForServer()
         {
-            Log("Pinging server");
+            Log("Pinging server...");
             serverOffline = true;
 
             Ping pingSender = new Ping();
@@ -182,7 +198,7 @@ namespace MouseMoverClient
 
         static void SetTimer()
         {
-            pollingTimer = new System.Timers.Timer(5000);
+            pollingTimer = new System.Timers.Timer(3000);
             pollingTimer.Elapsed += OnTimedEvent;
             pollingTimer.AutoReset = true;
             pollingTimer.Enabled = true;
@@ -201,6 +217,7 @@ namespace MouseMoverClient
             catch
             {
                 Log("Polling timer stopped");
+                pollingTimer.AutoReset = false;
                 pollingTimer.Enabled = false;
                 pollingTimer.Stop();
             }
@@ -239,6 +256,8 @@ namespace MouseMoverClient
         {
             uint X = (uint)Cursor.Position.X;
             uint Y = (uint)Cursor.Position.Y;
+            mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, X, Y, 0, 0);
+            Thread.Sleep(100);
             mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, X, Y, 0, 0);
         }
 

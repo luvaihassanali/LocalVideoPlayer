@@ -49,9 +49,9 @@ namespace LocalVideoPlayer
             timeline.Value = seekTime;
 
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
-            libVlc = new LibVLC("--verbose=2");
+            libVlc = new LibVLC(); // "--verbose=2");
             //libVlc.SetLogFile("vlclog.txt");
-            libVlc.Log += (sender, e) => Console.WriteLine($"[{e.Level}] {e.Module}:{e.Message}");
+            //libVlc.Log += (sender, e) => Console.WriteLine($"[{e.Level}] {e.Module}:{e.Message}");
 
             mediaPlayer = new MediaPlayer(libVlc);
             mediaPlayer.EnableMouseInput = false;
@@ -67,7 +67,7 @@ namespace LocalVideoPlayer
 
                 }
             };
-
+            
             mediaPlayer.LengthChanged += (sender, e) =>
             {
                 timeline.Maximum = mediaPlayer.Length;
@@ -101,15 +101,15 @@ namespace LocalVideoPlayer
         {
             closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.25), (closeButton.Width / 4));
             closeButton.BringToFront();
-            playButton.Location = new Point(playButton.Width / 4, this.Height - (int)(playButton.Width * 1.25));
+            playButton.Location = new Point(playButton.Width / 4 - 5, this.Height - (int)(playButton.Width * 1.25));
             playButton.BringToFront();
-            timeline.Size = new Size(this.Width - (int)(playButton.Width * 3), playButton.Height / 2);
-            timeline.Location = new Point(playButton.Width + 20, this.Height - (int)(playButton.Height * 1.025));
-            timeLbl.Location = new Point(timeline.Location.X + timeline.Width, timeline.Location.Y);
+            timeline.Size = new Size(this.Width - (int)(playButton.Width * 3) + 7, playButton.Height / 2);
+            timeline.Location = new Point(playButton.Width + 15, this.Height - (int)(playButton.Height * 1.025));
+            timeLbl.Location = new Point(timeline.Location.X + timeline.Width, timeline.Location.Y + 1);
             timeLbl.BringToFront();
 
             this.Cursor = new Cursor(Cursor.Current.Handle);
-            Cursor.Position = new Point(0, this.Height * 2);
+            Cursor.Position = new Point(0, this.Height * 3);
 
             FileInfo media = new FileInfo(path);
             Media currentMedia = CreateMedia(libVlc, path, FromType.FromPath);
@@ -164,9 +164,42 @@ namespace LocalVideoPlayer
                     }
                     else
                     {
-                        currTvShow.CurrSeason = currSeason;
-                        currTvShow.LastEpisode = currEpisode;
-                        currEpisode.SavedTime = endTime;
+                        if (currTvShow.LastEpisode == null)
+                        {
+                            currTvShow.CurrSeason = currSeason;
+                            currTvShow.LastEpisode = currEpisode;
+                            currEpisode.SavedTime = endTime;
+                        }
+                        else
+                        {
+                            currEpisode.SavedTime = endTime;
+
+                            MainForm mainForm = null;
+                            FormCollection formCollection = Application.OpenForms;
+                            foreach (Form f_ in formCollection)
+                            {
+
+                                if (f_.Name.Equals("MainForm"))
+                                {
+                                    mainForm = (MainForm)f_;
+                                }
+                            }
+                            int lastEpisodeSeason = 0;
+                            Episode dummy = mainForm.GetTvEpisode(currTvShow.Name, currTvShow.LastEpisode.Name, out lastEpisodeSeason);
+                            if(lastEpisodeSeason == currSeason)
+                            {
+                                if(currTvShow.LastEpisode.Id <= currEpisode.Id)
+                                {
+                                    currTvShow.CurrSeason = currSeason;
+                                    currTvShow.LastEpisode = currEpisode;
+                                }
+                            } else if (lastEpisodeSeason < currSeason)
+                            {
+                                currTvShow.CurrSeason = currSeason;
+                                currTvShow.LastEpisode = currEpisode;
+                                
+                            }
+                        }
                     }
                 }
 
@@ -187,6 +220,7 @@ namespace LocalVideoPlayer
             {
                 mediaPlayer.Pause();
             }
+            System.Threading.Thread.Sleep(1000);
             this.Close();
         }
 
