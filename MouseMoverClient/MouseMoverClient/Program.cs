@@ -44,7 +44,7 @@ namespace MouseMoverClient
             Console.Title = "Mouse";
             Console.SetWindowSize(60, 20);
             Console.ForegroundColor = ConsoleColor.Green;
-            SetWindowPos(MyConsole, 0, 650, 350, 0, 0, SWP_NOSIZE);
+            SetWindowPos(MyConsole, 0, 650, 10, 0, 0, SWP_NOSIZE);
 
             Log("Starting using ip address: " + serverIp);
 

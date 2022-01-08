@@ -140,18 +140,6 @@ namespace LocalVideoPlayer
             return await showDialogResult.Task;
         }
 
-        private void FadeOutCustom(float fadeSpeed, FadeCompleted finished, double opacity)
-        {
-            form.Opacity = opacity;
-            form.Show();
-
-            fadeFinished = finished;
-            this.fadeSpeed = fadeSpeed;
-            fadeDirection = FadeDirection.Out;
-
-            BeginFadeCustom(opacity);
-        }
-
         private void FadeInCustom(float fadeSpeed, FadeCompleted finished, double opacity)
         {
             form.Opacity = 0;
@@ -296,14 +284,6 @@ namespace LocalVideoPlayer
             fader.FadeInCustom(fadeSpeed, null, opacity);
         }
 
-        public static void FadeOutCustom(Form form, float fadeSpeed, double opacity)
-        {
-            Fader fader = new Fader(form)
-            {
-                shouldClose = true
-            };
-            fader.FadeOutCustom(fadeSpeed, null, opacity);
-        }
         /// <summary>
         /// Fade a form out at the defined speed.
         /// </summary>

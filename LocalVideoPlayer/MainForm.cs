@@ -635,7 +635,6 @@ namespace LocalVideoPlayer
             return episodePanelList;
         }
 
-        //To-do: transition for bigger seasons... and auto scroll somewhere for button to not be weird
         private void SeasonButton_Click(object sender, EventArgs e)
         {
             seasonFormOpen = true;
@@ -706,7 +705,7 @@ namespace LocalVideoPlayer
 
                 if (numSeasons > 6)
                 {
-                    seasonBox.Width = (int)(seasonForm.Width / 3.13);
+                    seasonBox.Width = (int)(seasonForm.Width / 3.14);
                 }
                 else
                 {
@@ -770,7 +769,7 @@ namespace LocalVideoPlayer
                     {
                         b.Text = "Extras";
                     }
-                    //To-do: Transitions...
+
                     seasonForm.Close();
                 };
 
@@ -795,7 +794,7 @@ namespace LocalVideoPlayer
             }
 
             seasonDimmerForm.Size = tvForm.Size;
-            Fader.FadeInCustom(seasonDimmerForm, Fader.FadeSpeed.Normal, 0.8);
+            Fader.FadeInCustom(seasonDimmerForm, Fader.FadeSpeed.Normal, 0.9);
             seasonDimmerForm.Location = tvForm.Location;
 
             if (numSeasons > 6)
@@ -819,7 +818,6 @@ namespace LocalVideoPlayer
 
             seasonForm.ShowDialog();
             seasonForm.Dispose();
-
             seasonFormOpen = false;
             Fader.FadeOut(seasonDimmerForm, Fader.FadeSpeed.Normal);
 
