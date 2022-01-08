@@ -258,9 +258,12 @@ namespace LocalVideoPlayer.Forms
 
             if (panel.Name.Equals("mainFormMainPanel"))
             {
-                //customScrollbar.Size = new Size(30, panel.Height - 2);
                 customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + (int)(panel.Height / 1.5);
                 customScrollbar.Location = new Point(panel.Width - 32, 0);
+            } 
+            else if (panel.Name.Equals("tvFormMainPanel"))
+            {
+                panel.Width -= 13;
             }
 
             return customScrollbar;

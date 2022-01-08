@@ -232,7 +232,7 @@ namespace LocalVideoPlayer
             tvForm.Name = tvShow.Name;
             tvForm.Width = (int)(this.Width / 1.75);
             tvForm.Height = this.Height;
-
+            
             Panel tvFormMainPanel = new Panel();
             tvFormMainPanel.Size = tvForm.Size;
             tvFormMainPanel.AutoScroll = true;
