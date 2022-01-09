@@ -19,8 +19,6 @@ const int blueLedPin = 5;
 const int joystickRxPin = A0;
 const int joystickRyPin = A1;
 const int joystickButtonPin = 2;
-//https://www.espressif.com/sites/default/files/documentation/4b-esp8266_at_command_examples_en.pdf
-const unsigned long keepAliveTimeout = 4999;
 
 IRsend irsend;
 int powerPinState = 0;
@@ -34,13 +32,8 @@ int scrollPinState = 0;
 
 SoftwareSerial esp8266(8, 7);
 String output = "";
-String tcpDataInOutput = "";
-String tcpDataInSendLength = "";
-String joystickOutput = "";
-String joystickSendLength = "";
-String keepAliveOutput = "";
-String keepAliveSendLength = "";
-String dataOutResult = "";
+String sendLength = "";
+String result = "";
 String dataInResponse = "";
 String dataOutResponse = "";
 int xPosition = 0;
@@ -51,7 +44,6 @@ int mapY = 0;
 bool volumeFirstRead = true;
 bool clientConnected = false;
 bool esp8266Init = false;
-unsigned long timeValue = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -77,31 +69,20 @@ void setup() {
     Serial.println("Infared ready");
   }
 }
-
+const int timeout = 4000;
 void loop() {
-  timeValue = millis();
-  while ((timeValue + keepAliveTimeout) > millis()) {
-    InnerLoop();
+  /*
+       long int time = millis();
+    while ((time + timeout) > millis()) {
+  */
+  long int time1 = millis();
+  Serial.println("time1: " + String(time1));
+  Serial.println("time1 + timeout: " + String((time1 + timeout)));
+  while ((time1 + timeout) > millis()) {
+    Serial.println("loop");
   }
-  if (clientConnected) {
-    keepAliveOutput = "ka\r\n";
-    keepAliveSendLength = "AT+CIPSEND=0," + String(keepAliveOutput.length()) + "\r\n";
-    TcpDataOut(keepAliveSendLength, 100);
-    TcpDataOut(keepAliveOutput, 100);
-    if (DEBUG) {
-      Serial.print("Send keep alive. ");
-      Serial.println("timeValue: " + String(timeValue) + " + keepAliveTimeout: " + String(timeValue + keepAliveTimeout));
-    }
-  } else {
-    if (DEBUG) {
-      Serial.print("Keep alive no client. ");
-      Serial.println("timeValue: " + String(timeValue) + " + keepAliveTimeout: " + String(timeValue + keepAliveTimeout));
-    }
-  }
-}
-
-void InnerLoop() {
-  //Serial.println("inner loop");
+  Serial.println("done while");
+  delay(1000);
 
   powerPinState = digitalRead(powerPin);
   if (powerPinState == LOW) {
@@ -110,7 +91,6 @@ void InnerLoop() {
     }
     digitalWrite(redLedPin, LOW);
     irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
-    delay(250);
   }
 
   volumeValue = analogRead(potentiometerPin);
@@ -143,7 +123,6 @@ void InnerLoop() {
       irsend.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
       volumeTracker = volumeLevel;
     }
-    delay(250);
   }
 
   volOvPinState = digitalRead(volOvPin);
@@ -161,7 +140,6 @@ void InnerLoop() {
       digitalWrite(redLedPin, LOW);
       irsend.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
     }
-    delay(250);
   }
 
   opticalPinState = digitalRead(opticalPin);
@@ -171,7 +149,6 @@ void InnerLoop() {
     }
     digitalWrite(redLedPin, LOW);
     irsend.sendNEC(0x807F926DU, IR_CODE_NUM_BITS);
-    delay(250);
   }
 
   bluetoothPinState = digitalRead(bluetoothPin);
@@ -181,7 +158,6 @@ void InnerLoop() {
     }
     digitalWrite(redLedPin, LOW);
     irsend.sendNEC(0x807F52ADU, IR_CODE_NUM_BITS);
-    delay(250);
   }
 
   xPosition = analogRead(joystickRxPin);
@@ -191,17 +167,13 @@ void InnerLoop() {
   mapY = map(yPosition, 0, 1023, -512, 512);
   scrollPinState = digitalRead(scrollPin);
 
-  //joystickOutput = String(mapX) + "," + String(mapY) + "," + String(xPosition) + "," + String(yPosition) + "\r\n";
-  //Serial.print(joystickOutput);
-  //delay(500);
-
-  if ((joystickPinState == 0 || scrollPinState == 0 || mapX > 25 || mapX < -25 || mapY > 25 || mapY < -25) && clientConnected) {
-    joystickOutput = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "," + String(scrollPinState) + "\r\n";
-    joystickSendLength = "AT+CIPSEND=0," + String(joystickOutput.length()) + "\r\n";
-    TcpDataOut(joystickSendLength, 100);
-    TcpDataOut(joystickOutput, 100);
+  if ((joystickPinState == 0 || scrollPinState == 0 || mapX > 50 || mapX < -50 || mapY > 50 || mapY < -50) && clientConnected) {
+    output = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "," + String(scrollPinState) + "\r\n";
+    sendLength = "AT+CIPSEND=0," + String(output.length()) + "\r\n";
+    TcpDataOut(sendLength, 100);
+    TcpDataOut(output, 100);
     if (DEBUG) {
-      Serial.print(joystickOutput);
+      Serial.print(output);
     }
     digitalWrite(blueLedPin, LOW);
   }
@@ -211,6 +183,7 @@ void InnerLoop() {
       Serial.println("Starting esp8266...");
     }
     InitializeEsp8266();
+    delay(1000);
     esp8266Init = true;
     if (DEBUG) {
       Serial.println("Esp8266 ready");
@@ -232,15 +205,15 @@ void InitializeEsp8266() {
   TcpDataOut("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000);
   while (!esp8266.find("OK")) {
   }
-  dataOutResult = TcpDataOut("AT+CIFSR\r\n", 1000);
-  if (dataOutResult.indexOf("0.0") > 0) {
+  result = TcpDataOut("AT+CIFSR\r\n", 1000);
+  if (result.indexOf("0.0") > 0) {
     if (DEBUG) {
       Serial.println("INVALID IP!!!");
     }
     ResetEsp8266();
   }
   TcpDataOut("AT+CIPMUX=1\r\n", 1000); //enable multiple connections
-  TcpDataOut("AT+CIPSERVER=1,3000\r\n", 2000);
+  TcpDataOut("AT+CIPSERVER=1,3000\r\n", 2000);  //  default port  = 333
 }
 
 void ResetEsp8266() {
@@ -294,7 +267,7 @@ void TcpDataIn(const int timeout) {
     return;
   }
   if (DEBUG) {
-    Serial.println("received: " + dataInResponse);
+    Serial.println("received: " + dataInResponse + " " + String(clientConnected));
   }
 
   if (dataInResponse.indexOf("nlink") > 0) {
@@ -310,29 +283,18 @@ void TcpDataIn(const int timeout) {
     if (DEBUG) {
       Serial.println("Client connected");
     }
-    tcpDataInOutput = "initack\r\n";
-    tcpDataInSendLength = "AT+CIPSEND=0," + String(tcpDataInOutput.length()) + "\r\n";
-    dataOutResult = TcpDataOut(tcpDataInSendLength, 100);
-    if (dataOutResult.indexOf("link is not") > 0) {
-      if (DEBUG) {
-        Serial.println("Client disconnect");
-      }
-      clientConnected = false;
-    }
-          return;
   }
-
-  tcpDataInOutput = "ok\r\n";
-  tcpDataInSendLength = "AT+CIPSEND=0," + String(tcpDataInOutput.length()) + "\r\n";
-  dataOutResult = TcpDataOut(tcpDataInSendLength, 100);
-  if (dataOutResult.indexOf("link is not") > 0) {
+  output = "ok\r\n";
+  sendLength = "AT+CIPSEND=0," + String(output.length()) + "\r\n";
+  result = TcpDataOut(sendLength, 100);
+  if (result.indexOf("link is not") > 0) {
     if (DEBUG) {
-      Serial.println("Client disconnect");
+      Serial.println("Client disconnect!!!");
     }
     clientConnected = false;
     return;
   }
-  TcpDataOut(tcpDataInOutput, 100);
+  TcpDataOut(output, 100);
 }
 
 String TcpDataOut(String command, const int timeout) {
@@ -348,7 +310,7 @@ String TcpDataOut(String command, const int timeout) {
 
   if (dataOutResponse.indexOf("link is not") > 0) {
     if (DEBUG) {
-      Serial.println("Client disconnect tcp data out");
+      Serial.println("Client disconnect tcp data out!!!");
     }
     clientConnected = false;
     return;

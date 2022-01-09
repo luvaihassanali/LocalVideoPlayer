@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -14,23 +15,6 @@ namespace MouseMoverClient
 {
     class Program
     {
-        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, CallingConvention = System.Runtime.InteropServices.CallingConvention.StdCall)]
-        public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
-
-        private const int MOUSEEVENTF_LEFTDOWN = 0x02;
-        private const int MOUSEEVENTF_LEFTUP = 0x04;
-        private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
-        private const int MOUSEEVENTF_RIGHTUP = 0x10;
-        private const int MOUSEEVENTF_WHEEL = 0x0800;
-
-        static string serverIp = "192.168.0.181";
-        static int serverPort = 3000;
-        static bool serverOffline = true;
-        static TcpClient client;
-        static System.Timers.Timer pollingTimer;
-        const int SWP_NOSIZE = 0x0001;
-
-
         [DllImport("kernel32.dll", ExactSpelling = true)]
         private static extern IntPtr GetConsoleWindow();
 
@@ -39,12 +23,33 @@ namespace MouseMoverClient
         [DllImport("user32.dll", EntryPoint = "SetWindowPos")]
         public static extern IntPtr SetWindowPos(IntPtr hWnd, int hWndInsertAfter, int x, int Y, int cx, int cy, int wFlags);
 
+        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, CallingConvention = System.Runtime.InteropServices.CallingConvention.StdCall)]
+        public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
+
+        private const int MOUSEEVENTF_LEFTDOWN = 0x02;
+        private const int MOUSEEVENTF_LEFTUP = 0x04;
+        private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
+        private const int MOUSEEVENTF_RIGHTUP = 0x10;
+        private const int MOUSEEVENTF_WHEEL = 0x0800;
+        private const int SWP_NOSIZE = 0x0001;
+
+        static string serverIp = "192.168.0.181";
+        static int serverPort = 3000;
+        static bool serverOffline = true;
+
+        static TcpClient client;
+        static System.Timers.Timer pollingTimer;
+
         static void Main(string[] args)
         {
             Console.Title = "Mouse";
             Console.SetWindowSize(60, 20);
             Console.ForegroundColor = ConsoleColor.Green;
             SetWindowPos(MyConsole, 0, 650, 10, 0, 0, SWP_NOSIZE);
+
+            pollingTimer = new System.Timers.Timer(2000);
+            pollingTimer.Elapsed += OnTimedEvent;
+            pollingTimer.AutoReset = false;
 
             Log("Starting using ip address: " + serverIp);
 
@@ -93,15 +98,14 @@ namespace MouseMoverClient
                         return;
                     }
 
-                    String message = "init";
-                    Byte[] data = System.Text.Encoding.ASCII.GetBytes(message);
+                    Byte[] data = System.Text.Encoding.ASCII.GetBytes("init");
                     NetworkStream stream = null;
 
                     try
                     {
                         stream = client.GetStream();
                         Log("Connected.");
-                        Thread.Sleep(2000);
+                        Thread.Sleep(1000);
                     }
                     catch (System.InvalidOperationException)
                     {
@@ -110,11 +114,9 @@ namespace MouseMoverClient
                     }
 
                     stream.Write(data, 0, data.Length);
-                    Log("Sent: " + message);
+                    Log("Sent: init");
+                    StartTimer();
 
-                    SetTimer();
-
-                    // Enter the listening loop.
                     while (true)
                     {
                         int i;
@@ -122,13 +124,29 @@ namespace MouseMoverClient
                         Byte[] bytes = new Byte[256];
                         String buffer = null;
 
-                        // Loop to receive all the data sent by the client.
                         while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                         {
-                            // Translate data bytes to a ASCII string.
                             buffer = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
                             Log("Received: " + buffer.Replace("\r\n", ""));
-                            if (!buffer.Contains("ok"))
+
+                            if (buffer.Contains("initack"))
+                            {
+                                StopTimer();
+                                pollingTimer.Interval = 5500;
+                                StartTimer();
+                            }
+
+                            if (buffer.Contains("ka"))
+                            {
+                                StopTimer();
+                                Log("Sending ok");
+                                data = System.Text.Encoding.ASCII.GetBytes("ack");
+                                stream = client.GetStream();
+                                stream.Write(data, 0, data.Length);
+                                StartTimer();
+                            }
+
+                            if (!buffer.Contains("ok") && !buffer.Contains("ka"))
                             {
                                 MoveMouse(buffer);
                             }
@@ -196,31 +214,26 @@ namespace MouseMoverClient
             }
         }
 
-        static void SetTimer()
+        static void StartTimer()
         {
-            pollingTimer = new System.Timers.Timer(3000);
-            pollingTimer.Elapsed += OnTimedEvent;
-            pollingTimer.AutoReset = true;
             pollingTimer.Enabled = true;
+            pollingTimer.Start();
+        }
+
+        static void StopTimer()
+        {
+            pollingTimer.Enabled = false;
+            pollingTimer.Stop();
         }
 
         static void OnTimedEvent(Object source, ElapsedEventArgs e)
         {
+            Log("Polling timer stopped");
+            pollingTimer.Enabled = false;
+            pollingTimer.Stop();
 
-            Log("Send keep alive"); 
-            try
-            {
-                NetworkStream stream = client.GetStream();
-                byte[] msg = System.Text.Encoding.ASCII.GetBytes("ka");
-                stream.Write(msg, 0, msg.Length);
-            }
-            catch
-            {
-                Log("Polling timer stopped");
-                pollingTimer.AutoReset = false;
-                pollingTimer.Enabled = false;
-                pollingTimer.Stop();
-            }
+            System.Diagnostics.Process.Start(Application.ExecutablePath);
+            Environment.Exit(0);
         }
 
         static void MoveMouse(string data)
@@ -237,9 +250,44 @@ namespace MouseMoverClient
                 return;
             }
 
-            //To-do: adjust for less than -512/512
-            x = -x / 4;
-            y = -y / 4;
+            //("before x: " + x);
+            //Log("before y: " + y);
+            if (x > 490 || y > 490 || x < -490 || y < -490)
+            {
+                Log("max");
+                x = -x;
+                y = -y;
+            }
+            else if ((x > 319 && x < 490) ||
+                     (y > 319 && y < 490) ||
+                     (x < -319 && x > -490) ||
+                     (y < -319 && y > -490))
+            {
+                Log("higher mid");
+                x = -x / 2;
+                y = -y / 2;
+            }
+            else if ((x > 220 && x < 319) ||
+                     (y > 200 && y < 319) ||
+                     (x < -220 && x > -319) ||
+                     (y < -220 && y > -319))
+            {
+                Log("lower mid");
+                x = -x / 4;
+                y = -y / 4;
+            }
+            else if ((x < 220 && x > -220) || (y < 220 && y > -220))
+            {
+                Log("min");
+                x = -x / 8;
+                y = -y / 8;
+            }
+            else
+            {
+                Log("idk");
+            }
+            //Log("after x: " + x);
+            //Log("after y: " + y);
 
             if (buttonTwoState == 0)
             {
@@ -248,10 +296,16 @@ namespace MouseMoverClient
             else
             {
                 Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
-                Log("Mouse position: " + Cursor.Position.ToString());
+                //Log("Mouse position: " + Cursor.Position.ToString());
             }
         }
 
+        //if greater than 490
+        // 400 - 490
+        // 300 - 400
+        // 300 - 200
+        // 200 - 100
+        // less than 100
         static void DoMouseClick()
         {
             uint X = (uint)Cursor.Position.X;
