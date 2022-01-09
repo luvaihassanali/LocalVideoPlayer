@@ -47,7 +47,7 @@ namespace MouseMoverClient
             Console.ForegroundColor = ConsoleColor.Green;
             SetWindowPos(MyConsole, 0, 650, 10, 0, 0, SWP_NOSIZE);
 
-            pollingTimer = new System.Timers.Timer(2000);
+            pollingTimer = new System.Timers.Timer(5500);
             pollingTimer.Elapsed += OnTimedEvent;
             pollingTimer.AutoReset = false;
 
@@ -98,14 +98,14 @@ namespace MouseMoverClient
                         return;
                     }
 
-                    Byte[] data = System.Text.Encoding.ASCII.GetBytes("init");
+                    Byte[] data = System.Text.Encoding.ASCII.GetBytes("zzzz");
                     NetworkStream stream = null;
 
                     try
                     {
                         stream = client.GetStream();
                         Log("Connected.");
-                        Thread.Sleep(1000);
+                        Thread.Sleep(3000);
                     }
                     catch (System.InvalidOperationException)
                     {
@@ -114,7 +114,7 @@ namespace MouseMoverClient
                     }
 
                     stream.Write(data, 0, data.Length);
-                    Log("Sent: init");
+                    Log("Sent: init (zzzz)");
                     StartTimer();
 
                     while (true)
@@ -131,8 +131,8 @@ namespace MouseMoverClient
 
                             if (buffer.Contains("initack"))
                             {
+                                Log("Ack received");
                                 StopTimer();
-                                pollingTimer.Interval = 5500;
                                 StartTimer();
                             }
 

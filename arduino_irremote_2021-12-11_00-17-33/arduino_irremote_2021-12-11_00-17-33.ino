@@ -296,7 +296,20 @@ void TcpDataIn(const int timeout) {
   if (DEBUG) {
     Serial.println("received: " + dataInResponse);
   }
-
+  
+  if (dataInResponse.indexOf("zzzz") > 0 || dataInResponse.indexOf("zzz") > 0 || dataInResponse.indexOf("zz") > 0) {
+    clientConnected = true;
+    if (DEBUG) {
+      Serial.println("Client connected");
+    }
+    tcpDataInOutput = "initack\r\n";
+    tcpDataInSendLength = "AT+CIPSEND=0," + String(tcpDataInOutput.length()) + "\r\n";
+    TcpDataOut(tcpDataInSendLength, 100);
+    TcpDataOut(tcpDataInOutput, 100);
+    clientConnected = true;
+    return;
+  }
+  
   if (dataInResponse.indexOf("nlink") > 0) {
     if (DEBUG) {
       Serial.println("Unlink detected");
@@ -305,33 +318,9 @@ void TcpDataIn(const int timeout) {
     return;
   }
 
-  if (dataInResponse.indexOf("init") > 0) {
-    clientConnected = true;
-    if (DEBUG) {
-      Serial.println("Client connected");
-    }
-    tcpDataInOutput = "initack\r\n";
-    tcpDataInSendLength = "AT+CIPSEND=0," + String(tcpDataInOutput.length()) + "\r\n";
-    dataOutResult = TcpDataOut(tcpDataInSendLength, 100);
-    if (dataOutResult.indexOf("link is not") > 0) {
-      if (DEBUG) {
-        Serial.println("Client disconnect");
-      }
-      clientConnected = false;
-    }
-          return;
-  }
-
   tcpDataInOutput = "ok\r\n";
   tcpDataInSendLength = "AT+CIPSEND=0," + String(tcpDataInOutput.length()) + "\r\n";
-  dataOutResult = TcpDataOut(tcpDataInSendLength, 100);
-  if (dataOutResult.indexOf("link is not") > 0) {
-    if (DEBUG) {
-      Serial.println("Client disconnect");
-    }
-    clientConnected = false;
-    return;
-  }
+  TcpDataOut(tcpDataInSendLength, 100);
   TcpDataOut(tcpDataInOutput, 100);
 }
 
