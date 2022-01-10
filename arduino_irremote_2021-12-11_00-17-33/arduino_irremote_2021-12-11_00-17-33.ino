@@ -6,7 +6,7 @@
 #include <SoftwareSerial.h>
 
 #define IR_CODE_NUM_BITS 32
-#define DEBUG true
+#define DEBUG false
 
 const int powerPin = 12;
 const int potentiometerPin = A5;

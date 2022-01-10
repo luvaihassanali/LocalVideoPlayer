@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading;
@@ -1598,6 +1597,7 @@ namespace LocalVideoPlayer
                     string episodeName = episodeNameNumber[1].Substring(0, fileSuffixIndex).Trim();
                     Episode episode = new Episode(0, episodeName, episodeEntries[j]);
                     season.Episodes[j] = episode;
+                    //TO-DO: catch error when no number % name
                 }
                 show.Seasons[i] = season;
             }

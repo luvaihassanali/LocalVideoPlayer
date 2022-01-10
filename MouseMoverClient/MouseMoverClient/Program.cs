@@ -47,7 +47,7 @@ namespace MouseMoverClient
             Console.ForegroundColor = ConsoleColor.Green;
             SetWindowPos(MyConsole, 0, 650, 10, 0, 0, SWP_NOSIZE);
 
-            pollingTimer = new System.Timers.Timer(5500);
+            pollingTimer = new System.Timers.Timer(10000);
             pollingTimer.Elapsed += OnTimedEvent;
             pollingTimer.AutoReset = false;
 
@@ -76,9 +76,30 @@ namespace MouseMoverClient
             Thread.Sleep(3000);
         }
 
+        static void StartTimer()
+        {
+            pollingTimer.Enabled = true;
+            pollingTimer.Start();
+        }
+
+        static void StopTimer()
+        {
+            pollingTimer.Enabled = false;
+            pollingTimer.Stop();
+        }
+
+        static void OnTimedEvent(Object source, ElapsedEventArgs e)
+        {
+            Log("Polling timer stopped");
+            pollingTimer.Enabled = false;
+            pollingTimer.Stop();
+
+            System.Diagnostics.Process.Start(Application.ExecutablePath);
+            Environment.Exit(0);
+        }
+
         static void ConnectToServer()
         {
-
             Log("Initializing TCP connection");
 
             try
@@ -90,7 +111,7 @@ namespace MouseMoverClient
                     IAsyncResult result = null;
 
                     result = client.BeginConnect(serverIp, serverPort, null, null);
-                    success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(10));
+                    success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(1));
 
                     while (!success)
                     {
@@ -146,7 +167,7 @@ namespace MouseMoverClient
                                 StartTimer();
                             }
 
-                            if (!buffer.Contains("ok") && !buffer.Contains("ka"))
+                            if (!buffer.Contains("ok") && !buffer.Contains("ka") && !buffer.Contains("initack"))
                             {
                                 MoveMouse(buffer);
                             }
@@ -214,28 +235,6 @@ namespace MouseMoverClient
             }
         }
 
-        static void StartTimer()
-        {
-            pollingTimer.Enabled = true;
-            pollingTimer.Start();
-        }
-
-        static void StopTimer()
-        {
-            pollingTimer.Enabled = false;
-            pollingTimer.Stop();
-        }
-
-        static void OnTimedEvent(Object source, ElapsedEventArgs e)
-        {
-            Log("Polling timer stopped");
-            pollingTimer.Enabled = false;
-            pollingTimer.Stop();
-
-            System.Diagnostics.Process.Start(Application.ExecutablePath);
-            Environment.Exit(0);
-        }
-
         static void MoveMouse(string data)
         {
             string[] dataSplit = data.Split(',');
@@ -250,8 +249,6 @@ namespace MouseMoverClient
                 return;
             }
 
-            //("before x: " + x);
-            //Log("before y: " + y);
             if (x > 490 || y > 490 || x < -490 || y < -490)
             {
                 Log("max");
@@ -286,8 +283,6 @@ namespace MouseMoverClient
             {
                 Log("idk");
             }
-            //Log("after x: " + x);
-            //Log("after y: " + y);
 
             if (buttonTwoState == 0)
             {
@@ -300,12 +295,6 @@ namespace MouseMoverClient
             }
         }
 
-        //if greater than 490
-        // 400 - 490
-        // 300 - 400
-        // 300 - 200
-        // 200 - 100
-        // less than 100
         static void DoMouseClick()
         {
             uint X = (uint)Cursor.Position.X;

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
@@ -36,44 +35,43 @@ namespace LocalVideoPlayer
             mainForm = m;
         }
 
-        private void SetTimer()
-        {
-            pollingTimer = new System.Timers.Timer(4000);
-            pollingTimer.Elapsed += OnTimedEvent;
-            pollingTimer.AutoReset = true;
-            pollingTimer.Enabled = true;
-        }
-
-
-        private void OnTimedEvent(Object source, ElapsedEventArgs e)
-        {
-            Log("Send keep alive");
-            try
-            {
-                NetworkStream stream = client.GetStream();
-                byte[] msg = System.Text.Encoding.ASCII.GetBytes("ka");
-                stream.Write(msg, 0, msg.Length);
-            }
-            catch
-            {
-                Log("Polling timer stopped");
-                pollingTimer.AutoReset = false;
-                pollingTimer.Enabled = false;
-                pollingTimer.Stop();
-            }
-        }
-
         private void DoWork()
         {
+            pollingTimer = new System.Timers.Timer(10000);
+            pollingTimer.Elapsed += OnTimedEvent;
+            pollingTimer.AutoReset = false;
+
             while (workerThreadRunning)
             {
                 CheckForServer();
                 ConnectToServer();
             }
         }
+
+        private void StartTimer()
+        {
+            pollingTimer.Enabled = true;
+            pollingTimer.Start();
+        }
+
+        private void StopTimer()
+        {
+            pollingTimer.Enabled = false;
+            pollingTimer.Stop();
+        }
+
+        private void OnTimedEvent(Object source, ElapsedEventArgs e)
+        {
+            Log("Polling timer stopped");
+            pollingTimer.Enabled = false;
+            pollingTimer.Stop();
+
+            StopImmediately();
+            Start();
+        }
+
         private void ConnectToServer()
         {
-
             Log("Initializing TCP connection");
 
             try
@@ -85,7 +83,7 @@ namespace LocalVideoPlayer
                     IAsyncResult result = null;
 
                     result = client.BeginConnect(serverIp, serverPort, null, null);
-                    success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(10));
+                    success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(1));
 
                     while (!success)
                     {
@@ -93,15 +91,14 @@ namespace LocalVideoPlayer
                         return;
                     }
 
-                    String message = "init";
-                    Byte[] data = System.Text.Encoding.ASCII.GetBytes(message);
+                    Byte[] data = System.Text.Encoding.ASCII.GetBytes("zzzz");
                     NetworkStream stream = null;
 
                     try
                     {
                         stream = client.GetStream();
                         Log("Connected.");
-                        Thread.Sleep(2000);
+                        Thread.Sleep(3000);
                     }
                     catch (System.InvalidOperationException)
                     {
@@ -110,11 +107,9 @@ namespace LocalVideoPlayer
                     }
 
                     stream.Write(data, 0, data.Length);
-                    Log("Sent: " + message);
+                    Log("Sent: init (zzzz)");
+                    StartTimer();
 
-                    SetTimer();
-
-                    // Enter the listening loop.
                     while (true)
                     {
                         int i;
@@ -122,13 +117,29 @@ namespace LocalVideoPlayer
                         Byte[] bytes = new Byte[256];
                         String buffer = null;
 
-                        // Loop to receive all the data sent by the client.
                         while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                         {
-                            // Translate data bytes to a ASCII string.
                             buffer = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
                             Log("Received: " + buffer.Replace("\r\n", ""));
-                            if (!buffer.Contains("ok"))
+
+                            if (buffer.Contains("initack"))
+                            {
+                                Log("Ack received");
+                                StopTimer();
+                                StartTimer();
+                            }
+
+                            if (buffer.Contains("ka"))
+                            {
+                                StopTimer();
+                                Log("Sending ok");
+                                data = System.Text.Encoding.ASCII.GetBytes("ack");
+                                stream = client.GetStream();
+                                stream.Write(data, 0, data.Length);
+                                StartTimer();
+                            }
+
+                            if (!buffer.Contains("ok") && !buffer.Contains("ka") && !buffer.Contains("initack"))
                             {
                                 MoveMouse(buffer);
                             }
@@ -169,7 +180,7 @@ namespace LocalVideoPlayer
 
         private void CheckForServer()
         {
-            Log("Pinging server");
+            Log("Pinging server...");
             serverOffline = true;
 
             Ping pingSender = new Ping();
@@ -181,15 +192,7 @@ namespace LocalVideoPlayer
 
             while (serverOffline)
             {
-                PingReply reply = null;
-                try
-                {
-                    reply = pingSender.Send(serverIp, timeout, buffer, options);
-                }
-                catch
-                {
-
-                }
+                PingReply reply = pingSender.Send(serverIp, timeout, buffer, options);
                 if (reply.Status == IPStatus.Success)
                 {
                     Log("Ping success");
@@ -218,9 +221,40 @@ namespace LocalVideoPlayer
                 return;
             }
 
-            //adjust for less than -512/512
-            x = -x / 4;
-            y = -y / 4;
+            if (x > 490 || y > 490 || x < -490 || y < -490)
+            {
+                Log("max");
+                x = -x;
+                y = -y;
+            }
+            else if ((x > 319 && x < 490) ||
+                     (y > 319 && y < 490) ||
+                     (x < -319 && x > -490) ||
+                     (y < -319 && y > -490))
+            {
+                Log("higher mid");
+                x = -x / 2;
+                y = -y / 2;
+            }
+            else if ((x > 220 && x < 319) ||
+                     (y > 200 && y < 319) ||
+                     (x < -220 && x > -319) ||
+                     (y < -220 && y > -319))
+            {
+                Log("lower mid");
+                x = -x / 4;
+                y = -y / 4;
+            }
+            else if ((x < 220 && x > -220) || (y < 220 && y > -220))
+            {
+                Log("min");
+                x = -x / 8;
+                y = -y / 8;
+            }
+            else
+            {
+                Log("idk");
+            }
 
             if (scrollState == 0)
             {
@@ -233,7 +267,7 @@ namespace LocalVideoPlayer
                 {
                     mainForm.Cursor = new Cursor(Cursor.Current.Handle);
                     Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
-                    Log("Mouse position: " + Cursor.Position.ToString());
+                    //Log("Mouse position: " + Cursor.Position.ToString());
                 }));
             }
         }
