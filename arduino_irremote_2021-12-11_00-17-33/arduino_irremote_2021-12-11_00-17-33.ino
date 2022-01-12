@@ -6,7 +6,7 @@
 #include <SoftwareSerial.h>
 
 #define IR_CODE_NUM_BITS 32
-#define DEBUG false
+#define DEBUG true
 
 const int powerPin = 12;
 const int potentiometerPin = A5;
@@ -19,6 +19,7 @@ const int blueLedPin = 5;
 const int joystickRxPin = A0;
 const int joystickRyPin = A1;
 const int joystickButtonPin = 2;
+const int joystickThreshold = 50;
 //https://www.espressif.com/sites/default/files/documentation/4b-esp8266_at_command_examples_en.pdf
 const unsigned long keepAliveTimeout = 4999;
 
@@ -56,6 +57,7 @@ unsigned long timeValue = 0;
 void setup() {
   Serial.begin(9600);
   esp8266.begin(9600);
+  
   if (DEBUG) {
     Serial.println("Serial ready");
   }
@@ -86,7 +88,7 @@ void loop() {
   if (clientConnected) {
     keepAliveOutput = "ka\r\n";
     keepAliveSendLength = "AT+CIPSEND=0," + String(keepAliveOutput.length()) + "\r\n";
-    TcpDataOut(keepAliveSendLength, 100);
+    TcpDataOut(keepAliveSendLength, 10);
     TcpDataOut(keepAliveOutput, 100);
     if (DEBUG) {
       Serial.print("Send keep alive. ");
@@ -191,14 +193,13 @@ void InnerLoop() {
   mapY = map(yPosition, 0, 1023, -512, 512);
   scrollPinState = digitalRead(scrollPin);
 
-  //joystickOutput = String(mapX) + "," + String(mapY) + "," + String(xPosition) + "," + String(yPosition) + "\r\n";
-  //Serial.print(joystickOutput);
-  //delay(500);
+  //joystickOutput = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "," + String(scrollPinState) + "\r\n";
+  //Serial.println(joystickOutput);
 
-  if ((joystickPinState == 0 || scrollPinState == 0 || mapX > 25 || mapX < -25 || mapY > 25 || mapY < -25) && clientConnected) {
+  if ((joystickPinState == 0 || scrollPinState == 0 || mapX > joystickThreshold || mapX < -joystickThreshold || mapY > joystickThreshold || mapY < -joystickThreshold) && clientConnected) {
     joystickOutput = String(mapX) + "," + String(mapY) + "," + String(joystickPinState) + "," + String(scrollPinState) + "\r\n";
     joystickSendLength = "AT+CIPSEND=0," + String(joystickOutput.length()) + "\r\n";
-    TcpDataOut(joystickSendLength, 100);
+    TcpDataOut(joystickSendLength, 10);
     TcpDataOut(joystickOutput, 100);
     if (DEBUG) {
       Serial.print(joystickOutput);
@@ -218,7 +219,7 @@ void InnerLoop() {
   }
 
   if (esp8266Init) {
-    TcpDataIn(200);
+    TcpDataIn(50); 
   }
   digitalWrite(redLedPin, HIGH);
   if (clientConnected) {
@@ -227,24 +228,43 @@ void InnerLoop() {
 }
 
 void InitializeEsp8266() {
-  TcpDataOut("AT+RST\r\n", 3000); //reset module
-  TcpDataOut("AT+CWMODE=1\r\n", 1000);
-  TcpDataOut("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2000);
-  while (!esp8266.find("OK")) {
-  }
-  dataOutResult = TcpDataOut("AT+CIFSR\r\n", 1000);
+  FlashBlueLed();
+  TcpDataOut("AT+RST\r\n", 2100);
+  FlashBlueLed();
+  TcpDataOut("AT+CWMODE=1\r\n", 201);
+  FlashBlueLed();
+  dataOutResult = TcpDataOut("AT+CIFSR\r\n", 201);
+
   if (dataOutResult.indexOf("0.0") > 0) {
     if (DEBUG) {
-      Serial.println("INVALID IP!!!");
+      Serial.println("Invalid IP");
     }
-    ResetEsp8266();
+    dataOutResult = TcpDataOut("AT+CWJAP=\"***REMOVED***\",\"***REMOVED***\"\r\n", 2100); //3200
+    //To-do: Add timeout here
+    while (!esp8266.find("OK")) {
+    }
+    if (dataOutResult.indexOf("0.0") > 0) {
+      if (DEBUG) {
+        Serial.println("Invalid IP after AT+CWJAP");
+      }
+      ResetEsp8266();
+      return;
+    }
+    if (DEBUG) {
+      Serial.println("Connected to wifi");
+    }
+    TcpDataOut("AT+CIFSR\r\n", 201);
   }
-  TcpDataOut("AT+CIPMUX=1\r\n", 1000); //enable multiple connections
-  TcpDataOut("AT+CIPSERVER=1,3000\r\n", 2000);
+
+  FlashBlueLed();
+  TcpDataOut("AT+CIPMUX=1\r\n", 201); //enable multiple connections
+  FlashBlueLed();
+  TcpDataOut("AT+CIPSERVER=1,3000\r\n", 201);
+  FlashBlueLed();
 }
 
 void ResetEsp8266() {
-  BlinkEsp8266Led();
+  BlinkBlueLed();
   if (DEBUG) {
     Serial.println("Restarting esp8266...");
   }
@@ -255,7 +275,13 @@ void ResetEsp8266() {
   clientConnected = false;
 }
 
-void BlinkEsp8266Led() {
+void FlashBlueLed() {
+  digitalWrite(blueLedPin, HIGH);
+  delay(100);
+  digitalWrite(blueLedPin, LOW);
+}
+
+void BlinkBlueLed() {
   digitalWrite(blueLedPin, LOW);
   delay(100);
   digitalWrite(blueLedPin, HIGH);
@@ -286,30 +312,29 @@ void TcpDataIn(const int timeout) {
   }
   if (dataInResponse.length() == 0) {
     if (!clientConnected) {
-      digitalWrite(blueLedPin, HIGH);
-      delay(100);
-      digitalWrite(blueLedPin, LOW);
-      delay(100);
+      FlashBlueLed();
     }
     return;
   }
   if (DEBUG) {
     Serial.println("received: " + dataInResponse);
   }
-  
-  if (dataInResponse.indexOf("zzzz") > 0 || dataInResponse.indexOf("zzz") > 0 || dataInResponse.indexOf("zz") > 0) {
+
+  if (dataInResponse.indexOf("zzzz") > 0 || dataInResponse.indexOf("zzz") > 0 ||
+      dataInResponse.indexOf("zz") > 0 || dataInResponse.indexOf("z") > 0) {
+
     clientConnected = true;
     if (DEBUG) {
       Serial.println("Client connected");
     }
     tcpDataInOutput = "initack\r\n";
     tcpDataInSendLength = "AT+CIPSEND=0," + String(tcpDataInOutput.length()) + "\r\n";
-    TcpDataOut(tcpDataInSendLength, 100);
+    TcpDataOut(tcpDataInSendLength, 10);
     TcpDataOut(tcpDataInOutput, 100);
     clientConnected = true;
     return;
   }
-  
+
   if (dataInResponse.indexOf("nlink") > 0) {
     if (DEBUG) {
       Serial.println("Unlink detected");
@@ -318,10 +343,10 @@ void TcpDataIn(const int timeout) {
     return;
   }
 
-  tcpDataInOutput = "ok\r\n";
+  /*tcpDataInOutput = "ok\r\n";
   tcpDataInSendLength = "AT+CIPSEND=0," + String(tcpDataInOutput.length()) + "\r\n";
   TcpDataOut(tcpDataInSendLength, 100);
-  TcpDataOut(tcpDataInOutput, 100);
+  TcpDataOut(tcpDataInOutput, 100);*/
 }
 
 String TcpDataOut(String command, const int timeout) {

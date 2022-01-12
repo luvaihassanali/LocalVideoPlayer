@@ -36,13 +36,14 @@ namespace MouseMoverClient
         static string serverIp = "192.168.0.181";
         static int serverPort = 3000;
         static bool serverOffline = true;
-
+        static int jX;
+        static int jY;
         static TcpClient client;
         static System.Timers.Timer pollingTimer;
 
         static void Main(string[] args)
         {
-            Console.Title = "Mouse";
+            Console.Title = "Mouse Mover";
             Console.SetWindowSize(60, 20);
             Console.ForegroundColor = ConsoleColor.Green;
             SetWindowPos(MyConsole, 0, 650, 10, 0, 0, SWP_NOSIZE);
@@ -126,7 +127,7 @@ namespace MouseMoverClient
                     {
                         stream = client.GetStream();
                         Log("Connected.");
-                        Thread.Sleep(3000);
+                        Thread.Sleep(1000);
                     }
                     catch (System.InvalidOperationException)
                     {
@@ -160,7 +161,7 @@ namespace MouseMoverClient
                             if (buffer.Contains("ka"))
                             {
                                 StopTimer();
-                                Log("Sending ok");
+                                Log("Sending ack");
                                 data = System.Text.Encoding.ASCII.GetBytes("ack");
                                 stream = client.GetStream();
                                 stream.Write(data, 0, data.Length);
@@ -169,7 +170,7 @@ namespace MouseMoverClient
 
                             if (!buffer.Contains("ok") && !buffer.Contains("ka") && !buffer.Contains("initack"))
                             {
-                                MoveMouse(buffer);
+                                ParseTcpDataIn(buffer);
                             }
                         }
 
@@ -235,11 +236,11 @@ namespace MouseMoverClient
             }
         }
 
-        static void MoveMouse(string data)
+        static void ParseTcpDataIn(string data)
         {
             string[] dataSplit = data.Split(',');
-            int x = Int32.Parse(dataSplit[0]);
-            int y = Int32.Parse(dataSplit[1]);
+            jX = -Int32.Parse(dataSplit[0]);
+            jY = -Int32.Parse(dataSplit[1]);
             int buttonState = Int32.Parse(dataSplit[2]);
             int buttonTwoState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
@@ -249,50 +250,103 @@ namespace MouseMoverClient
                 return;
             }
 
-            if (x > 490 || y > 490 || x < -490 || y < -490)
-            {
-                Log("max");
-                x = -x;
-                y = -y;
-            }
-            else if ((x > 319 && x < 490) ||
-                     (y > 319 && y < 490) ||
-                     (x < -319 && x > -490) ||
-                     (y < -319 && y > -490))
-            {
-                Log("higher mid");
-                x = -x / 2;
-                y = -y / 2;
-            }
-            else if ((x > 220 && x < 319) ||
-                     (y > 200 && y < 319) ||
-                     (x < -220 && x > -319) ||
-                     (y < -220 && y > -319))
-            {
-                Log("lower mid");
-                x = -x / 4;
-                y = -y / 4;
-            }
-            else if ((x < 220 && x > -220) || (y < 220 && y > -220))
-            {
-                Log("min");
-                x = -x / 8;
-                y = -y / 8;
-            }
-            else
-            {
-                Log("idk");
-            }
-
             if (buttonTwoState == 0)
             {
                 DoMouseRightClick();
+                return;
             }
-            else
+
+            if (jX > 100)
             {
-                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
-                //Log("Mouse position: " + Cursor.Position.ToString());
+                if (jY > 100)
+                {
+                    DoMouseMove("NW");
+                    return;
+                }
+                if (jY < -100)
+                {
+                    DoMouseMove("SW");
+                    return;
+                }
+                DoMouseMove("W");
+                return;
+
             }
+
+            if (jX < -100)
+            {
+                if (jY > 100)
+                {
+                    DoMouseMove("NE");
+                    return;
+                }
+                if (jY < -100)
+                {
+                    DoMouseMove("SE");
+                    return;
+                }
+                DoMouseMove("E");
+                return;
+            }
+
+            if (jY > 100)
+            {
+                DoMouseMove("N");
+                return;
+            }
+            DoMouseMove("S");
+            return;
+
+            //NW 500, 500
+            //N -3, 500
+            //NE -499, 500
+            //E -500, 4
+            //SE -499, -499
+            //S -2, -500
+            //SW 500, -499
+            //W 500, 4 
+        }
+
+        static void DoMouseMove(string direction)
+        {
+            Log(direction);
+            Tuple<int, int> tuple = null;
+            switch(direction)
+            {
+                case "NW":
+                    tuple = new Tuple<int, int>(1, 1);
+                    break;
+                case "SW":
+                    tuple = new Tuple<int, int>(1, -1);
+                    break;
+                case "W":
+                    tuple = new Tuple<int, int>(1, 0);
+                    break;
+                case "NE":
+                    tuple = new Tuple<int, int>(-1, 1);
+                    break;
+                case "SE":
+                    tuple = new Tuple<int, int>(-1, -1);
+                    break;
+                case "E":
+                    tuple = new Tuple<int, int>(-1, 0);
+                    break;
+                case "N":
+                    tuple = new Tuple<int, int>(0, 1);
+                    break;
+                case "S":
+                    tuple = new Tuple<int, int>(0, -1);
+                    break;
+            
+            }
+            for (int i = 0; i < 1;  i++)
+            {
+                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + jX / 4, Cursor.Position.Y + jY / 4);
+                Thread.Sleep(1);
+            }
+
+            //Cursor.Position = new System.Drawing.Point(Cursor.Position.X + tuple.Item1, Cursor.Position.Y + tuple.Item2);
+            //Log("Mouse position: " + Cursor.Position.ToString()); 
         }
 
         static void DoMouseClick()
