@@ -242,10 +242,19 @@ namespace LocalVideoPlayer
         {
             jX = -jX;
             jY = -jY;
+            int divisor = 25;
+            if ((jX > 0 && jX < 150) || (jX < 0 && jX > -150))
+            {
+                divisor = 40;
+            }
+            else if ((jX > 150 && jX < 300) || (jX < -150 && jX > -300))
+            {
+                divisor = 30;
+            }
 
             for (int i = 0; i < 15; i++)
             {
-                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + jX / 30, Cursor.Position.Y + jY / 30);
+                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + jX / divisor, Cursor.Position.Y + jY / divisor);
                 Thread.Sleep(1);
             }
 
