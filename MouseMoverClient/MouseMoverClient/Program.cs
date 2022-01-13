@@ -136,13 +136,12 @@ namespace MouseMoverClient
                     }
 
                     stream.Write(data, 0, data.Length);
-                    Log("Sent: init (zzzz)");
+                    Log("Sent: init");
                     StartTimer();
 
                     while (true)
                     {
                         int i;
-
                         Byte[] bytes = new Byte[256];
                         String buffer = null;
 
@@ -153,7 +152,7 @@ namespace MouseMoverClient
 
                             if (buffer.Contains("initack"))
                             {
-                                Log("Ack received");
+                                Log("initack received");
                                 StopTimer();
                                 StartTimer();
                             }
@@ -239,8 +238,13 @@ namespace MouseMoverClient
         static void ParseTcpDataIn(string data)
         {
             string[] dataSplit = data.Split(',');
-            jX = -Int32.Parse(dataSplit[0]);
-            jY = -Int32.Parse(dataSplit[1]);
+            if(dataSplit.Length > 5)
+            {
+                Log("Error. Message incorrect format: " + data);
+                return;
+            }
+            jX = Int32.Parse(dataSplit[0]);
+            jY = Int32.Parse(dataSplit[1]);
             int buttonState = Int32.Parse(dataSplit[2]);
             int buttonTwoState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
@@ -256,46 +260,7 @@ namespace MouseMoverClient
                 return;
             }
 
-            if (jX > 100)
-            {
-                if (jY > 100)
-                {
-                    DoMouseMove("NW");
-                    return;
-                }
-                if (jY < -100)
-                {
-                    DoMouseMove("SW");
-                    return;
-                }
-                DoMouseMove("W");
-                return;
-
-            }
-
-            if (jX < -100)
-            {
-                if (jY > 100)
-                {
-                    DoMouseMove("NE");
-                    return;
-                }
-                if (jY < -100)
-                {
-                    DoMouseMove("SE");
-                    return;
-                }
-                DoMouseMove("E");
-                return;
-            }
-
-            if (jY > 100)
-            {
-                DoMouseMove("N");
-                return;
-            }
-            DoMouseMove("S");
-            return;
+            DoMouseMove();
 
             //NW 500, 500
             //N -3, 500
@@ -307,41 +272,49 @@ namespace MouseMoverClient
             //W 500, 4 
         }
 
-        static void DoMouseMove(string direction)
+        static void DoMouseMove()
         {
-            Log(direction);
-            Tuple<int, int> tuple = null;
-            switch(direction)
+
+            /*if (jX > 490 || jY > 490 || jX < -490 || jY < -490)
             {
-                case "NW":
-                    tuple = new Tuple<int, int>(1, 1);
-                    break;
-                case "SW":
-                    tuple = new Tuple<int, int>(1, -1);
-                    break;
-                case "W":
-                    tuple = new Tuple<int, int>(1, 0);
-                    break;
-                case "NE":
-                    tuple = new Tuple<int, int>(-1, 1);
-                    break;
-                case "SE":
-                    tuple = new Tuple<int, int>(-1, -1);
-                    break;
-                case "E":
-                    tuple = new Tuple<int, int>(-1, 0);
-                    break;
-                case "N":
-                    tuple = new Tuple<int, int>(0, 1);
-                    break;
-                case "S":
-                    tuple = new Tuple<int, int>(0, -1);
-                    break;
-            
+                Log("max");
+                jX = -jX;
+                jY = -jY;
             }
-            for (int i = 0; i < 1;  i++)
+            else if ((jX > 319 && jX < 490) ||
+                     (jY > 319 && jY < 490) ||
+                     (jX < -319 && jX > -490) ||
+                     (jY < -319 && jY > -490))
             {
-                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + jX / 4, Cursor.Position.Y + jY / 4);
+                Log("higher mid");
+                jX = -jX / 2;
+                jY = -jY / 2;
+            }
+            else if ((jX > 220 && jX < 319) ||
+                     (jY > 200 && jY < 319) ||
+                     (jX < -220 && jX > -319) ||
+                     (jY < -220 && jY > -319))
+            {
+                Log("lower mid");
+                jX = -jX / 4;
+                jY = -jY / 4;
+            }
+            else if ((jX < 220 && jX > -220) || (jY < 220 && jY > -220))
+            {
+                Log("min");
+                jX = -jX / 8;
+                jY = -jY / 8;
+            }
+            else
+            {
+                Log("idk");
+            }*/
+            jX = -jX;
+            jY = -jY; 
+
+            for (int i = 0; i < 15;  i++)
+            {
+                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + jX / 30, Cursor.Position.Y + jY / 30);
                 Thread.Sleep(1);
             }
 

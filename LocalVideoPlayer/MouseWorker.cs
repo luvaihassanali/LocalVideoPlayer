@@ -26,6 +26,8 @@ namespace LocalVideoPlayer
         private MainForm mainForm;
         private string serverIp = "192.168.0.181";
         private int serverPort = 3000;
+        private int jX;
+        private int jY;
         private bool serverOffline = true;
         private TcpClient client;
         private System.Timers.Timer pollingTimer;
@@ -98,7 +100,7 @@ namespace LocalVideoPlayer
                     {
                         stream = client.GetStream();
                         Log("Connected.");
-                        Thread.Sleep(3000);
+                        Thread.Sleep(1000);
                     }
                     catch (System.InvalidOperationException)
                     {
@@ -107,13 +109,12 @@ namespace LocalVideoPlayer
                     }
 
                     stream.Write(data, 0, data.Length);
-                    Log("Sent: init (zzzz)");
+                    Log("Sent init");
                     StartTimer();
 
                     while (true)
                     {
                         int i;
-
                         Byte[] bytes = new Byte[256];
                         String buffer = null;
 
@@ -124,7 +125,7 @@ namespace LocalVideoPlayer
 
                             if (buffer.Contains("initack"))
                             {
-                                Log("Ack received");
+                                Log("initack received");
                                 StopTimer();
                                 StartTimer();
                             }
@@ -132,7 +133,7 @@ namespace LocalVideoPlayer
                             if (buffer.Contains("ka"))
                             {
                                 StopTimer();
-                                Log("Sending ok");
+                                Log("Sending ack");
                                 data = System.Text.Encoding.ASCII.GetBytes("ack");
                                 stream = client.GetStream();
                                 stream.Write(data, 0, data.Length);
@@ -141,7 +142,7 @@ namespace LocalVideoPlayer
 
                             if (!buffer.Contains("ok") && !buffer.Contains("ka") && !buffer.Contains("initack"))
                             {
-                                MoveMouse(buffer);
+                                ParseTcpDataIn(buffer);
                             }
                         }
 
@@ -207,11 +208,16 @@ namespace LocalVideoPlayer
             }
         }
 
-        private void MoveMouse(string data)
+        private void ParseTcpDataIn(string data)
         {
             string[] dataSplit = data.Split(',');
-            int x = Int32.Parse(dataSplit[0]);
-            int y = Int32.Parse(dataSplit[1]);
+            if (dataSplit.Length > 5)
+            {
+                Log("Error. Message incorrect format: " + data);
+                return;
+            }
+            jX = Int32.Parse(dataSplit[0]);
+            jY = Int32.Parse(dataSplit[1]);
             int buttonState = Int32.Parse(dataSplit[2]);
             int scrollState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
@@ -221,55 +227,28 @@ namespace LocalVideoPlayer
                 return;
             }
 
-            if (x > 490 || y > 490 || x < -490 || y < -490)
-            {
-                Log("max");
-                x = -x;
-                y = -y;
-            }
-            else if ((x > 319 && x < 490) ||
-                     (y > 319 && y < 490) ||
-                     (x < -319 && x > -490) ||
-                     (y < -319 && y > -490))
-            {
-                Log("higher mid");
-                x = -x / 2;
-                y = -y / 2;
-            }
-            else if ((x > 220 && x < 319) ||
-                     (y > 200 && y < 319) ||
-                     (x < -220 && x > -319) ||
-                     (y < -220 && y > -319))
-            {
-                Log("lower mid");
-                x = -x / 4;
-                y = -y / 4;
-            }
-            else if ((x < 220 && x > -220) || (y < 220 && y > -220))
-            {
-                Log("min");
-                x = -x / 8;
-                y = -y / 8;
-            }
-            else
-            {
-                Log("idk");
-            }
-
             if (scrollState == 0)
             {
-                y = y * -2;
-                mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)y, 0);
+                jY = jY * -2;
+                mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)jY, 0);
             }
             else
             {
-                mainForm.BeginInvoke(new MethodInvoker(delegate
-                {
-                    mainForm.Cursor = new Cursor(Cursor.Current.Handle);
-                    Cursor.Position = new System.Drawing.Point(Cursor.Position.X + x, Cursor.Position.Y + y);
-                    //Log("Mouse position: " + Cursor.Position.ToString());
-                }));
+                DoMouseMove();
             }
+        }
+        
+        void DoMouseMove()
+        {
+            jX = -jX;
+            jY = -jY;
+
+            for (int i = 0; i < 15; i++)
+            {
+                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + jX / 30, Cursor.Position.Y + jY / 30);
+                Thread.Sleep(1);
+            }
+
         }
 
         public void DoMouseClick()
