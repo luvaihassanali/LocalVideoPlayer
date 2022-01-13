@@ -1115,6 +1115,8 @@ namespace LocalVideoPlayer
             return result;
         }
 
+        #region Build cache
+
         private void UpdateLoadingLabel(string text)
         {
             if (text == null)
@@ -1138,7 +1140,6 @@ namespace LocalVideoPlayer
             }
         }
 
-        //To-do: arrange alphabetically
         private async Task BuildCacheAsync()
         {
             //To-do: Hover over button change this function fucks up blue-link
@@ -1502,50 +1503,98 @@ namespace LocalVideoPlayer
             bufferString = filePath;
         }
 
-        private void ProcessDirectory(string targetDir)
+        #endregion  
+
+        #region Process directory
+
+        private void ProcessDirectory(string targetDir, string targetDirB)
         {
-            string moviesDir = null;
-            string tvDir = null;
+            string[] moviesDir = new string[2];
+            string[] tvDir = new string[2];
             string[] subdirectoryEntries;
+            string[] subdirectoryEntriesB = null;
+            bool subdirectoryBExists = false;
             try
             {
                 subdirectoryEntries = Directory.GetDirectories(targetDir);
+                if(targetDirB != String.Empty)
+                {
+                    subdirectoryEntriesB = Directory.GetDirectories(targetDirB);
+                    subdirectoryBExists = true;
+                }
             }
-            catch (Exception e)
+            catch
             {
-                //To-do: error dialog
-                throw e;
+                throw new ArgumentNullException();
             }
+
             foreach (string subDir in subdirectoryEntries)
             {
                 string[] subDirPath = subDir.Split('\\');
                 string targetSubDir = subDirPath[subDirPath.Length - 1].ToLower();
                 if (targetSubDir.ToLower().Equals("movies"))
                 {
-                    moviesDir = subDir;
+                    moviesDir[0] = subDir;
                 }
                 if (targetSubDir.Equals("tv"))
                 {
-                    tvDir = subDir;
+                    tvDir[0] = subDir;
                 }
             }
+
+            if(subdirectoryBExists)
+            {
+                foreach (string subDir in subdirectoryEntriesB)
+                {
+                    string[] subDirPath = subDir.Split('\\');
+                    string targetSubDir = subDirPath[subDirPath.Length - 1].ToLower();
+                    if (targetSubDir.ToLower().Equals("movies"))
+                    {
+                        moviesDir[1] = subDir;
+                    }
+                    if (targetSubDir.Equals("tv"))
+                    {
+                        tvDir[1] = subDir;
+                    }
+                }
+            }
+
             if (moviesDir == null || tvDir == null) throw new ArgumentNullException();
 
-            int moviesCount = Directory.GetDirectories(moviesDir).Length;
-            int tvCount = Directory.GetDirectories(tvDir).Length;
+            int moviesCount = subdirectoryBExists ? Directory.GetDirectories(moviesDir[0]).Length + Directory.GetDirectories(moviesDir[1]).Length : Directory.GetDirectories(moviesDir[0]).Length;
+            int tvCount = subdirectoryBExists ? Directory.GetDirectories(tvDir[0]).Length + Directory.GetDirectories(tvDir[1]).Length : Directory.GetDirectories(tvDir[0]).Length;
+
+
             media = new MediaModel(moviesCount, tvCount);
 
-            string[] movieEntries = Directory.GetDirectories(moviesDir);
+            string[] movieEntries = Directory.GetDirectories(moviesDir[0]);
             for (int i = 0; i < movieEntries.Length; i++)
             {
 
                 media.Movies[i] = ProcessMovieDirectory(movieEntries[i]);
             }
 
-            string[] tvEntries = Directory.GetDirectories(tvDir);
+            string[] tvEntries = Directory.GetDirectories(tvDir[0]);
             for (int i = 0; i < tvEntries.Length; i++)
             {
                 media.TvShows[i] = ProcessTvDirectory(tvEntries[i]);
+            }
+
+            if(subdirectoryBExists)
+            {
+                string[] movieEntriesB = Directory.GetDirectories(moviesDir[1]);
+                for (int i = movieEntries.Length; i < moviesCount; i++)
+                {
+
+                    media.Movies[i] = ProcessMovieDirectory(movieEntriesB[i]);
+                }
+
+                string[] tvEntriesB = Directory.GetDirectories(tvDir[1]);
+                int index = 0;
+                for (int i = tvEntries.Length; i < tvCount; i++)
+                {
+                    media.TvShows[i] = ProcessTvDirectory(tvEntriesB[index++]);
+                }
             }
 
         }
@@ -1655,6 +1704,8 @@ namespace LocalVideoPlayer
 
         #endregion
 
+        #endregion
+
         #region Background worker
 
         private void BackgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
@@ -1662,8 +1713,9 @@ namespace LocalVideoPlayer
             BackgroundWorker worker = sender as BackgroundWorker;
 
             string mediaPath = ConfigurationManager.AppSettings["mediaPath"];
+            string mediaPathB = ConfigurationManager.AppSettings["mediaPathB"];
 
-            ProcessDirectory(mediaPath);
+            ProcessDirectory(mediaPath, mediaPathB);
 
             if (media == null) throw new ArgumentNullException();
 
@@ -1683,7 +1735,7 @@ namespace LocalVideoPlayer
         {
             loadingCircle1.Dispose();
             loadingLabel.Dispose();
-            this.Padding = new System.Windows.Forms.Padding(5, 20, 20, 20);
+            this.Padding = new Padding(5, 20, 20, 20);
             InitGui();
             //TvShowBox_Click(null, null);
         }
