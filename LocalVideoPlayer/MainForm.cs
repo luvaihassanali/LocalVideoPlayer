@@ -1109,6 +1109,7 @@ namespace LocalVideoPlayer
             }
             else
             {
+                File.Copy(jsonFile, jsonFile + ".bak", true);
                 media.Ingest(prevMedia);
             }
 
@@ -1733,11 +1734,11 @@ namespace LocalVideoPlayer
 
         private void BackgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            loadingCircle1.Dispose();
             loadingLabel.Dispose();
             this.Padding = new Padding(5, 20, 20, 20);
             InitGui();
-            //TvShowBox_Click(null, null);
+            loadingCircle1.Dispose();
+            loadingCircle1.SendToBack();
         }
 
         #endregion
@@ -1769,7 +1770,8 @@ namespace LocalVideoPlayer
             }
 
             SystemParametersInfo(SPI_SETCURSORS, 0, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
-            SystemParametersInfo(0x2029, 0, 128, 0x01);
+            uint mouseSize = uint.Parse(ConfigurationManager.AppSettings["mouseSize"]);
+            SystemParametersInfo(0x2029, 0, mouseSize, 0x01);
         }
 
         #endregion

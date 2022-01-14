@@ -229,7 +229,7 @@ namespace LocalVideoPlayer
 
             if (scrollState == 0)
             {
-                jY = jY * -2;
+                jY = jY * 2;
                 mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)jY, 0);
             }
             else
@@ -242,14 +242,14 @@ namespace LocalVideoPlayer
         {
             jX = -jX;
             jY = -jY;
-            int divisor = 25;
+            int divisor = 20;
             if ((jX > 0 && jX < 150) || (jX < 0 && jX > -150))
             {
-                divisor = 40;
+                divisor = 60;
             }
-            else if ((jX > 150 && jX < 300) || (jX < -150 && jX > -300))
+            else if ((jX > 150 && jX < 400) || (jX < -150 && jX > -400))
             {
-                divisor = 30;
+                divisor = 40;
             }
 
             for (int i = 0; i < 15; i++)
