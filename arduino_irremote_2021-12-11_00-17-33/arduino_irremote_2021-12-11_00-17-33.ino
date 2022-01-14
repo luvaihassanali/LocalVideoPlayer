@@ -5,6 +5,7 @@
 #include <IRremote.h>
 #include <SoftwareSerial.h>
 
+#define NEC_REPEAT   0xFFFFFFFF
 #define IR_CODE_NUM_BITS 32
 #define DEBUG true
 
@@ -49,6 +50,7 @@ int yPosition = 0;
 int joystickPinState = 0;
 int mapX = 0;
 int mapY = 0;
+bool powerPressed = false;
 bool volumeFirstRead = true;
 bool clientConnected = false;
 bool esp8266Init = false;
@@ -57,7 +59,7 @@ unsigned long timeValue = 0;
 void setup() {
   Serial.begin(9600);
   esp8266.begin(9600);
-  
+
   if (DEBUG) {
     Serial.println("Serial ready");
   }
@@ -103,16 +105,31 @@ void loop() {
 }
 
 void InnerLoop() {
-  //Serial.println("inner loop");
-
   powerPinState = digitalRead(powerPin);
-  if (powerPinState == LOW) {
-    if (DEBUG) {
-      Serial.println("Power on sound bar");
+  if (powerPressed) {
+    if (powerPinState == LOW) {
+      if (DEBUG) {
+        Serial.println("Power off sound bar");
+      }
+      digitalWrite(redLedPin, LOW);
+      irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
+      for (int i = 0; i < 300; i++) {
+        delay(10);
+        irsend.sendNEC(NEC_REPEAT, 0);
+      }
+      powerPressed = false;
+      delay(250);
     }
-    digitalWrite(redLedPin, LOW);
-    irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
-    delay(250);
+  } else {
+    if (powerPinState == LOW) {
+      if (DEBUG) {
+        Serial.println("Power on sound bar");
+      }
+      digitalWrite(redLedPin, LOW);
+      irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
+      powerPressed = true;
+      delay(250);
+    }
   }
 
   volumeValue = analogRead(potentiometerPin);
@@ -219,7 +236,7 @@ void InnerLoop() {
   }
 
   if (esp8266Init) {
-    TcpDataIn(50); 
+    TcpDataIn(50);
   }
   digitalWrite(redLedPin, HIGH);
   if (clientConnected) {
@@ -344,9 +361,9 @@ void TcpDataIn(const int timeout) {
   }
 
   /*tcpDataInOutput = "ok\r\n";
-  tcpDataInSendLength = "AT+CIPSEND=0," + String(tcpDataInOutput.length()) + "\r\n";
-  TcpDataOut(tcpDataInSendLength, 100);
-  TcpDataOut(tcpDataInOutput, 100);*/
+    tcpDataInSendLength = "AT+CIPSEND=0," + String(tcpDataInOutput.length()) + "\r\n";
+    TcpDataOut(tcpDataInSendLength, 100);
+    TcpDataOut(tcpDataInOutput, 100);*/
 }
 
 String TcpDataOut(String command, const int timeout) {
