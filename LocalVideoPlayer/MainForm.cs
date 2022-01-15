@@ -1583,15 +1583,16 @@ namespace LocalVideoPlayer
 
             if(subdirectoryBExists)
             {
+                int index = 0;
                 string[] movieEntriesB = Directory.GetDirectories(moviesDir[1]);
                 for (int i = movieEntries.Length; i < moviesCount; i++)
                 {
 
-                    media.Movies[i] = ProcessMovieDirectory(movieEntriesB[i]);
+                    media.Movies[i] = ProcessMovieDirectory(movieEntriesB[index++]);
                 }
 
                 string[] tvEntriesB = Directory.GetDirectories(tvDir[1]);
-                int index = 0;
+                index = 0;
                 for (int i = tvEntries.Length; i < tvCount; i++)
                 {
                     media.TvShows[i] = ProcessTvDirectory(tvEntriesB[index++]);
