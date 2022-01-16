@@ -1,5 +1,7 @@
 namespace MediaIndexUtil
 {
+	//To-do: show changed index
+	//To-do: Undo
     public partial class Form1 : Form
     {
         List<string[]> list = new List<string[]>();
@@ -7,7 +9,6 @@ namespace MediaIndexUtil
         public Form1()
         {
             InitializeComponent();
-            this.treeView1.NodeMouseClick += new TreeNodeMouseClickEventHandler(treeView1_NodeMouseClick);
             PopulateTreeView();
             treeView1_NodeMouseClick(null, null);
         }
@@ -16,7 +17,7 @@ namespace MediaIndexUtil
         {
             TreeNode rootNode;
 
-            DirectoryInfo info = new DirectoryInfo(@"../..");
+            DirectoryInfo info = new DirectoryInfo(@"../");
             if (info.Exists)
             {
                 rootNode = new TreeNode(info.Name);
@@ -62,14 +63,22 @@ namespace MediaIndexUtil
             ListViewItem.ListViewSubItem[] subItems;
             ListViewItem item;
 
-            foreach (DirectoryInfo dir in nodeDirInfo.GetDirectories())
+            DirectoryInfo[] dirs = nodeDirInfo.GetDirectories();
+            Array.Sort(dirs, delegate (DirectoryInfo d1, DirectoryInfo d2) {
+                return d1.Name.CompareTo(d2.Name);
+            });
+            foreach (DirectoryInfo dir in dirs)
             {
                 item = new ListViewItem(dir.Name, 0);
                 subItems = new ListViewItem.ListViewSubItem[] { new ListViewItem.ListViewSubItem(item, "Directory"), new ListViewItem.ListViewSubItem(item, dir.FullName) };
                 item.SubItems.AddRange(subItems);
                 listView1.Items.Add(item);
             }
-            foreach (FileInfo file in nodeDirInfo.GetFiles())
+            FileInfo[] files = nodeDirInfo.GetFiles();
+            Array.Sort(files, delegate (FileInfo f1, FileInfo f2) {
+                return f1.Name.CompareTo(f2.Name);
+            });
+            foreach (FileInfo file in files)
             {
                 item = new ListViewItem(file.Name, 1);
                 subItems = new ListViewItem.ListViewSubItem[] { new ListViewItem.ListViewSubItem(item, "File"), new ListViewItem.ListViewSubItem(item, file.FullName) };
@@ -104,6 +113,23 @@ namespace MediaIndexUtil
             subItems = new ListViewItem.ListViewSubItem[] { new ListViewItem.ListViewSubItem(newItem, fileComponents[1]) };
             newItem.SubItems.AddRange(subItems);
             listView2.Items.Add(newItem);
+        }
+
+        private void listView2_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
+        {
+            if (listView2.SelectedItems.Count == 0)
+                return;
+
+            string name = e.Item.SubItems[1].Text.Trim();
+            listView2.Items.Remove(e.Item);
+            foreach(string[] entry in list)
+            {
+                if(entry[1].Equals(name))
+                {
+                    list.Remove(entry);
+                    break;
+                }
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
