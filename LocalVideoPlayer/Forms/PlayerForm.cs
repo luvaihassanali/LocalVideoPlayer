@@ -1,5 +1,6 @@
 ﻿using LibVLCSharp.Shared;
 using System;
+using System.Configuration;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
@@ -37,7 +38,8 @@ namespace LocalVideoPlayer
             #region Serial port initialize 
             
             serialPort = new SerialPort();
-            serialPort.PortName = "COM4";//Set your board COM
+            string portNumber = ConfigurationManager.AppSettings["comPort"];
+            serialPort.PortName = "COM" + portNumber;//Set your board COM
             serialPort.BaudRate = 9600;
             serialPort.DataBits = 8;
             serialPort.Parity = Parity.None;
