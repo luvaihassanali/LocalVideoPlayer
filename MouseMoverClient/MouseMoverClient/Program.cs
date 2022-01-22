@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
+using System.IO.Ports;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Forms;
 
@@ -15,6 +12,8 @@ namespace MouseMoverClient
 {
     class Program
     {
+        #region Dll Import 
+
         [DllImport("kernel32.dll", ExactSpelling = true)]
         private static extern IntPtr GetConsoleWindow();
 
@@ -30,8 +29,9 @@ namespace MouseMoverClient
         private const int MOUSEEVENTF_LEFTUP = 0x04;
         private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
         private const int MOUSEEVENTF_RIGHTUP = 0x10;
-        private const int MOUSEEVENTF_WHEEL = 0x0800;
         private const int SWP_NOSIZE = 0x0001;
+
+        #endregion
 
         static string serverIp = "192.168.0.181";
         static int serverPort = 3000;
@@ -43,6 +43,8 @@ namespace MouseMoverClient
 
         static void Main(string[] args)
         {
+            #region Initialize
+
             Console.Title = "Mouse Mover";
             Console.SetWindowSize(60, 20);
             Console.ForegroundColor = ConsoleColor.Green;
@@ -51,6 +53,8 @@ namespace MouseMoverClient
             pollingTimer = new System.Timers.Timer(10000);
             pollingTimer.Elapsed += OnTimedEvent;
             pollingTimer.AutoReset = false;
+
+            #endregion
 
             Log("Starting using ip address: " + serverIp);
 
@@ -61,6 +65,9 @@ namespace MouseMoverClient
             }
 
             Log("Exiting...");
+
+            #region Clean up
+
 
             if (client != null)
             {
@@ -74,8 +81,12 @@ namespace MouseMoverClient
                 pollingTimer.Dispose();
             }
 
+            #endregion
+
             Thread.Sleep(3000);
         }
+
+        #region Timer 
 
         static void StartTimer()
         {
@@ -98,6 +109,10 @@ namespace MouseMoverClient
             System.Diagnostics.Process.Start(Application.ExecutablePath);
             Environment.Exit(0);
         }
+
+        #endregion
+
+        #region Tcp server
 
         static void ConnectToServer()
         {
@@ -238,7 +253,7 @@ namespace MouseMoverClient
         static void ParseTcpDataIn(string data)
         {
             string[] dataSplit = data.Split(',');
-            if(dataSplit.Length > 5)
+            if (dataSplit.Length > 5)
             {
                 Log("Error. Message incorrect format: " + data);
                 return;
@@ -271,6 +286,10 @@ namespace MouseMoverClient
             //SW 500, -499
             //W 500, 4 
         }
+
+        #endregion
+
+        #region Mouse functions
 
         static void DoMouseMove()
         {
@@ -347,9 +366,11 @@ namespace MouseMoverClient
             mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP, X, Y, 0, 0);
         }
 
+        #endregion
+
         static void Log(string message)
         {
-            Console.WriteLine("{0}: {1}", DateTime.Now.ToString("0:HH:mm:ss.fff"), message);
+            Console.WriteLine("{0}: {1}", DateTime.Now.ToString("> HH:mm:ss.fff"), message);
         }
 
     }

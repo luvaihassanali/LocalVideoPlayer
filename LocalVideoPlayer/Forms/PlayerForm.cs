@@ -3,6 +3,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
+using System.IO.Ports;
 using System.Windows.Forms;
 
 namespace LocalVideoPlayer
@@ -21,21 +22,43 @@ namespace LocalVideoPlayer
         private bool mouseDown = false;
         private bool controlsVisible = false;
         private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
+        private SerialPort serialPort;
 
         public PlayerForm(string p, long s, int r, TvShow t, Episode ep, Form tf)
         {
             if (!DesignMode)
-            {
                 Core.Initialize();
-            }
-
             InitializeComponent();
             closeButton.Cursor = blueHandCursor;
             timeline.Cursor = blueHandCursor;
             playButton.Cursor = blueHandCursor;
             videoView1.Cursor = Cursors.Default;
 
-            //some parameters are in tv object > remove
+            #region Serial port initialize 
+            
+            serialPort = new SerialPort();
+            serialPort.PortName = "COM4";//Set your board COM
+            serialPort.BaudRate = 9600;
+            serialPort.DataBits = 8;
+            serialPort.Parity = Parity.None;
+            serialPort.StopBits = StopBits.One;
+            serialPort.Handshake = Handshake.None;
+            serialPort.ReadTimeout = 200;
+            serialPort.DataReceived += SerialPort_DataReceived;
+
+            try
+            {
+                serialPort.Open();
+                System.Diagnostics.Debug.WriteLine("Connected to serial");
+            }
+            catch
+            {
+                System.Diagnostics.Debug.WriteLine("Serial port does not exist");
+            }
+
+            #endregion
+
+            //To-do: some parameters are in tv object > remove
             tvForm = tf;
             currEpisode = ep;
             currTvShow = t;
@@ -51,6 +74,8 @@ namespace LocalVideoPlayer
             libVlc = new LibVLC(); // "--verbose=2");
             //libVlc.SetLogFile("vlclog.txt");
             //libVlc.Log += (sender, e) => Console.WriteLine($"[{e.Level}] {e.Module}:{e.Message}");
+
+            #region Media player initialize 
 
             mediaPlayer = new MediaPlayer(libVlc);
             mediaPlayer.EnableMouseInput = false;
@@ -88,6 +113,8 @@ namespace LocalVideoPlayer
                 //To-do: progress bar or wait cursor
                 //cast to MediaPlayer.Event.Buffering -> e.GetBuffering();
             };*/
+
+            #endregion
 
             pollingTimer = new Timer();
             pollingTimer.Tick += new EventHandler(Polling_Tick);
@@ -128,6 +155,12 @@ namespace LocalVideoPlayer
 
         private void PlayerForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (serialPort != null)
+            {
+                serialPort.Close();
+                serialPort.Dispose();
+            }
+
             if (pollingTimer != null)
             {
                 if (pollingTimer.Enabled)
@@ -578,6 +611,26 @@ namespace LocalVideoPlayer
         }
 
         #endregion
+
+        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort serialPort = (SerialPort)sender;
+            if (e.EventType == SerialData.Chars)
+            {
+                string test = serialPort.ReadLine();
+                System.Diagnostics.Debug.WriteLine("Serial port: " + test);
+                if(test.Contains("stop"))
+                {
+                    if(mediaPlayer.IsPlaying)
+                    {
+                        mediaPlayer.Pause();
+                    } else
+                    {
+                        mediaPlayer.Play();
+                    }
+                }
+            }
+        }
     }
 
     public class RoundButton : Button
