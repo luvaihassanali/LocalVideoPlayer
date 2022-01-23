@@ -3,7 +3,7 @@
 #define DECODE_NEC // Includes Apple and Onkyo (Can't compile for Uno without)
 #define DECODE_SAMSUNG
 #define MARK_EXCESS_MICROS 10 // Adapt it to your IR receiver module. See also IRremote.h.
-#define NO_LED_FEEDBACK_CODE // halves ISR duration
+//+#define NO_LED_FEEDBACK_CODE // halves ISR duration
 //#define DEBUG // Activate this for lots of lovely debug output from the decoders.
 //#define INFO // To see valuable informations from universal decoder for pulse width or pulse distance protocols
 #include <IRremote.hpp> // Needs to be after define statements
@@ -79,7 +79,7 @@ void ParseIrValue(uint32_t rawData) {
 }
 
 void ChangeInputSoundBar() {
-  if(inputSourceSwitch) {
+  if (inputSourceSwitch) {
     //Serial.println("Optical");
     IrSender.sendNECMSB(0x807F926DU, 32);
     inputSourceSwitch = false;
@@ -91,16 +91,16 @@ void ChangeInputSoundBar() {
   }
 }
 
-void PowerOnSoundBar() { 
-   //Serial.println("Power on");
-   IrSender.sendNECMSB(0x807F08F7U, 32);
-   powerPressed = true;
+void PowerOnSoundBar() {
+  //Serial.println("Power on");
+  IrSender.sendNECMSB(0x807F08F7U, 32);
+  powerPressed = true;
 }
 
 void PowerOffSoundBar() {
   //Serial.println("Power off");
   IrSender.sendNECMSB(0x807F08F7U, 32);
-  for (int i = 0; i < 300; i++) {
+  for (int i = 0; i < 150; i++) {
     delay(10);
     IrSender.sendNECMSB(0XFFFFFFFF, 0);
   }
