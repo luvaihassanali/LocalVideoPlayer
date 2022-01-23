@@ -1,10 +1,10 @@
-#include "PinDefinitionsAndMore.h"
 #include <IRremote.h> 
+#include <IRremoteInt.h>
 
 #define IR_CODE_NUM_BITS 32
 
 IRsend irsend;
-IRrecv receiver(7); 
+IRrecv irrecv(7); 
 decode_results results; 
 unsigned long key_value = 0; 
 bool powerPressed = false;
@@ -12,11 +12,13 @@ bool inputSourceSwitch = false;
 
 void setup() {
   Serial.begin(9600); 
-  receiver.enableIRIn(); 
-  receiver.blink13(true);
-  //IrReceiver.begin(11, ENABLE_LED_FEEDBACK);
-  //IrSender.begin(IR_SEND_PIN, ENABLE_LED_FEEDBACK); 
+  irrecv.enableIRIn(); 
+  irrecv.blink13(true);
   Serial.println("Infared ready");
+        Serial.println("C button - vol down");
+      irsend.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
+      irrecv.enableIRIn();
+      delay(250);
 }
 
 void loop() {
@@ -24,7 +26,7 @@ void loop() {
 }
 
 void DecodeIrValue() {
-  if (receiver.decode(&results)) {
+  if (irrecv.decode(&results)) {
     if (results.value == 0XFFFFFFFF) {
       results.value = key_value;
     }
@@ -39,8 +41,8 @@ void DecodeIrValue() {
         break;
     }
     key_value = results.value;
-    receiver.enableIRIn();
-    receiver.resume();     
+    irrecv.enableIRIn();
+    irrecv.resume();     
     }
 }
 
@@ -75,13 +77,15 @@ void ParseIrValue(uint32_t value) {
     case 0XE0E028D7:
       Serial.println("B button - vol up");
       irsend.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
-      //IrSender.sendNECMSB(0x807F8877U, 32);
+            delay(250);
+      irrecv.enableIRIn();
       delay(250);
       break;
     case 0XE0E0A857:
       Serial.println("C button - vol down");
       irsend.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
-      //IrSender.sendNECRaw(0x807F10EFU, 1);
+            delay(250);
+      irrecv.enableIRIn();
       delay(250);
       break;
     case 0XEE0E06897:
@@ -91,21 +95,21 @@ void ParseIrValue(uint32_t value) {
       break;
   }
   
-  receiver.enableIRIn();
-  receiver.resume();  
+  //irrecv.enableIRIn();
+  irrecv.resume();  
 }
 
 void ChangeInputSoundBar() {
   if(inputSourceSwitch) {
     Serial.println("Optical");
     irsend.sendNEC(0x807F926DU, IR_CODE_NUM_BITS);
-    //IrSender.sendNECRaw(0x807F926DU, 1);
+    irrecv.enableIRIn();
     inputSourceSwitch = false;
     return;
   } else {
     Serial.println("Bluetooth");
     irsend.sendNEC(0x807F52ADU, IR_CODE_NUM_BITS);
-    //IrSender.sendNECRaw(0x807F52ADU, 1);
+    irrecv.enableIRIn();
     inputSourceSwitch = true;
   }
 }
@@ -113,7 +117,7 @@ void ChangeInputSoundBar() {
 void PowerOnSoundBar() { 
    Serial.println("Power on");
    irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
-   //IrSender.sendNECRaw(0x807F08F7U, 1);
+   irrecv.enableIRIn();
    powerPressed = true;
    delay(250);
 }
@@ -121,12 +125,11 @@ void PowerOnSoundBar() {
 void PowerOffSoundBar() {
   Serial.println("Power off");
   irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
-  //IrSender.sendNECRaw(0x807F08F7U, 1);
   for (int i = 0; i < 300; i++) {
     delay(10);
     irsend.sendNEC(0XFFFFFFFF, 0);
-    //IrSender.sendNECRaw(0XFFFFFFFF, 1);
   }
+  irrecv.enableIRIn();
   powerPressed = false;
   delay(250);
 }
