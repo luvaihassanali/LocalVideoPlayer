@@ -14,9 +14,9 @@ void setup() {
   Serial.begin(9600); 
   receiver.enableIRIn(); 
   receiver.blink13(true);
-  //Serial.println("Ready to receive");
-  IrSender.begin(IR_SEND_PIN, ENABLE_LED_FEEDBACK); 
-  //Serial.println("Ready to send...");
+  //IrReceiver.begin(11, ENABLE_LED_FEEDBACK);
+  //IrSender.begin(IR_SEND_PIN, ENABLE_LED_FEEDBACK); 
+  Serial.println("Infared ready");
 }
 
 void loop() {
@@ -33,37 +33,39 @@ void DecodeIrValue() {
       //case NEC:
       case SAMSUNG:
         ParseIrValue(results.value);
-        break;
-      default:
+        break;      
       case UNKNOWN:
-        //Serial.println("UNKNOWN");
-        break ;
+        Serial.println("UNKNOWN");
+        break;
     }
     key_value = results.value;
-    receiver.resume();
-  }
+    receiver.enableIRIn();
+    receiver.resume();     
+    }
 }
 
-void ParseIrValue(int value) {
+void ParseIrValue(uint32_t value) {
   switch (value) {
     case 0XE0E0629D:
-      //Serial.println("Stop button");
+      Serial.println("Stop button");
       Serial.println("stop");
       break;
+    /*
     case 0XE0E0E21D:
-      //Serial.println("Play button");
+      Serial.println("Play button");
       break;
     case 0XE0E052AD:
-      //Serial.println("Pause button");
+      Serial.println("Pause button");
       break;
     case 0XE0E0A25D:
-      //Serial.println("Rewind button");
+      Serial.println("Rewind button");
       break;
     case 0XE0E012ED:
-      //Serial.println("Forward button");
+      Serial.println("Forward button");
       break;
+    */
     case 0XE0E036C9:
-      //Serial.println("A button");
+      Serial.println("A button");
       if(powerPressed) {
         PowerOffSoundBar();
       } else {
@@ -71,49 +73,59 @@ void ParseIrValue(int value) {
       }
       break;
     case 0XE0E028D7:
-      //Serial.println("B button - vol up");
+      Serial.println("B button - vol up");
       irsend.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
+      //IrSender.sendNECMSB(0x807F8877U, 32);
       delay(250);
       break;
     case 0XE0E0A857:
-      //Serial.println("C button - vol down");
+      Serial.println("C button - vol down");
       irsend.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
+      //IrSender.sendNECRaw(0x807F10EFU, 1);
       delay(250);
       break;
-    case 0XE0E06897:
-      //Serial.println("D button");
+    case 0XEE0E06897:
+      Serial.println("D button");
       ChangeInputSoundBar();
       delay(250);
       break;
   }
+  
+  receiver.enableIRIn();
+  receiver.resume();  
 }
 
 void ChangeInputSoundBar() {
   if(inputSourceSwitch) {
-    //Serial.println("Optical");
+    Serial.println("Optical");
     irsend.sendNEC(0x807F926DU, IR_CODE_NUM_BITS);
+    //IrSender.sendNECRaw(0x807F926DU, 1);
     inputSourceSwitch = false;
     return;
   } else {
-    //Serial.println("Bluetooth");
+    Serial.println("Bluetooth");
     irsend.sendNEC(0x807F52ADU, IR_CODE_NUM_BITS);
+    //IrSender.sendNECRaw(0x807F52ADU, 1);
     inputSourceSwitch = true;
   }
 }
 
 void PowerOnSoundBar() { 
-   //Serial.println("Power on");
+   Serial.println("Power on");
    irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
+   //IrSender.sendNECRaw(0x807F08F7U, 1);
    powerPressed = true;
    delay(250);
 }
 
 void PowerOffSoundBar() {
-  //Serial.println("Power off");
+  Serial.println("Power off");
   irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
+  //IrSender.sendNECRaw(0x807F08F7U, 1);
   for (int i = 0; i < 300; i++) {
     delay(10);
     irsend.sendNEC(0XFFFFFFFF, 0);
+    //IrSender.sendNECRaw(0XFFFFFFFF, 1);
   }
   powerPressed = false;
   delay(250);

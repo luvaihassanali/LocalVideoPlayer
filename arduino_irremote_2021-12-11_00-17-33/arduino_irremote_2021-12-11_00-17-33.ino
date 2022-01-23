@@ -75,7 +75,6 @@ void setup() {
   pinMode(joystickRyPin, INPUT);
   pinMode(joystickButtonPin, INPUT_PULLUP);
 
-  IrSender.begin(IR_SEND_PIN, ENABLE_LED_FEEDBACK); // To-do: change to redLed pin?
   digitalWrite(redLedPin, HIGH);
   if (DEBUG) {
     Serial.println("Infared ready");
