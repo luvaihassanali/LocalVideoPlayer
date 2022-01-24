@@ -10,6 +10,160 @@ namespace LocalVideoPlayer.Forms
     {
         static private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
 
+        #region Reset seasons
+
+        static internal int[] ShowResetSeasons(string tvShow, int numSeasons, int width, int height)
+        {
+            Font headerFont = new Font("Arial", 16, FontStyle.Bold);
+            Font buttonFont = new Font("Arial", 14, FontStyle.Regular);
+            Font textFont = new Font("Arial", 12, FontStyle.Regular);
+            Form resetForm = new Form();
+            CustomScrollbar customScrollbar = null;
+            List<Control> controls = new List<Control>();
+            List<int> selectionList = new List<int>();
+
+            resetForm.Width = (int)(width / 1.5);
+            resetForm.Height = (int)(height / 1.5);
+            resetForm.MaximumSize = new Size(width, height - 100);
+            resetForm.StartPosition = FormStartPosition.CenterScreen;
+            resetForm.BackColor = SystemColors.Desktop;
+            resetForm.ForeColor = SystemColors.Control;
+            resetForm.ShowInTaskbar = false;
+            resetForm.FormBorderStyle = FormBorderStyle.FixedSingle;
+            resetForm.ControlBox = false;
+
+            Panel resetFormMainPanel = new Panel();
+            resetFormMainPanel.Size = resetForm.Size;
+            resetFormMainPanel.MaximumSize = resetForm.MaximumSize;
+            resetFormMainPanel.AutoScroll = true;
+            resetFormMainPanel.Name = "resetFormMainPanel";
+            resetForm.Controls.Add(resetFormMainPanel);
+
+            resetForm.Shown += (s, e) =>
+            {
+                resetFormMainPanel.AutoScrollPosition = new Point(0, 0);
+            };
+
+            resetForm.Deactivate += (s, e) =>
+            {
+                resetForm.Activate();
+                return;
+            };
+
+            Label headerLabel = new Label() { Text = "Reset " + tvShow + " progress" };
+            headerLabel.Dock = DockStyle.Top;
+            headerLabel.Font = headerFont;
+            headerLabel.AutoSize = true;
+            headerLabel.Padding = new Padding(20, 20, 20, 15);
+            Size maxSize = new Size(width / 2, height);
+            headerLabel.MaximumSize = maxSize;
+
+            Button confirmation = new Button() { Text = "OK" };
+            confirmation.AutoSize = true;
+            confirmation.Font = buttonFont;
+            confirmation.Dock = DockStyle.Bottom;
+            confirmation.FlatStyle = FlatStyle.Flat;
+            confirmation.Cursor = blueHandCursor;
+            confirmation.Click += (sender, e) =>
+            {
+                bool selection = false;
+                foreach (Control c in controls)
+                {
+                    CheckBox box = c as CheckBox;
+                    if (box != null)
+                    {
+                        if (box.Checked)
+                        {
+                            selection = true;
+                            selectionList.Add(int.Parse(box.Name));
+                        }
+                    }
+                }
+
+                if (selection)
+                {
+                    resetForm.Close();
+                }
+            };
+
+            Button cancel = new Button() { Text = "Cancel" };
+            cancel.AutoSize = true;
+            cancel.Font = textFont;
+            cancel.Dock = DockStyle.Bottom;
+            cancel.FlatStyle = FlatStyle.Flat;
+            cancel.Cursor = blueHandCursor;
+            cancel.Click += (sender, e) => { resetForm.Close(); };
+
+            for (int i = 0; i <= numSeasons; i++)
+            {
+                CheckBox chkBox = new CheckBox { Text = "Season " + i };
+                chkBox.Dock = DockStyle.Top;
+                chkBox.Font = textFont;
+                chkBox.AutoSize = true;
+                chkBox.Cursor = blueHandCursor;
+                chkBox.Padding = new Padding(40, 20, 20, 0);
+                chkBox.Name = i.ToString();
+                if (i == 0)
+                {
+                    chkBox.Text = "All seasons";
+                    chkBox.Click += (sender, e) =>
+                    {
+                        resetFormMainPanel.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
+                        if (customScrollbar != null)
+                        {
+                            customScrollbar.Value = -resetFormMainPanel.AutoScrollPosition.Y;
+                        }
+                    };
+                }
+
+                if (i == numSeasons)
+                {
+                    chkBox.Padding = new Padding(40, 20, 20, 40);
+                }
+
+                controls.Add(chkBox);
+            }
+
+            resetFormMainPanel.Controls.Add(headerLabel);
+            resetFormMainPanel.Controls.Add(confirmation);
+            resetFormMainPanel.Controls.Add(cancel);
+            controls.Reverse();
+            foreach (Control c in controls)
+            {
+                resetFormMainPanel.Controls.Add(c);
+            }
+            resetFormMainPanel.Controls.Add(headerLabel);
+
+            if (resetFormMainPanel.VerticalScroll.Visible)
+            {
+                customScrollbar = CreateScrollBar(resetFormMainPanel);
+                resetForm.Width += 2;
+
+                customScrollbar.Scroll += (s, e) =>
+                {
+                    resetFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
+                };
+
+                resetFormMainPanel.MouseWheel += (s, e) =>
+                {
+                    int newVal = -resetFormMainPanel.AutoScrollPosition.Y;
+                    customScrollbar.Value = newVal;
+                    customScrollbar.Invalidate();
+                    Application.DoEvents();
+                };
+
+                resetForm.Controls.Add(customScrollbar);
+                customScrollbar.BringToFront();
+            }
+
+            resetForm.ShowDialog();
+            resetForm.Dispose();
+
+            return selectionList.ToArray();         
+        }
+
+        #endregion
+
         #region Show Options Form
 
         static internal int ShowOptions(string item, string[][] info, DateTime?[] dates, int width, int height)

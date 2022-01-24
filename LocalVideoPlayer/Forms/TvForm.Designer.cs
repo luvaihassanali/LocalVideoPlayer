@@ -32,6 +32,7 @@ namespace LocalVideoPlayer.Forms
             this.seasonButton = new System.Windows.Forms.Button();
             this.resumeButton = new System.Windows.Forms.Button();
             this.closeButton = new LocalVideoPlayer.RoundButton();
+            this.resetButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // seasonButton
@@ -73,12 +74,27 @@ namespace LocalVideoPlayer.Forms
             this.closeButton.TabIndex = 10;
             this.closeButton.UseVisualStyleBackColor = true;
             // 
+            // resetButton
+            // 
+            this.resetButton.AutoSize = true;
+            this.resetButton.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.resetButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.resetButton.Font = new System.Drawing.Font("Arial", 3.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.resetButton.Location = new System.Drawing.Point(272, 176);
+            this.resetButton.Name = "resetButton";
+            this.resetButton.Size = new System.Drawing.Size(30, 18);
+            this.resetButton.TabIndex = 13;
+            this.resetButton.Text = "Reset";
+            this.resetButton.UseVisualStyleBackColor = true;
+            this.resetButton.Visible = false;
+            // 
             // TvForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Desktop;
             this.ClientSize = new System.Drawing.Size(438, 367);
+            this.Controls.Add(this.resetButton);
             this.Controls.Add(this.resumeButton);
             this.Controls.Add(this.seasonButton);
             this.Controls.Add(this.closeButton);
@@ -98,5 +114,6 @@ namespace LocalVideoPlayer.Forms
         private RoundButton closeButton;
         private System.Windows.Forms.Button seasonButton;
         private System.Windows.Forms.Button resumeButton;
+        private System.Windows.Forms.Button resetButton;
     }
 }

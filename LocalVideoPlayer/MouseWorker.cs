@@ -193,8 +193,13 @@ namespace LocalVideoPlayer
 
             while (serverOffline)
             {
-                PingReply reply = pingSender.Send(serverIp, timeout, buffer, options);
-                if (reply.Status == IPStatus.Success)
+                PingReply reply = null;
+                try
+                {
+                    reply = pingSender.Send(serverIp, timeout, buffer, options);
+                }
+                catch { }
+                if (reply != null && reply.Status == IPStatus.Success)
                 {
                     Log("Ping success");
                     serverOffline = false;

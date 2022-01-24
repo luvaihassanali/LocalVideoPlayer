@@ -30,7 +30,7 @@ namespace LocalVideoPlayer
         private const string apiImageUrl = "http://image.tmdb.org/t/p/original";
         private const string tvSearch = apiUrl + "search/tv" + apiKey + "&query=";
         private const string movieSearch = apiUrl + "search/movie" + apiKey + "&query=";
-        
+
         private const int SPI_SETCURSORS = 0x0057;
         private const int SPIF_UPDATEINIFILE = 0x01;
         private const int SPIF_SENDCHANGE = 0x02;
@@ -41,6 +41,7 @@ namespace LocalVideoPlayer
         private string bufferString = "";
 
         private bool seasonFormOpen = false;
+        private bool resetFormOpen = false;
         private bool isPlaying = false;
         private bool mouseMoverClientKill = false;
 
@@ -78,6 +79,8 @@ namespace LocalVideoPlayer
             loadingCircle1.Active = true;
             loadingLabel.Text = "";
 
+            #region Dimmers 
+
             dimmerForm = new Form();
             dimmerForm.ShowInTaskbar = false;
             dimmerForm.FormBorderStyle = FormBorderStyle.None;
@@ -87,6 +90,9 @@ namespace LocalVideoPlayer
             seasonDimmerForm.ShowInTaskbar = false;
             seasonDimmerForm.FormBorderStyle = FormBorderStyle.None;
             seasonDimmerForm.BackColor = Color.Black;
+
+            #endregion
+
         }
 
         #region General form functions
@@ -95,7 +101,7 @@ namespace LocalVideoPlayer
         {
             loadingCircle1.Location = new Point(this.Width / 2 - loadingCircle1.Width / 2, this.Height / 2 - loadingCircle1.Height / 2);
             loadingLabel.Location = new Point(0, this.Height / 2 - loadingLabel.Height / 2 + 2);
-            loadingLabel.Size = new Size(this.Width, loadingLabel.Height);;
+            loadingLabel.Size = new Size(this.Width, loadingLabel.Height); ;
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -231,7 +237,7 @@ namespace LocalVideoPlayer
             tvForm.Name = tvShow.Name;
             tvForm.Width = (int)(this.Width / 1.75);
             tvForm.Height = this.Height;
-            
+
             Panel tvFormMainPanel = new Panel();
             tvFormMainPanel.Size = tvForm.Size;
             tvFormMainPanel.AutoScroll = true;
@@ -263,11 +269,10 @@ namespace LocalVideoPlayer
             tvShowBackdropBox.Image = Image.FromFile(imagePath);
             tvShowBackdropBox.Dock = DockStyle.Top;
             tvShowBackdropBox.SizeMode = PictureBoxSizeMode.StretchImage;
-            tvShowBackdropBox.Name = tvShow.Name;
-            //To-do: start playing clip
-            //tvShowBackdropBox.Click += tvShowBackdropBox_Click;
+            tvShowBackdropBox.Name = "tvShowBackdropBox";
 
             Button resumeButton = null;
+            Button resetButton = null;
             if (tvShow.LastEpisode != null)
             {
                 foreach (Control c in tvForm.Controls)
@@ -276,16 +281,34 @@ namespace LocalVideoPlayer
                     {
                         resumeButton = (Button)c;
                     }
+                    if (c.Name.Equals("resetButton"))
+                    {
+                        resetButton = (Button)c;
+                    }
                 }
-                if (resumeButton == null) throw new ArgumentNullException();
+
+                resetButton.Visible = true;
+                resetButton.BringToFront();
+                resetButton.Padding = new Padding(1, 0, 0, 0);
+                resetButton.AutoSize = true;
+                resetButton.Location = new Point(tvForm.Width - resetButton.Width - 35, tvShowBackdropBox.Location.Y + tvShowBackdropBox.Height - resetButton.Height - 5);
+                resetButton.Cursor = blueHandCursor;
+                resetButton.Click += (s, e_) =>
+                {
+                    resetFormOpen = true;
+                    int[] seasons = CustomDialog.ShowResetSeasons(tvShow.Name, tvShow.Seasons.Length, this.Width, this.Height);
+                    if (seasons.Length != 0)
+                        ResetSeasons(tvShow, seasons);
+                    resetFormOpen = false;
+                };
 
                 resumeButton.Visible = true;
                 resumeButton.BringToFront();
-                resumeButton.Text = "Resume";
                 resumeButton.Padding = new Padding(3, 0, 0, 0);
                 resumeButton.Font = mainHeaderFont;
                 resumeButton.AutoSize = true;
                 resumeButton.Location = new Point(tvShowBackdropBox.Location.X + 10, tvShowBackdropBox.Location.Y + 10);
+                resumeButton.Cursor = blueHandCursor;
                 resumeButton.Click += (s, e_) =>
                 {
                     isPlaying = true;
@@ -293,7 +316,6 @@ namespace LocalVideoPlayer
                     LaunchVlc(tvShow.Name, lastEpisode.Name, lastEpisode.Path, tvForm);
                     isPlaying = false;
                 };
-                resumeButton.Cursor = blueHandCursor;
             }
 
             Panel mainPanel = new Panel();
@@ -338,7 +360,7 @@ namespace LocalVideoPlayer
 
             tvForm.Deactivate += (s, ev) =>
             {
-                if (seasonFormOpen || isPlaying) return;
+                if (seasonFormOpen || isPlaying || resetFormOpen) return;
                 tvForm.Close();
                 Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
             };
@@ -371,6 +393,7 @@ namespace LocalVideoPlayer
                     if (resumeButton != null)
                     {
                         resumeButton.Visible = true;
+                        resetButton.Visible = true;
                     }
                 }
                 else
@@ -379,6 +402,7 @@ namespace LocalVideoPlayer
                     if (resumeButton != null)
                     {
                         resumeButton.Visible = false;
+                        resetButton.Visible = false;
                     }
                 }
             };
@@ -393,6 +417,7 @@ namespace LocalVideoPlayer
                     if (resumeButton != null)
                     {
                         resumeButton.Visible = true;
+                        resetButton.Visible = true;
                     }
                 }
                 else
@@ -401,6 +426,7 @@ namespace LocalVideoPlayer
                     if (resumeButton != null)
                     {
                         resumeButton.Visible = false;
+                        resetButton.Visible = false;
                     }
                 }
                 customScrollbar.Value = newVal;
@@ -469,6 +495,9 @@ namespace LocalVideoPlayer
             CustomScrollbar customScrollbar = null;
             Label overviewLabel = null;
             Button seasonButton = null;
+            Button resumeButton = null;
+            Button resetButton = null;
+            PictureBox tvShowBackdropBox = null;
 
             foreach (Control c in tvForm.Controls)
             {
@@ -482,6 +511,14 @@ namespace LocalVideoPlayer
                 {
                     seasonButton = tempButton;
                 }
+                if (tempButton != null && tempButton.Name.Contains("resetButton"))
+                {
+                    resetButton = tempButton;
+                }
+                if (tempButton != null && tempButton.Name.Contains("resumeButton"))
+                {
+                    resumeButton = tempButton;
+                }
 
                 //To-do: remove cast and just check names
                 Panel p_ = c as Panel;
@@ -494,6 +531,12 @@ namespace LocalVideoPlayer
                         if (tempLabel != null && tempLabel.Name.Equals("overviewLabel"))
                         {
                             overviewLabel = tempLabel;
+                        }
+
+                        PictureBox tempBox = ctrl as PictureBox;
+                        if (tempBox != null && tempBox.Name.Equals("tvShowBackdropBox"))
+                        {
+                            tvShowBackdropBox = tempBox;
                         }
 
                         Panel p = ctrl as Panel;
@@ -545,6 +588,11 @@ namespace LocalVideoPlayer
             CustomDialog.UpdateScrollBar(customScrollbar, masterPanel);
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
 
+            if (tvShow.LastEpisode == null)
+            {
+                tvForm.Controls.Remove(resumeButton);
+                tvForm.Controls.Remove(resetButton);
+            }
             mainPanel.Refresh();
         }
 
@@ -632,6 +680,41 @@ namespace LocalVideoPlayer
             }
 
             return episodePanelList;
+        }
+
+        #endregion
+
+        #region Seasons
+
+        private void ResetSeasons(TvShow tvShow, int[] seasonsSelection)
+        {
+            if (seasonsSelection[0] == 0)
+            {
+                tvShow.LastEpisode = null;
+                for (int j = 0; j < tvShow.Seasons.Length; j++)
+                {
+                    Season currSeason = tvShow.Seasons[j];
+                    for (int k = 0; k < currSeason.Episodes.Length; k++)
+                    {
+                        Episode currEpisode = currSeason.Episodes[k];
+                        currEpisode.SavedTime = 0;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < seasonsSelection.Length; i++)
+                {
+                    int seasonIndex = seasonsSelection[i] - 1;
+                    Season currSeason = tvShow.Seasons[seasonIndex];
+                    for (int j = 0; j < currSeason.Episodes.Length; j++)
+                    {
+                        Episode currEpisode = currSeason.Episodes[j];
+                        currEpisode.SavedTime = 0;
+                    }
+                }
+            }
+            UpdateTvForm(tvShow);
         }
 
         private void SeasonButton_Click(object sender, EventArgs e)
@@ -1518,7 +1601,7 @@ namespace LocalVideoPlayer
             try
             {
                 subdirectoryEntries = Directory.GetDirectories(targetDir);
-                if(targetDirB != String.Empty)
+                if (targetDirB != String.Empty)
                 {
                     subdirectoryEntriesB = Directory.GetDirectories(targetDirB);
                     subdirectoryBExists = true;
@@ -1543,7 +1626,7 @@ namespace LocalVideoPlayer
                 }
             }
 
-            if(subdirectoryBExists)
+            if (subdirectoryBExists)
             {
                 foreach (string subDir in subdirectoryEntriesB)
                 {
@@ -1581,7 +1664,7 @@ namespace LocalVideoPlayer
                 media.TvShows[i] = ProcessTvDirectory(tvEntries[i]);
             }
 
-            if(subdirectoryBExists)
+            if (subdirectoryBExists)
             {
                 int index = 0;
                 string[] movieEntriesB = Directory.GetDirectories(moviesDir[1]);
@@ -1782,10 +1865,8 @@ namespace LocalVideoPlayer
             TvShow currTvShow = null;
             Episode currEpisode = null;
             Movie currMovie = null;
-            //To-do remove this and fix function
             int currSeason = 0;
 
-            //To-do: change to if episode name is null otherwise use media name to get movie + runningTime
             if (episodeName != null)
             {
                 currTvShow = GetTvShow(mediaName);
@@ -1796,20 +1877,16 @@ namespace LocalVideoPlayer
                 currMovie = GetMovie(mediaName);
             }
 
-            //To-do: Fade in
             long savedTime = 0;
-            if (currMovie == null)
-            {
-                if (currEpisode != null)
-                {
-                    savedTime = currEpisode.SavedTime;
-                }
-            }
-            //To-do: all one line if-else replace with ? :
+
             int runningTime;
             if (currMovie == null)
             {
                 runningTime = currTvShow.RunningTime;
+                if (currEpisode != null)
+                {
+                    savedTime = currEpisode.SavedTime;
+                }
             }
             else
             {
@@ -1830,7 +1907,6 @@ namespace LocalVideoPlayer
         }
     }
 
-    //Extension methods must be defined in a static class
     public static class StringExtension
     {
         private const string targetSingleQuoteSymbol = "'";
