@@ -79,8 +79,6 @@ namespace LocalVideoPlayer
             loadingCircle1.Active = true;
             loadingLabel.Text = "";
 
-            #region Dimmers 
-
             dimmerForm = new Form();
             dimmerForm.ShowInTaskbar = false;
             dimmerForm.FormBorderStyle = FormBorderStyle.None;
@@ -90,9 +88,6 @@ namespace LocalVideoPlayer
             seasonDimmerForm.ShowInTaskbar = false;
             seasonDimmerForm.FormBorderStyle = FormBorderStyle.None;
             seasonDimmerForm.BackColor = Color.Black;
-
-            #endregion
-
         }
 
         #region General form functions
@@ -126,7 +121,6 @@ namespace LocalVideoPlayer
             }
         }
 
-        //To-do: A blocking operation was interrupted by a call to WSACancelBlockingCalls
         private void CloseButton_Click(object sender, EventArgs e)
         {
             Button closeButton = sender as Button;
@@ -163,7 +157,6 @@ namespace LocalVideoPlayer
             tvLabel.Font = f;
         }
 
-        //To-do: apply to all other fonts
         public static float GetHeaderFontSize(Graphics graphics, Size size, Font font, string str)
         {
             SizeF stringSize = graphics.MeasureString(str, font);
@@ -209,6 +202,7 @@ namespace LocalVideoPlayer
             }
             else
             {
+                //To-do: Can remove
                 foreach (Control c_ in this.Controls)
                 {
                     Panel p = c_ as Panel;
@@ -251,11 +245,8 @@ namespace LocalVideoPlayer
             foreach (Control c in tvForm.Controls)
             {
                 if (c.Name.Equals("closeButton"))
-                {
                     closeButton = (RoundButton)c;
-                }
             }
-            if (closeButton == null) throw new ArgumentNullException();
             closeButton.Click += CloseButton_Click;
             closeButton.Location = new Point(tvForm.Width - (int)(closeButton.Width * 1.65), (closeButton.Width / 8));
 
@@ -275,16 +266,17 @@ namespace LocalVideoPlayer
             Button resetButton = null;
             if (tvShow.LastEpisode != null)
             {
+                int currSeason = 0;
+                Episode iAmLazyFuckEpisode = GetTvEpisode(tvShow.Name, tvShow.LastEpisode.Name, out currSeason);
+                tvShow.CurrSeason = currSeason;
+
                 foreach (Control c in tvForm.Controls)
                 {
                     if (c.Name.Equals("resumeButton"))
-                    {
                         resumeButton = (Button)c;
-                    }
+
                     if (c.Name.Equals("resetButton"))
-                    {
                         resetButton = (Button)c;
-                    }
                 }
 
                 resetButton.Visible = true;
@@ -440,15 +432,11 @@ namespace LocalVideoPlayer
             foreach (Control c in tvForm.Controls)
             {
                 if (c.Name.Equals("seasonButton"))
-                {
                     seasonButton = (Button)c;
-                }
             }
 
             if (tvShow.CurrSeason == -1)
-            {
                 seasonButton.Text = "Extras";
-            }
 
             seasonButton.Name = "seasonButton_" + tvShow.Name;
             seasonButton.Text = "Season " + tvShow.CurrSeason;
@@ -461,12 +449,12 @@ namespace LocalVideoPlayer
 
             seasonButton.MouseWheel += (s, e_) =>
             {
-                if (e_.Delta < 0) //if scrolling downwards
+                if (e_.Delta < 0) //if scrolling down
                 {
                     this.Cursor = new Cursor(Cursor.Current.Handle);
                     Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y + 50);
                 }
-                else
+                else //up
                 {
                     this.Cursor = new Cursor(Cursor.Current.Handle);
                     Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y - 50);
@@ -727,14 +715,7 @@ namespace LocalVideoPlayer
             TvShow tvShow = GetTvShow(showName);
 
             int seasonNum;
-            if (b.Text.Contains("Season"))
-            {
-                seasonNum = Int32.Parse(b.Text.Replace("Season ", ""));
-            }
-            else
-            {
-                seasonNum = tvShow.Seasons.Length - 1;
-            }
+            seasonNum = b.Text.Contains("Season") ? Int32.Parse(b.Text.Replace("Season ", "")) : seasonNum = tvShow.Seasons.Length - 1;
 
             Form seasonForm = new Form();
             seasonForm.Width = (int)(this.Width / 2.75);
@@ -745,11 +726,6 @@ namespace LocalVideoPlayer
             seasonForm.ForeColor = SystemColors.Control;
             seasonForm.FormBorderStyle = FormBorderStyle.None;
             typeof(Form).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, seasonForm, new object[] { true });
-
-            /*seasonForm.FormClosing += (sender_, e_) =>
-            {
-                //To-do: Closing animation?
-            };*/
 
             Panel seasonFormMainPanel = new Panel();
             seasonFormMainPanel.Size = seasonForm.Size;
@@ -764,9 +740,7 @@ namespace LocalVideoPlayer
             int currSeasonIndex = tvShow.CurrSeason - 1;
 
             if (tvShow.CurrSeason == -1)
-            {
                 currSeasonIndex = tvShow.Seasons.Length - 1;
-            }
 
             for (int i = 0; i < numSeasons; i++)
             {
@@ -784,15 +758,7 @@ namespace LocalVideoPlayer
 
                 Season currSeason = tvShow.Seasons[i];
                 PictureBox seasonBox = new PictureBox();
-
-                if (numSeasons > 6)
-                {
-                    seasonBox.Width = (int)(seasonForm.Width / 3.14);
-                }
-                else
-                {
-                    seasonBox.Width = (int)(seasonForm.Width / 2.99);
-                }
+                seasonBox.Width = numSeasons > 6 ? (int)(seasonForm.Width / 3.14) : (int)(seasonForm.Width / 2.99);
                 seasonBox.Height = (int)(seasonBox.Width * 1.5);
 
                 if (currSeason.Poster != null)
@@ -817,9 +783,7 @@ namespace LocalVideoPlayer
                 seasonBox.Name = (i + 1).ToString();
 
                 if (currSeason.Id == -1)
-                {
                     seasonBox.Name = "-1";
-                }
 
                 seasonBox.Click += (s, ev) =>
                 {
@@ -835,30 +799,24 @@ namespace LocalVideoPlayer
                             foreach (Control c_ in p_.Controls)
                             {
                                 PictureBox prevSeason = c_ as PictureBox;
-                                if ((prevSeason != null && Int32.Parse(prevSeason.Name) == seasonNum))
-                                {
+                                if (prevSeason != null && Int32.Parse(prevSeason.Name) == seasonNum)
                                     prevSeason.BorderStyle = BorderStyle.None;
-                                }
                             }
                         }
                     }
-
                     seasonBox.BorderStyle = BorderStyle.Fixed3D;
 
                     tvShow.CurrSeason = seasonNum;
                     b.Text = "Season " + seasonNum;
+
                     if (seasonNum == -1)
-                    {
                         b.Text = "Extras";
-                    }
 
                     seasonForm.Close();
                 };
 
                 if (i == currSeasonIndex)
-                {
                     seasonBox.BorderStyle = BorderStyle.Fixed3D;
-                }
 
                 currentPanel.Controls.Add(seasonBox);
                 count++;
@@ -870,9 +828,7 @@ namespace LocalVideoPlayer
             foreach (Form f_ in formCollection)
             {
                 if (f_.Text.Equals("tvForm"))
-                {
                     tvForm = f_;
-                }
             }
 
             seasonDimmerForm.Size = tvForm.Size;
@@ -893,7 +849,6 @@ namespace LocalVideoPlayer
                     customScrollbar.Invalidate();
                     Application.DoEvents();
                 };
-
                 seasonForm.Controls.Add(customScrollbar);
                 customScrollbar.BringToFront();
             }
@@ -904,9 +859,7 @@ namespace LocalVideoPlayer
             Fader.FadeOut(seasonDimmerForm, Fader.FadeSpeed.Normal);
 
             if (indexChange)
-            {
                 UpdateTvForm(tvShow);
-            }
         }
 
         private TvShow GetTvShow(string name)
@@ -914,9 +867,7 @@ namespace LocalVideoPlayer
             for (int i = 0; i < media.TvShows.Length; i++)
             {
                 if (media.TvShows[i].Name.Equals(name))
-                {
                     return media.TvShows[i];
-                }
             }
             return null;
         }
@@ -994,13 +945,13 @@ namespace LocalVideoPlayer
             Font overviewFont = new Font("Arial", 12, FontStyle.Regular);
 
             PictureBox movieBackdropBox = new PictureBox();
-            movieBackdropBox.Height = (int)(movieForm.Height / 1.777777777777778);
             string imagePath = movie.Backdrop;
             movieBackdropBox.BackgroundImage = Image.FromFile(imagePath);
             movieBackdropBox.BackgroundImageLayout = ImageLayout.Stretch;
             movieBackdropBox.BackColor = SystemColors.Desktop;
             movieBackdropBox.Dock = DockStyle.Top;
             movieBackdropBox.Cursor = blueHandCursor;
+            movieBackdropBox.Height = (int)(movieForm.Height / 1.777777777777778);
             movieBackdropBox.SizeMode = PictureBoxSizeMode.CenterImage;
             movieBackdropBox.Name = movie.Path;
             movieBackdropBox.Click += MovieBackdropBox_Click;
@@ -1042,7 +993,6 @@ namespace LocalVideoPlayer
             dimmerForm.Size = this.Size;
             Fader.FadeInCustom(dimmerForm, Fader.FadeSpeed.Normal, 0.8);
             dimmerForm.Location = this.Location;
-
             movieForm.Show();
         }
 
@@ -1051,9 +1001,7 @@ namespace LocalVideoPlayer
             for (int i = 0; i < media.Movies.Length; i++)
             {
                 if (media.Movies[i].Name.Equals(name))
-                {
                     return media.Movies[i];
-                }
             }
             return null;
         }
@@ -1795,21 +1743,15 @@ namespace LocalVideoPlayer
 
         private void BackgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            BackgroundWorker worker = sender as BackgroundWorker;
-
             string mediaPath = ConfigurationManager.AppSettings["mediaPath"];
             string mediaPathB = ConfigurationManager.AppSettings["mediaPathB"];
-
             ProcessDirectory(mediaPath, mediaPathB);
-
+            
             if (media == null) throw new ArgumentNullException();
 
             bool update = CheckForUpdates();
-
             if (update)
             {
-                //To-do: change to synchronous
-                //To-do: detect bad cache (null)
                 UpdateLoadingLabel(null);
                 Task buildCache = BuildCacheAsync();
                 buildCache.Wait();
@@ -1831,14 +1773,12 @@ namespace LocalVideoPlayer
 
         private void RestoreSystemCursor()
         {
-            //To-do: backup existing keys for restore
             string[] keys = Properties.Resources.keys_backup.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
             foreach (string key in keys)
             {
                 string[] keyValuePair = key.Split('=');
                 Registry.SetValue(@"HKEY_CURRENT_USER\Control Panel\Cursors\", keyValuePair[0], keyValuePair[1]);
             }
-
             SystemParametersInfo(SPI_SETCURSORS, 0, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
             SystemParametersInfo(0x2029, 0, 32, 0x01);
         }
@@ -1852,7 +1792,6 @@ namespace LocalVideoPlayer
                 string[] keyValuePair = key.Split('=');
                 Registry.SetValue(@"HKEY_CURRENT_USER\Control Panel\Cursors\", keyValuePair[0], cursorPath + keyValuePair[1]);
             }
-
             SystemParametersInfo(SPI_SETCURSORS, 0, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
             uint mouseSize = uint.Parse(ConfigurationManager.AppSettings["mouseSize"]);
             SystemParametersInfo(0x2029, 0, mouseSize, 0x01);
@@ -1878,32 +1817,25 @@ namespace LocalVideoPlayer
             }
 
             long savedTime = 0;
-
             int runningTime;
+
             if (currMovie == null)
             {
                 runningTime = currTvShow.RunningTime;
                 if (currEpisode != null)
-                {
                     savedTime = currEpisode.SavedTime;
-                }
             }
             else
             {
                 runningTime = currMovie.RunningTime;
             }
 
-            //can be removed from dialog by remove deactivate function for tv/movie box
             Form playerForm = new PlayerForm(path, savedTime, runningTime, currTvShow, currEpisode, tvForm);
             playerForm.ShowDialog();
-
             playerForm.Dispose();
             isPlaying = false;
-
             if (tvForm != null)
-            {
                 tvForm.Refresh();
-            }
         }
     }
 
