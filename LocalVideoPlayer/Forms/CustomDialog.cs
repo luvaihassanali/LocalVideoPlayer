@@ -425,7 +425,7 @@ namespace LocalVideoPlayer.Forms
 
         static internal void UpdateScrollBar(CustomScrollbar customScrollbar, Panel panel)
         {
-            customScrollbar.Size = new Size(15, panel.Height);
+            customScrollbar.Size = new Size(30, panel.Height);
             customScrollbar.LargeChange = customScrollbar.Maximum / customScrollbar.Height + panel.Height;
             customScrollbar.Maximum = panel.DisplayRectangle.Height;
         }

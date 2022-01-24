@@ -248,7 +248,7 @@ namespace LocalVideoPlayer
                     closeButton = (RoundButton)c;
             }
             closeButton.Click += CloseButton_Click;
-            closeButton.Location = new Point(tvForm.Width - (int)(closeButton.Width * 1.65), (closeButton.Width / 8));
+            closeButton.Location = new Point(tvForm.Width - (int)(closeButton.Width * 1.65), closeButton.Width / 8);
 
             Font mainHeaderFont = new Font("Arial", 26, FontStyle.Bold);
             Font episodeHeaderFont = new Font("Arial", 16, FontStyle.Bold);
@@ -549,30 +549,40 @@ namespace LocalVideoPlayer
                 mainPanel.Controls.Remove(c);
             }
 
-            List<Control> episodePanelList = CreateEpisodePanels(tvShow);
-            foreach (Control ep in episodePanelList)
+            List<Control> episodePanelList = null;
+            if(tvShow.CurrSeason == -1)
             {
-                mainPanel.Controls.Add(ep);
-                mainPanel.Controls.SetChildIndex(ep, 0);
-            }
 
-            for (int i = 0; i < episodePanelList.Count; i++)
+            } else
             {
-                if (episodePanelList[i].Controls.Count == 4)
+                episodePanelList = CreateEpisodePanels(tvShow);
+            }
+            if(episodePanelList != null)
+            {
+                foreach (Control ep in episodePanelList)
                 {
-                    episodePanelList[i].Controls[1].Location = new Point(episodePanelList[i].Controls[1].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[1].Height / 2) + 5);
-                    episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[1].Location.X, episodePanelList[i].Controls[1].Location.Y + episodePanelList[i].Controls[1].Height - 10);
+                    mainPanel.Controls.Add(ep);
+                    mainPanel.Controls.SetChildIndex(ep, 0);
                 }
-                else if (episodePanelList[i].Controls.Count == 3)
+
+                for (int i = 0; i < episodePanelList.Count; i++)
                 {
-                    episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[0].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[0].Height / 2) + 5);
-                }
-                else
-                {
-                    throw new ArgumentNullException(); // something went wrong
+                    if (episodePanelList[i].Controls.Count == 4)
+                    {
+                        episodePanelList[i].Controls[1].Location = new Point(episodePanelList[i].Controls[1].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[1].Height / 2) + 5);
+                        episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[1].Location.X, episodePanelList[i].Controls[1].Location.Y + episodePanelList[i].Controls[1].Height - 10);
+                    }
+                    else if (episodePanelList[i].Controls.Count == 3)
+                    {
+                        episodePanelList[i].Controls[0].Location = new Point(episodePanelList[i].Controls[0].Location.X + 10, (episodePanelList[i].Height / 2) - (episodePanelList[i].Controls[0].Height / 2) + 5);
+                    }
+                    else
+                    {
+                        throw new ArgumentNullException(); // something went wrong
+                    }
                 }
             }
-
+            
             CustomDialog.UpdateScrollBar(customScrollbar, masterPanel);
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
 
