@@ -25,8 +25,20 @@ namespace LocalVideoPlayer
 
         [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "SystemParametersInfo")]
         public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, uint pvParam, uint fWinIni);
+        private const int SPI_SETCURSORS = 0x0057;
+        private const int SPIF_UPDATEINIFILE = 0x01;
+        private const int SPIF_SENDCHANGE = 0x02;
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+
+        static public extern bool ShowScrollBar(System.IntPtr hWnd, int wBar, bool bShow);
+        private const uint SB_HORZ = 0;
+        private const uint SB_VERT = 1;
+        private const uint ESB_DISABLE_BOTH = 0x3;
+        private const uint ESB_ENABLE_BOTH = 0x0;
 
         #endregion
+
+        #region TMDB API
 
         private const string jsonFile = "Media.json";
         private const string apiKey = "?api_key=c69c4effc7beb9c473d22b8f85d59e4c";
@@ -34,30 +46,28 @@ namespace LocalVideoPlayer
         private const string apiImageUrl = "http://image.tmdb.org/t/p/original";
         private const string tvSearch = apiUrl + "search/tv" + apiKey + "&query=";
         private const string movieSearch = apiUrl + "search/movie" + apiKey + "&query=";
-
-        private const int SPI_SETCURSORS = 0x0057;
-        private const int SPIF_UPDATEINIFILE = 0x01;
-        private const int SPIF_SENDCHANGE = 0x02;
-
         private string tvGet = apiUrl + "tv/{tv_id}" + apiKey;
         private string tvSeasonGet = apiUrl + "tv/{tv_id}/season/{season_number}" + apiKey;
         private string movieGet = apiUrl + "movie/{movie_id}" + apiKey;
         private string bufferString = "";
+
+        #endregion
 
         private bool seasonFormOpen = false;
         private bool resetFormOpen = false;
         private bool isPlaying = false;
         private bool mouseMoverClientKill = false;
 
+        private CustomScrollbar customScrollbar = null;
+        private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         private Form dimmerForm;
         private Form seasonDimmerForm;
         private Label movieLabel;
         private Label tvLabel;
         private MediaModel media;
-        private Panel mainFormMainPanel = null;
-        private CustomScrollbar customScrollbar = null;
-        private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         private MouseWorker worker = null;
+        private MRG.Controls.UI.LoadingCircle loadingCircle2;
+        private Panel mainFormMainPanel = null;
 
         public MainForm()
         {
@@ -83,6 +93,8 @@ namespace LocalVideoPlayer
             loadingCircle1.Active = true;
             loadingLabel.Text = "";
 
+            #region Dimmers 
+
             dimmerForm = new Form();
             dimmerForm.ShowInTaskbar = false;
             dimmerForm.FormBorderStyle = FormBorderStyle.None;
@@ -92,7 +104,25 @@ namespace LocalVideoPlayer
             seasonDimmerForm.ShowInTaskbar = false;
             seasonDimmerForm.FormBorderStyle = FormBorderStyle.None;
             seasonDimmerForm.BackColor = Color.Black;
-        }
+
+            loadingCircle2 = new MRG.Controls.UI.LoadingCircle();
+            loadingCircle2.Active = true;
+            loadingCircle2.Color = Color.DarkGray;
+            loadingCircle2.InnerCircleRadius = 100;
+            loadingCircle2.Location = new Point(232, 40);
+            loadingCircle2.Name = "loadingCircle2";
+            loadingCircle2.NumberSpoke = 24;
+            loadingCircle2.OuterCircleRadius = 160;
+            loadingCircle2.RotationSpeed = 100;
+            loadingCircle2.Size = new Size(344, 344);
+            loadingCircle2.SpokeThickness = 8;
+            loadingCircle2.StylePreset = MRG.Controls.UI.LoadingCircle.StylePresets.MacOSX;
+            loadingCircle2.TabIndex = 0;
+            loadingCircle2.Text = "loadingCircle2";
+            seasonDimmerForm.Controls.Add(loadingCircle2);
+
+        #endregion
+    }
 
         #region General form functions
 
@@ -481,9 +511,6 @@ namespace LocalVideoPlayer
                 }
             }
 
-            TvForm t = (TvForm)tvForm;
-            t.ShowLoadingCircle();
-
             List<Control> toRemove = new List<Control>();
             Panel masterPanel = null;
             Panel mainPanel = null;
@@ -611,7 +638,6 @@ namespace LocalVideoPlayer
             }
 
             mainPanel.Refresh();
-            t.HideLoadingCircle();
         }
 
         private List<Control> CreateEpisodePanels(TvShow tvShow)
@@ -723,7 +749,7 @@ namespace LocalVideoPlayer
             dirView.SelectedImageIndex = 0;
             dirView.NodeMouseClick += DirView_NodeMouseClick;
 
-            dirView.MouseWheel += (s, e_) =>
+            /*dirView.MouseWheel += (s, e_) =>
             {
                 if (e_.Delta < 0) //if scrolling down
                 {
@@ -735,7 +761,7 @@ namespace LocalVideoPlayer
                     this.Cursor = new Cursor(Cursor.Current.Handle);
                     Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y - 50);
                 }
-            };
+            };*/
 
 
             ColumnHeader c1 = new ColumnHeader();
@@ -751,7 +777,7 @@ namespace LocalVideoPlayer
             fileView.SmallImageList = this.imageList1;
             fileView.UseCompatibleStateImageBehavior = false;
             fileView.View = View.Details;
-
+            
             dirView.BackColor = SystemColors.Desktop;
             dirView.ForeColor = SystemColors.Control;
             fileView.BackColor = SystemColors.Desktop;
@@ -761,6 +787,8 @@ namespace LocalVideoPlayer
             fileView.Font = extrasFont;
             fileView.HeaderStyle = ColumnHeaderStyle.Nonclickable;
             fileView.OwnerDraw = true;
+            fileView.Scrollable = false;
+            //ShowScrollBar(fileView.Handle, (int)SB_VERT, true);
 
             fileView.DrawColumnHeader += (s, e) => {
                 headerDraw(s, e);
@@ -773,13 +801,19 @@ namespace LocalVideoPlayer
 
             fileView.ItemSelectionChanged += (sender, e) =>
             {
+
+
                 if (fileView.SelectedItems.Count == 0)
                     return;
 
                 ListViewItem item = fileView.SelectedItems[0];
 
                 if (item.SubItems[1].Text == "Directory")
+                {
+                    if (e.IsSelected)
+                        e.Item.Selected = false;
                     return;
+                }
 
                 string fullPath = item.SubItems[2].Text;
                 string[] episodeNameParts = fullPath.Split('\\');
@@ -789,7 +823,7 @@ namespace LocalVideoPlayer
                 LaunchVlc(null, null, fullPath, null);
             };
 
-            fileView.MouseWheel += (s, e_) =>
+            /*fileView.MouseWheel += (s, e_) =>
             {
                 if (e_.Delta < 0) //if scrolling down
                 {
@@ -801,7 +835,7 @@ namespace LocalVideoPlayer
                     this.Cursor = new Cursor(Cursor.Current.Handle);
                     Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y - 50);
                 }
-            };
+            };*/
 
             dirViewG = dirView;
             fileViewG = fileView;
@@ -881,6 +915,18 @@ namespace LocalVideoPlayer
             }
 
             fileViewG.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+
+            int itemsCount = fileViewG.Items.Count;
+            int itemHeight = fileViewG.Items[0].Bounds.Height;
+            int VisibleItem = (int)fileViewG.ClientRectangle.Height / itemHeight;
+
+            if (itemsCount >= VisibleItem)
+            {
+                ShowScrollBar(fileViewG.Handle, (int)SB_VERT, true);
+            } else
+            {
+                ShowScrollBar(fileViewG.Handle, (int)SB_VERT, false);
+            }
         }
 
         private void PopulateTreeView(TreeView dirView, string path)
@@ -1080,6 +1126,7 @@ namespace LocalVideoPlayer
             seasonDimmerForm.Size = tvForm.Size;
             Fader.FadeInCustom(seasonDimmerForm, Fader.FadeSpeed.Normal, 0.9);
             seasonDimmerForm.Location = tvForm.Location;
+            loadingCircle2.Location = new Point(seasonDimmerForm.Width / 2 - loadingCircle2.Width / 2, seasonDimmerForm.Height / 2 - loadingCircle2.Height / 2);
 
             if (numSeasons > 6)
             {

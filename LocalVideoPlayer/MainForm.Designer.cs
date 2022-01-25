@@ -32,8 +32,8 @@ namespace LocalVideoPlayer
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
-            this.loadingLabel = new System.Windows.Forms.Label();
             this.loadingCircle1 = new MRG.Controls.UI.LoadingCircle();
+            this.loadingLabel = new System.Windows.Forms.Label();
             this.closeButton = new LocalVideoPlayer.RoundButton();
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.SuspendLayout();
