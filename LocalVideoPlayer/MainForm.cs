@@ -481,6 +481,9 @@ namespace LocalVideoPlayer
                 }
             }
 
+            TvForm t = (TvForm)tvForm;
+            t.ShowLoadingCircle();
+
             List<Control> toRemove = new List<Control>();
             Panel masterPanel = null;
             Panel mainPanel = null;
@@ -608,6 +611,7 @@ namespace LocalVideoPlayer
             }
 
             mainPanel.Refresh();
+            t.HideLoadingCircle();
         }
 
         private List<Control> CreateEpisodePanels(TvShow tvShow)
@@ -2006,7 +2010,6 @@ namespace LocalVideoPlayer
             this.Padding = new Padding(5, 20, 20, 20);
             InitGui();
             loadingCircle1.Dispose();
-            loadingCircle1.SendToBack();
         }
 
         #endregion
