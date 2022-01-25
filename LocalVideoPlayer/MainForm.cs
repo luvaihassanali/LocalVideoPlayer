@@ -21,8 +21,12 @@ namespace LocalVideoPlayer
 {
     public partial class MainForm : Form
     {
+        #region Dll import
+
         [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "SystemParametersInfo")]
         public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, uint pvParam, uint fWinIni);
+
+        #endregion
 
         private const string jsonFile = "Media.json";
         private const string apiKey = "?api_key=c69c4effc7beb9c473d22b8f85d59e4c";
@@ -753,7 +757,7 @@ namespace LocalVideoPlayer
             fileView.Font = extrasFont;
             fileView.HeaderStyle = ColumnHeaderStyle.Nonclickable;
             fileView.OwnerDraw = true;
-            
+
             fileView.DrawColumnHeader += (s, e) => {
                 headerDraw(s, e);
             };
@@ -775,8 +779,8 @@ namespace LocalVideoPlayer
 
                 string fullPath = item.SubItems[2].Text;
                 string[] episodeNameParts = fullPath.Split('\\');
-                string episodeNameFileExt = episodeNameParts[episodeNameParts.Length - 1].Split('%')[1].Trim();
-                string episodeName = episodeNameFileExt.Split('.')[0];
+                //string episodeNameFileExt = episodeNameParts[episodeNameParts.Length - 1].Split('%')[1].Trim();
+                string episodeName = episodeNameParts[episodeNameParts.Length - 1].Split('.')[0];
                 isPlaying = true;
                 LaunchVlc(null, null, fullPath, null);
             };
@@ -804,9 +808,10 @@ namespace LocalVideoPlayer
             string extrasPath = extras.Episodes[0].Path;
             string[] extrasPathParts = extrasPath.Split('\\');
             extrasPath = "";
-            for(int i = 0; i < extrasPathParts.Length - 2; i++)
+            for(int i = 0; i < extrasPathParts.Length; i++)
             {
                 extrasPath += extrasPathParts[i] + '\\';
+                if (extrasPathParts[i].Contains("Extras")) break;
             }
             PopulateTreeView(dirView, extrasPath);
             
