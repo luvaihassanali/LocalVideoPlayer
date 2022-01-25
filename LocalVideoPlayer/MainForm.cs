@@ -735,7 +735,7 @@ namespace LocalVideoPlayer
             #region Initialize picker
 
             SplitContainer mainContainer = new SplitContainer();
-            TreeView dirView = new TreeView();
+            NoHScrollTree dirView = new NoHScrollTree();
             ListView fileView = new ListView();
             
             mainContainer.Dock = DockStyle.Fill;
@@ -2144,6 +2144,19 @@ namespace LocalVideoPlayer
         {
             return str.Replace(genericSingleQuoteSymbol, targetSingleQuoteSymbol).Replace(openSingleQuoteSymbol, targetSingleQuoteSymbol)
                 .Replace(closeSingleQuoteSymbol, targetSingleQuoteSymbol).Replace(frenchAccentAigu, "e").Replace(frenchAccentGrave, "a");
+        }
+    }
+
+    public class NoHScrollTree : TreeView
+    {
+        protected override CreateParams CreateParams
+        {
+            get
+            {
+                CreateParams cp = base.CreateParams;
+                cp.Style |= 0x8000; // TVS_NOHSCROLL
+                return cp;
+            }
         }
     }
 }
