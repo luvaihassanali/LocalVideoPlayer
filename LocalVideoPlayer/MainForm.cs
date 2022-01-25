@@ -556,8 +556,9 @@ namespace LocalVideoPlayer
                 SplitContainer extrasContainer = CreateExtrasPicker(tvShow, tvForm);
                 extrasContainer.Dock = DockStyle.None;
                 mainPanel.Controls.Add(extrasContainer);
-                extrasContainer.Location = new Point(seasonButton.Location.X, 110);
+                extrasContainer.Location = new Point(seasonButton.Location.X, 120);
                 extrasContainer.Width = seasonButton.Width;
+                extrasContainer.Height = this.Height / 2;
                 extrasContainer.SplitterDistance = seasonButton.Width / 3;
                 extrasContainer.BringToFront();
                 DirView_NodeMouseClick(null, null);
@@ -601,6 +602,7 @@ namespace LocalVideoPlayer
                 tvForm.Controls.Remove(resumeButton);
                 tvForm.Controls.Remove(resetButton);
             }
+
             mainPanel.Refresh();
         }
 
@@ -706,12 +708,27 @@ namespace LocalVideoPlayer
             mainContainer.Panel1.Controls.Add(dirView);
             mainContainer.Panel2.Controls.Add(fileView);
             mainContainer.Name = "extrasContainer";
-            dirView.Cursor = Cursors.Default;
+            dirView.Cursor = blueHandCursor;
             dirView.Dock = DockStyle.Fill;
             dirView.ImageIndex = 0;
             dirView.ImageList = this.imageList1;
             dirView.SelectedImageIndex = 0;
             dirView.NodeMouseClick += DirView_NodeMouseClick;
+
+            dirView.MouseWheel += (s, e_) =>
+            {
+                if (e_.Delta < 0) //if scrolling down
+                {
+                    this.Cursor = new Cursor(Cursor.Current.Handle);
+                    Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y + 50);
+                }
+                else //up
+                {
+                    this.Cursor = new Cursor(Cursor.Current.Handle);
+                    Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y - 50);
+                }
+            };
+
 
             ColumnHeader c1 = new ColumnHeader();
             ColumnHeader c2 = new ColumnHeader();
@@ -721,11 +738,31 @@ namespace LocalVideoPlayer
             c3.Text = "Path";
 
             fileView.Columns.AddRange(new ColumnHeader[] { c1, c2, c3 });
-            fileView.Cursor = Cursors.Default;
+            fileView.Cursor = blueHandCursor;
             fileView.Dock = DockStyle.Fill;
             fileView.SmallImageList = this.imageList1;
             fileView.UseCompatibleStateImageBehavior = false;
             fileView.View = View.Details;
+
+            dirView.BackColor = SystemColors.Desktop;
+            dirView.ForeColor = SystemColors.Control;
+            fileView.BackColor = SystemColors.Desktop;
+            fileView.ForeColor = SystemColors.Control;
+            Font extrasFont = new Font("Arial", 12F, FontStyle.Regular);
+            dirView.Font = extrasFont;
+            fileView.Font = extrasFont;
+            fileView.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+            fileView.OwnerDraw = true;
+            
+            fileView.DrawColumnHeader += (s, e) => {
+                headerDraw(s, e);
+            };
+
+            fileView.DrawItem += (s, e) =>
+            {
+                e.DrawDefault = true;
+            };
+
             fileView.ItemSelectionChanged += (sender, e) =>
             {
                 if (fileView.SelectedItems.Count == 0)
@@ -742,6 +779,20 @@ namespace LocalVideoPlayer
                 string episodeName = episodeNameFileExt.Split('.')[0];
                 isPlaying = true;
                 LaunchVlc(null, null, fullPath, null);
+            };
+
+            fileView.MouseWheel += (s, e_) =>
+            {
+                if (e_.Delta < 0) //if scrolling down
+                {
+                    this.Cursor = new Cursor(Cursor.Current.Handle);
+                    Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y + 50);
+                }
+                else //up
+                {
+                    this.Cursor = new Cursor(Cursor.Current.Handle);
+                    Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y - 50);
+                }
             };
 
             dirViewG = dirView;
@@ -764,6 +815,19 @@ namespace LocalVideoPlayer
 
         private TreeView dirViewG;
         private ListView fileViewG;
+
+        private void headerDraw(object sender, DrawListViewColumnHeaderEventArgs e)
+        {
+            using (SolidBrush backBrush = new SolidBrush(SystemColors.Desktop))
+            {
+                e.Graphics.FillRectangle(backBrush, e.Bounds);
+            }
+
+            using (SolidBrush foreBrush = new SolidBrush(SystemColors.Control))
+            {
+                e.Graphics.DrawString(e.Header.Text, e.Font, foreBrush, e.Bounds);
+            }
+        }
 
         private void DirView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
