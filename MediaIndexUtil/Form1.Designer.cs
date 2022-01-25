@@ -203,7 +203,7 @@
             this.splitContainer2.ResumeLayout(false);
             this.ResumeLayout(false);
 
-        }
+        }   
 
         #endregion
         private ImageList imageList1;

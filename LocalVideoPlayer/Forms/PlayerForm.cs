@@ -39,7 +39,7 @@ namespace LocalVideoPlayer
             
             serialPort = new SerialPort();
             string portNumber = ConfigurationManager.AppSettings["comPort"];
-            serialPort.PortName = "COM" + portNumber;//Set your board COM
+            serialPort.PortName = "COM" + portNumber;
             serialPort.BaudRate = 115200;
             serialPort.DataBits = 8;
             serialPort.Parity = Parity.None;
@@ -60,7 +60,7 @@ namespace LocalVideoPlayer
 
             #endregion
 
-            //To-do: some parameters are in tv object > remove
+            //To-do: some parameters are in tv object to remove from constructor
             tvForm = tf;
             currEpisode = ep;
             currTvShow = t;
@@ -73,7 +73,8 @@ namespace LocalVideoPlayer
             timeline.Value = seekTime;
 
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
-            libVlc = new LibVLC(); // "--verbose=2");
+            libVlc = new LibVLC(); 
+            //libVlc = new LibVLC("--verbose=2");
             //libVlc.SetLogFile("vlclog.txt");
             //libVlc.Log += (sender, e) => Console.WriteLine($"[{e.Level}] {e.Module}:{e.Message}");
 
@@ -121,6 +122,27 @@ namespace LocalVideoPlayer
             pollingTimer = new Timer();
             pollingTimer.Tick += new EventHandler(Polling_Tick);
             pollingTimer.Interval = 10000;
+        }
+
+        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort serialPort = (SerialPort)sender;
+            if (e.EventType == SerialData.Chars)
+            {
+                string test = serialPort.ReadLine();
+                System.Diagnostics.Debug.WriteLine("Serial port: " + test);
+                if (test.Contains("stop"))
+                {
+                    if (mediaPlayer.IsPlaying)
+                    {
+                        mediaPlayer.Pause();
+                    }
+                    else
+                    {
+                        mediaPlayer.Play();
+                    }
+                }
+            }
         }
 
         #region General form functions
@@ -614,25 +636,6 @@ namespace LocalVideoPlayer
 
         #endregion
 
-        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
-            SerialPort serialPort = (SerialPort)sender;
-            if (e.EventType == SerialData.Chars)
-            {
-                string test = serialPort.ReadLine();
-                System.Diagnostics.Debug.WriteLine("Serial port: " + test);
-                if(test.Contains("stop"))
-                {
-                    if(mediaPlayer.IsPlaying)
-                    {
-                        mediaPlayer.Pause();
-                    } else
-                    {
-                        mediaPlayer.Play();
-                    }
-                }
-            }
-        }
     }
 
     public class RoundButton : Button

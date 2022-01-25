@@ -29,10 +29,13 @@ namespace LocalVideoPlayer
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.loadingLabel = new System.Windows.Forms.Label();
             this.loadingCircle1 = new MRG.Controls.UI.LoadingCircle();
             this.closeButton = new LocalVideoPlayer.RoundButton();
+            this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.SuspendLayout();
             // 
             // loadingLabel
@@ -77,6 +80,13 @@ namespace LocalVideoPlayer
             this.closeButton.Visible = false;
             this.closeButton.Click += new System.EventHandler(this.CloseButton_Click);
             // 
+            // imageList1
+            // 
+            this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
+            this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
+            this.imageList1.Images.SetKeyName(0, "icons8-movies-folder-48.png");
+            this.imageList1.Images.SetKeyName(1, "icons8-movie-48.png");
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -106,6 +116,7 @@ namespace LocalVideoPlayer
         private RoundButton closeButton;
         private MRG.Controls.UI.LoadingCircle loadingCircle1;
         private System.Windows.Forms.Label loadingLabel;
+        private System.Windows.Forms.ImageList imageList1;
     }
 }
 

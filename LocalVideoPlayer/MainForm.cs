@@ -485,7 +485,6 @@ namespace LocalVideoPlayer
             Button seasonButton = null;
             Button resumeButton = null;
             Button resetButton = null;
-            PictureBox tvShowBackdropBox = null;
 
             foreach (Control c in tvForm.Controls)
             {
@@ -521,18 +520,19 @@ namespace LocalVideoPlayer
                             overviewLabel = tempLabel;
                         }
 
-                        PictureBox tempBox = ctrl as PictureBox;
-                        if (tempBox != null && tempBox.Name.Equals("tvShowBackdropBox"))
-                        {
-                            tvShowBackdropBox = tempBox;
-                        }
-
                         Panel p = ctrl as Panel;
                         if (p != null && p.Name.Equals("mainPanel"))
                         {
                             mainPanel = p;
                             foreach (Control c_ in mainPanel.Controls)
                             {
+                                SplitContainer tempContainer = c_ as SplitContainer;
+                                if (tempContainer != null)
+                                {
+                                    masterPanel.Controls.Remove(tempContainer);
+                                    tempContainer.Dispose();
+                                }
+
                                 Panel ePanel = c_ as Panel;
                                 if (ePanel != null && ePanel.Name.Contains("episodePanel"))
                                 {
@@ -547,16 +547,26 @@ namespace LocalVideoPlayer
             foreach (Control c in toRemove)
             {
                 mainPanel.Controls.Remove(c);
+                //c.Dispose();
             }
 
             List<Control> episodePanelList = null;
             if(tvShow.CurrSeason == -1)
             {
-
-            } else
+                SplitContainer extrasContainer = CreateExtrasPicker(tvShow, tvForm);
+                extrasContainer.Dock = DockStyle.None;
+                mainPanel.Controls.Add(extrasContainer);
+                extrasContainer.Location = new Point(seasonButton.Location.X, 110);
+                extrasContainer.Width = seasonButton.Width;
+                extrasContainer.SplitterDistance = seasonButton.Width / 3;
+                extrasContainer.BringToFront();
+                DirView_NodeMouseClick(null, null);
+            } 
+            else
             {
                 episodePanelList = CreateEpisodePanels(tvShow);
             }
+
             if(episodePanelList != null)
             {
                 foreach (Control ep in episodePanelList)
@@ -680,6 +690,159 @@ namespace LocalVideoPlayer
             return episodePanelList;
         }
 
+        #endregion
+
+        #region Extras 
+
+        private SplitContainer CreateExtrasPicker(TvShow tvShow, Form tvForm)
+        {
+            #region Initialize picker
+
+            SplitContainer mainContainer = new SplitContainer();
+            TreeView dirView = new TreeView();
+            ListView fileView = new ListView();
+            
+            mainContainer.Dock = DockStyle.Fill;
+            mainContainer.Panel1.Controls.Add(dirView);
+            mainContainer.Panel2.Controls.Add(fileView);
+            mainContainer.Name = "extrasContainer";
+            dirView.Cursor = Cursors.Default;
+            dirView.Dock = DockStyle.Fill;
+            dirView.ImageIndex = 0;
+            dirView.ImageList = this.imageList1;
+            dirView.SelectedImageIndex = 0;
+            dirView.NodeMouseClick += DirView_NodeMouseClick;
+
+            ColumnHeader c1 = new ColumnHeader();
+            ColumnHeader c2 = new ColumnHeader();
+            ColumnHeader c3 = new ColumnHeader();
+            c1.Text = "Name";
+            c2.Text = "Type";
+            c3.Text = "Path";
+
+            fileView.Columns.AddRange(new ColumnHeader[] { c1, c2, c3 });
+            fileView.Cursor = Cursors.Default;
+            fileView.Dock = DockStyle.Fill;
+            fileView.SmallImageList = this.imageList1;
+            fileView.UseCompatibleStateImageBehavior = false;
+            fileView.View = View.Details;
+            fileView.ItemSelectionChanged += (sender, e) =>
+            {
+                if (fileView.SelectedItems.Count == 0)
+                    return;
+
+                ListViewItem item = fileView.SelectedItems[0];
+
+                if (item.SubItems[1].Text == "Directory")
+                    return;
+
+                string fullPath = item.SubItems[2].Text;
+                string[] episodeNameParts = fullPath.Split('\\');
+                string episodeNameFileExt = episodeNameParts[episodeNameParts.Length - 1].Split('%')[1].Trim();
+                string episodeName = episodeNameFileExt.Split('.')[0];
+                isPlaying = true;
+                LaunchVlc(null, null, fullPath, null);
+            };
+
+            dirViewG = dirView;
+            fileViewG = fileView;
+
+            #endregion
+
+            Season extras = tvShow.Seasons[tvShow.Seasons.Length - 1];
+            string extrasPath = extras.Episodes[0].Path;
+            string[] extrasPathParts = extrasPath.Split('\\');
+            extrasPath = "";
+            for(int i = 0; i < extrasPathParts.Length - 2; i++)
+            {
+                extrasPath += extrasPathParts[i] + '\\';
+            }
+            PopulateTreeView(dirView, extrasPath);
+            
+            return mainContainer;
+        }
+
+        private TreeView dirViewG;
+        private ListView fileViewG;
+
+        private void DirView_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            TreeNode newSelected;
+            if (sender == null)
+            {
+                newSelected = dirViewG.Nodes[0];
+            }
+            else
+            {
+                newSelected = e.Node;
+            }
+            fileViewG.Items.Clear();
+
+            DirectoryInfo nodeDirInfo = (DirectoryInfo)newSelected.Tag;
+            ListViewItem.ListViewSubItem[] subItems;
+            ListViewItem item;
+
+            DirectoryInfo[] dirs = nodeDirInfo.GetDirectories();
+            Array.Sort(dirs, delegate (DirectoryInfo d1, DirectoryInfo d2)
+            {
+                return d1.Name.CompareTo(d2.Name);
+            });
+            foreach (DirectoryInfo dir in dirs)
+            {
+                item = new ListViewItem(dir.Name, 0);
+                subItems = new ListViewItem.ListViewSubItem[] { new ListViewItem.ListViewSubItem(item, "Directory"), new ListViewItem.ListViewSubItem(item, dir.FullName) };
+                item.SubItems.AddRange(subItems);
+                fileViewG.Items.Add(item);
+            }
+            FileInfo[] files = nodeDirInfo.GetFiles();
+            Array.Sort(files, delegate (FileInfo f1, FileInfo f2)
+            {
+                return f1.Name.CompareTo(f2.Name);
+            });
+            foreach (FileInfo file in files)
+            {
+                item = new ListViewItem(file.Name, 1);
+                subItems = new ListViewItem.ListViewSubItem[] { new ListViewItem.ListViewSubItem(item, "File"), new ListViewItem.ListViewSubItem(item, file.FullName) };
+                item.SubItems.AddRange(subItems);
+                fileViewG.Items.Add(item);
+            }
+
+            fileViewG.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
+        }
+
+        private void PopulateTreeView(TreeView dirView, string path)
+        {
+            TreeNode rootNode;
+
+            DirectoryInfo info = new DirectoryInfo(path);
+            if (info.Exists)
+            {
+                rootNode = new TreeNode(info.Name);
+                rootNode.Tag = info;
+                GetDirectories(info.GetDirectories(), rootNode);
+                dirView.Nodes.Add(rootNode);
+            }
+            dirView.ExpandAll();
+        }
+
+        private void GetDirectories(DirectoryInfo[] subDirs,
+            TreeNode nodeToAddTo)
+        {
+            TreeNode aNode;
+            DirectoryInfo[] subSubDirs;
+            foreach (DirectoryInfo subDir in subDirs)
+            {
+                aNode = new TreeNode(subDir.Name, 0, 0);
+                aNode.Tag = subDir;
+                aNode.ImageKey = "folder";
+                subSubDirs = subDir.GetDirectories();
+                if (subSubDirs.Length != 0)
+                {
+                    GetDirectories(subSubDirs, aNode);
+                }
+                nodeToAddTo.Nodes.Add(aNode);
+            }
+        }
         #endregion
 
         #region Seasons
@@ -1827,15 +1990,15 @@ namespace LocalVideoPlayer
             }
 
             long savedTime = 0;
-            int runningTime;
+            int runningTime = 0;
 
-            if (currMovie == null)
+            if (currTvShow != null)
             {
                 runningTime = currTvShow.RunningTime;
                 if (currEpisode != null)
                     savedTime = currEpisode.SavedTime;
             }
-            else
+            else if (currMovie != null)
             {
                 runningTime = currMovie.RunningTime;
             }
@@ -1844,6 +2007,7 @@ namespace LocalVideoPlayer
             playerForm.ShowDialog();
             playerForm.Dispose();
             isPlaying = false;
+
             if (tvForm != null)
                 tvForm.Refresh();
         }
