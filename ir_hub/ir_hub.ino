@@ -14,7 +14,7 @@ bool powerPressed = false;
 bool inputSourceSwitch = false;
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
 #if defined(__AVR_ATmega32U4__) || defined(Serial_USB) || defined(Serial_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
   delay(4000); // To be able to connect //Serial monitor after reset or power up and before first print out. Do not wait for an attached //Serial Monitor!
 #endif
@@ -39,6 +39,26 @@ void checkReceive(uint16_t aSentAddress, uint16_t aSentCommand) {
   // wait until signal has received
   delay((RECORD_GAP_MICROS / 1000) + 1);
   if (IrReceiver.decode()) {
+    /*IrReceiver.printIRResultShort(&Serial);
+    if (IrReceiver.decodedIRData.flags & IRDATA_FLAGS_WAS_OVERFLOW) {
+      IrReceiver.decodedIRData.flags = false; // yes we have recognized the flag :-)
+      Serial.println(F("Overflow detected"));
+      Serial.println(F("Try to increase the \"RAW_BUFFER_LENGTH\" value of " STR(RAW_BUFFER_LENGTH) " in " __FILE__));
+    } else {
+      if (IrReceiver.decodedIRData.address != aSentAddress) {
+        Serial.print(F("ERROR: Received address=0x"));
+        Serial.print(IrReceiver.decodedIRData.address, HEX);
+        Serial.print(F(" != sent address=0x"));
+        Serial.println(aSentAddress, HEX);
+      }
+
+      if (IrReceiver.decodedIRData.command != aSentCommand) {
+        Serial.print(F("ERROR: Received command=0x"));
+        Serial.print(IrReceiver.decodedIRData.command, HEX);
+        Serial.print(F(" != sent command=0x"));
+        Serial.println(aSentCommand, HEX);
+      }
+    }*/
     uint32_t rawData = IrReceiver.decodedIRData.decodedRawData;
     ParseIrValue(rawData);
     IrReceiver.resume();

@@ -21,7 +21,7 @@ const int joystickThreshold = 50;
 //https://www.espressif.com/sites/default/files/documentation/4b-esp8266_at_command_examples_en.pdf
 const unsigned long keepAliveTimeout = 4999;
 
-IRsend irsend;
+//IRsend IrSender;
 int soundBarPowerPinState = 0;
 int tvPowerPinState = 0;
 int volumeValue = 0;
@@ -58,7 +58,9 @@ unsigned long timeValue = 0;
 
 void setup() {
   Serial.begin(9600);
-  esp8266.begin(9600);
+#if defined(__AVR_ATmega32U4__) || defined(Serial_USB) || defined(Serial_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
+  delay(4000);
+#endif
   Serial.println("Serial ready");
 
   pinMode(soundBarPowerPin, INPUT_PULLUP);
@@ -73,8 +75,10 @@ void setup() {
   pinMode(joystickButtonPin, INPUT_PULLUP);
   pinMode(backButtonPin, INPUT_PULLUP);
 
-  digitalWrite(redLedPin, HIGH);
+  IrSender.begin(IR_SEND_PIN, ENABLE_LED_FEEDBACK);
+  IrSender.enableIROut(38);
   Serial.println("Infared ready");
+  digitalWrite(redLedPin, HIGH);
 }
 
 void loop() {
@@ -101,10 +105,10 @@ void InnerLoop() {
     if (soundBarPowerPinState == LOW) {
       Serial.println("Power off sound bar");
       digitalWrite(redLedPin, LOW);
-      irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
+      IrSender.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
       for (int i = 0; i < 150; i++) {
         delay(10);
-        irsend.sendNEC(0xFFFFFFFF, 0);
+        IrSender.sendNEC(0xFFFFFFFF, 0);
       }
       soundBarPowerSwitch = false;
       delay(250);
@@ -113,7 +117,7 @@ void InnerLoop() {
     if (soundBarPowerPinState == LOW) {
       Serial.println("Power on sound bar");
       digitalWrite(redLedPin, LOW);
-      irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
+      IrSender.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
       soundBarPowerSwitch = true;
       delay(250);
     }
@@ -133,7 +137,7 @@ void InnerLoop() {
       Serial.print("  ");
       Serial.println(volumeLevel);
       digitalWrite(redLedPin, LOW);
-      irsend.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
+      IrSender.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
       volumeTracker = volumeLevel;
     } else {
       Serial.print("Volume up: ");
@@ -141,7 +145,7 @@ void InnerLoop() {
       Serial.print("  ");
       Serial.println(volumeLevel);
       digitalWrite(redLedPin, LOW);
-      irsend.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
+      IrSender.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
       volumeTracker = volumeLevel;
     }
     delay(250);
@@ -152,11 +156,11 @@ void InnerLoop() {
     if (volumeLevel < 7) {
       Serial.println("Volume down (override)");
       digitalWrite(redLedPin, LOW);
-      irsend.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
+      IrSender.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
     } else {
       Serial.println("Volume up (override)");
       digitalWrite(redLedPin, LOW);
-      irsend.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
+      IrSender.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
     }
     delay(250);
   }
@@ -166,7 +170,7 @@ void InnerLoop() {
     if (opticalPinState == LOW) {
       Serial.println("Bluetooth");
       digitalWrite(redLedPin, LOW);
-      irsend.sendNEC(0x807F52ADU, IR_CODE_NUM_BITS);
+      IrSender.sendNEC(0x807F52ADU, IR_CODE_NUM_BITS);
       inputSourceSwitch = false;
       delay(250);
     }
@@ -174,7 +178,7 @@ void InnerLoop() {
     if (opticalPinState == LOW) {
       Serial.println("Optical");
       digitalWrite(redLedPin, LOW);
-      irsend.sendNEC(0x807F926DU, IR_CODE_NUM_BITS);
+      IrSender.sendNEC(0x807F926DU, IR_CODE_NUM_BITS);
       inputSourceSwitch = true;
       delay(250);
     }
@@ -185,7 +189,7 @@ void InnerLoop() {
     if (tvPowerPinState == LOW) {
       Serial.println("Power off tv");
       digitalWrite(redLedPin, LOW);
-      irsend.sendSAMSUNG(0xE0E040BF, IR_CODE_NUM_BITS);
+      IrSender.sendSAMSUNG(0xE0E040BF, IR_CODE_NUM_BITS);
       tvPowerSwitch = false;
       delay(250);
     }
@@ -193,7 +197,7 @@ void InnerLoop() {
     if (tvPowerPinState == LOW) {
       Serial.println("Power on tv");
       digitalWrite(redLedPin, LOW);
-      irsend.sendSAMSUNG(0xE0E040BF, IR_CODE_NUM_BITS);
+      IrSender.sendSAMSUNG(0xE0E040BF, IR_CODE_NUM_BITS);
       tvPowerSwitch = true;
       delay(250);
     }
@@ -209,29 +213,29 @@ void InnerLoop() {
 
   if ((backButtonPinState == 0 || joystickPinState == 0 || mapX > joystickThreshold || mapX < -joystickThreshold || mapY > joystickThreshold || mapY < -joystickThreshold) && !esp8266Init) {
     if (backButtonPinState == 0) {
-      Serial.println("back");
+      Serial.println("home");
       digitalWrite(redLedPin, LOW);
-      irsend.sendSAMSUNG(0xA7580707 , IR_CODE_NUM_BITS);
+      IrSender.sendSamsung(0x707, 0x79, 0, false);
     } else if (joystickPinState == 0) {
       Serial.println("enter");
       digitalWrite(redLedPin, LOW);
-      irsend.sendSAMSUNG(0x97680707, IR_CODE_NUM_BITS);
+      IrSender.sendSamsung(0x707, 0x68, 0, false);
     } else if (mapX > joystickThreshold) {
       Serial.println("left");
       digitalWrite(redLedPin, LOW);
-      irsend.sendSAMSUNG(0x9A650707, IR_CODE_NUM_BITS);
+      IrSender.sendSamsung(0x707, 0x65, 0, false);
     } else if (mapX < -joystickThreshold) {
       Serial.println("right");
       digitalWrite(redLedPin, LOW);
-      irsend.sendSAMSUNG(0x9D620707, IR_CODE_NUM_BITS);
+      IrSender.sendSamsung(0x707, 0x62, 0, false);
     } else if (mapY > joystickThreshold) {
       Serial.println("up");
       digitalWrite(redLedPin, LOW);
-      irsend.sendSAMSUNG(0x9F600707, IR_CODE_NUM_BITS);
+      IrSender.sendSamsung(0x707, 0x60, 0, false);
     } else if (mapY < -joystickThreshold) {
       Serial.println("down");
       digitalWrite(redLedPin, LOW);
-      irsend.sendSAMSUNG(0x9E610707, IR_CODE_NUM_BITS);
+      IrSender.sendSamsung(0x707, 0x61, 0, false);
     }
     delay(250);
   }
@@ -246,6 +250,7 @@ void InnerLoop() {
   }
 
   if (scrollPinState == 0 && !esp8266Init) {
+    esp8266.begin(9600);
     Serial.println("Starting esp8266...");
     InitializeEsp8266();
     esp8266Init = true;
@@ -391,94 +396,130 @@ String TcpDataOut(String command, const int timeout) {
   long commandno = Serial.parseInt();
   joystickButtonPinitch (commandno) {
   case 1L:
-    irsend.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
     break;
   case 2L:
-    irsend.sendNEC(0x807FE817U, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807FE817U, IR_CODE_NUM_BITS);
     break;
   case 3L:
-    irsend.sendNEC(0x807F52ADU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F52ADU, IR_CODE_NUM_BITS);
     break;
   case 4L:
-    irsend.sendNEC(0x807F926DU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F926DU, IR_CODE_NUM_BITS);
     break;
   case 5L:
-    irsend.sendNEC(0x807FE21DU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807FE21DU, IR_CODE_NUM_BITS);
     break;
   case 6L:
-    irsend.sendNEC(0x807F50AFU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F50AFU, IR_CODE_NUM_BITS);
     break;
   case 7L:
-    irsend.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
     break;
   case 8L:
-    irsend.sendNEC(0x807F28D7U, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F28D7U, IR_CODE_NUM_BITS);
     break;
   case 9L:
-    irsend.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
     break;
   case 10L:
-    irsend.sendNEC(0x807F906FU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F906FU, IR_CODE_NUM_BITS);
     break;
   case 11L:
-    irsend.sendNEC(0x807F7A85U, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F7A85U, IR_CODE_NUM_BITS);
     break;
   case 12L:
-    irsend.sendNEC(0x807FC23DU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807FC23DU, IR_CODE_NUM_BITS);
     break;
   case 13L:
-    irsend.sendNEC(0x807F02FDU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F02FDU, IR_CODE_NUM_BITS);
     break;
   case 14L:
-    irsend.sendNEC(0x807FC837U, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807FC837U, IR_CODE_NUM_BITS);
     break;
   case 15L:
-    irsend.sendNEC(0x807FB24DU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807FB24DU, IR_CODE_NUM_BITS);
     break;
   case 16L:
-    irsend.sendNEC(0x807F32CDU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F32CDU, IR_CODE_NUM_BITS);
     break;
   case 17L:
-    irsend.sendNEC(0x807FD22DU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807FD22DU, IR_CODE_NUM_BITS);
     break;
   case 18L:
-    irsend.sendNEC(0x807F0AF5U, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F0AF5U, IR_CODE_NUM_BITS);
     break;
   case 19L:
-    irsend.sendNEC(0x807FF20DU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807FF20DU, IR_CODE_NUM_BITS);
     break;
   case 20L:
-    irsend.sendNEC(0x807F728DU, IR_CODE_NUM_BITS);
+    IrSender.sendNEC(0x807F728DU, IR_CODE_NUM_BITS);
     break;
   case 21L:
-    irsend.sendSAMSUNG(POWER, IR_CODE_NUM_BITS);
+    IrSender.sendSAMSUNG(POWER, IR_CODE_NUM_BITS);
     break;
   case 22L:
-    irsend.sendSAMSUNG(VOLUME_UP, IR_CODE_NUM_BITS);
+    IrSender.sendSAMSUNG(VOLUME_UP, IR_CODE_NUM_BITS);
     break;
   case 23L:
-    irsend.sendSAMSUNG(VOLUME_DOWN, IR_CODE_NUM_BITS);
+    IrSender.sendSAMSUNG(VOLUME_DOWN, IR_CODE_NUM_BITS);
     break;
   default:
     Serial.println(F("Invalid number entered, try again"));
     break;
   }
 
+  // --- SAMSUNG ---
+
   #define POWER 0xE0E040BF
   #define VOLUME_UP 0xE0E0E01F
   #define VOLUME_DOWN 0xE0E0D02F
-  // ok 97680707
 
-  // back A7580707
+  power
 
-  // l 9A650707
+  04:47:29.791 -> Protocol=SAMSUNG Address=0x707 Command=0xE6 Raw-Data=0x19E60707 32 bits LSB first
+  04:47:29.892 -> ERROR: Received address=0x707 != sent address=0xF1
+  04:47:29.938 -> ERROR: Received command=0xE6 != sent command=0x76
 
-  // r 9D620707
+  left
+  04:44:29.282 -> Protocol=SAMSUNG Address=0x707 Command=0x62 Raw-Data=0x9D620707 32 bits LSB first
+  04:44:29.382 -> ERROR: Received address=0x707 != sent address=0xF1
+  04:44:29.429 -> ERROR: Received command=0x62 != sent command=0x76
 
-  // u 9F600707
+  right
 
-  // d 9E610707
+  04:44:38.743 -> Protocol=SAMSUNG Address=0x707 Command=0x65 Raw-Data=0x9A650707 32 bits LSB first
+  04:44:38.787 -> ERROR: Received address=0x707 != sent address=0xF1
+  04:44:38.870 -> ERROR: Received command=0x65 != sent command=0x76
 
+  up
+  04:45:41.307 -> Protocol=SAMSUNG Address=0x707 Command=0x60 Raw-Data=0x9F600707 32 bits LSB first
+  04:45:41.407 -> ERROR: Received address=0x707 != sent address=0xF1
+  04:45:41.454 -> ERROR: Received command=0x60 != sent command=0x76
+
+  down
+  04:45:48.893 -> Protocol=SAMSUNG Address=0x707 Command=0x61 Raw-Data=0x9E610707 32 bits LSB first
+  04:45:48.940 -> ERROR: Received address=0x707 != sent address=0xF1
+  04:45:48.994 -> ERROR: Received command=0x61 != sent command=0x76
+
+  home
+
+  04:46:03.027 -> Protocol=SAMSUNG Address=0x707 Command=0x79 Raw-Data=0x86790707 32 bits LSB first
+  04:46:03.127 -> ERROR: Received address=0x707 != sent address=0xF1
+  04:46:03.181 -> ERROR: Received command=0x79 != sent command=0x76
+
+  ok
+
+  04:46:13.325 -> Protocol=SAMSUNG Address=0x707 Command=0x68 Raw-Data=0x97680707 32 bits LSB first
+  04:46:13.426 -> ERROR: Received address=0x707 != sent address=0xF1
+  04:46:13.473 -> ERROR: Received command=0x68 != sent command=0x76
+
+  back
+
+  04:46:22.735 -> ERROR: Received command=0x58 != sent command=0x76
+  04:46:23.993 -> Protocol=SAMSUNG Address=0x707 Command=0x58 Raw-Data=0xA7580707 32 bits LSB first
+  04:46:24.093 -> ERROR: Received address=0x707 != sent address=0xF1
+  04:46:24.139 -> ERROR: Received command=0x58 != sent command=0x76
 
 */
 

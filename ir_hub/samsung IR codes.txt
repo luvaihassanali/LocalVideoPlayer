@@ -1,0 +1,46 @@
+power
+
+04:47:29.791 -> Protocol=SAMSUNG Address=0x707 Command=0xE6 Raw-Data=0x19E60707 32 bits LSB first
+04:47:29.892 -> ERROR: Received address=0x707 != sent address=0xF1
+04:47:29.938 -> ERROR: Received command=0xE6 != sent command=0x76
+
+left
+
+04:44:29.282 -> Protocol=SAMSUNG Address=0x707 Command=0x62 Raw-Data=0x9D620707 32 bits LSB first
+04:44:29.382 -> ERROR: Received address=0x707 != sent address=0xF1
+04:44:29.429 -> ERROR: Received command=0x62 != sent command=0x76
+
+right
+
+04:44:38.743 -> Protocol=SAMSUNG Address=0x707 Command=0x65 Raw-Data=0x9A650707 32 bits LSB first
+04:44:38.787 -> ERROR: Received address=0x707 != sent address=0xF1
+04:44:38.870 -> ERROR: Received command=0x65 != sent command=0x76
+
+up
+04:45:41.307 -> Protocol=SAMSUNG Address=0x707 Command=0x60 Raw-Data=0x9F600707 32 bits LSB first
+04:45:41.407 -> ERROR: Received address=0x707 != sent address=0xF1
+04:45:41.454 -> ERROR: Received command=0x60 != sent command=0x76
+
+down
+04:45:48.893 -> Protocol=SAMSUNG Address=0x707 Command=0x61 Raw-Data=0x9E610707 32 bits LSB first
+04:45:48.940 -> ERROR: Received address=0x707 != sent address=0xF1
+04:45:48.994 -> ERROR: Received command=0x61 != sent command=0x76
+
+home
+
+04:46:03.027 -> Protocol=SAMSUNG Address=0x707 Command=0x79 Raw-Data=0x86790707 32 bits LSB first
+04:46:03.127 -> ERROR: Received address=0x707 != sent address=0xF1
+04:46:03.181 -> ERROR: Received command=0x79 != sent command=0x76
+
+ok 
+
+04:46:13.325 -> Protocol=SAMSUNG Address=0x707 Command=0x68 Raw-Data=0x97680707 32 bits LSB first
+04:46:13.426 -> ERROR: Received address=0x707 != sent address=0xF1
+04:46:13.473 -> ERROR: Received command=0x68 != sent command=0x76
+
+back 
+
+04:46:22.735 -> ERROR: Received command=0x58 != sent command=0x76
+04:46:23.993 -> Protocol=SAMSUNG Address=0x707 Command=0x58 Raw-Data=0xA7580707 32 bits LSB first
+04:46:24.093 -> ERROR: Received address=0x707 != sent address=0xF1
+04:46:24.139 -> ERROR: Received command=0x58 != sent command=0x76
