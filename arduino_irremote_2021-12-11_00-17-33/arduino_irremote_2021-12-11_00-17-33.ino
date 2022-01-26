@@ -58,9 +58,6 @@ unsigned long timeValue = 0;
 
 void setup() {
   Serial.begin(9600);
-#if defined(__AVR_ATmega32U4__) || defined(Serial_USB) || defined(Serial_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
-  delay(4000);
-#endif
   Serial.println("Serial ready");
 
   pinMode(soundBarPowerPin, INPUT_PULLUP);

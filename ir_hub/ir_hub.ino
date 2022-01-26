@@ -15,9 +15,6 @@ bool inputSourceSwitch = false;
 
 void setup() {
   Serial.begin(9600);
-#if defined(__AVR_ATmega32U4__) || defined(Serial_USB) || defined(Serial_PORT_USBVIRTUAL)  || defined(ARDUINO_attiny3217)
-  delay(4000); // To be able to connect //Serial monitor after reset or power up and before first print out. Do not wait for an attached //Serial Monitor!
-#endif
 
   IrReceiver.begin(IR_RECEIVE_PIN);
   IrSender.begin(IR_SEND_PIN, ENABLE_LED_FEEDBACK); // Specify send pin and enable feedback LED at default feedback LED pin
