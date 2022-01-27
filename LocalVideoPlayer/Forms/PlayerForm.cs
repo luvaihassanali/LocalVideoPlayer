@@ -22,6 +22,7 @@ namespace LocalVideoPlayer
         private Timer pollingTimer;
         private bool mouseDown = false;
         private bool controlsVisible = false;
+        bool shrinkTimeLine = false;
         private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         private SerialPort serialPort;
 
@@ -153,7 +154,7 @@ namespace LocalVideoPlayer
             closeButton.BringToFront();
             playButton.Location = new Point(playButton.Width / 4 - 5, this.Height - (int)(playButton.Width * 1.25));
             playButton.BringToFront();
-            timeline.Size = new Size(this.Width - (int)(playButton.Width * 3) + 7, playButton.Height / 2);
+            timeline.Size = new Size(this.Width - (int)(playButton.Width * 3), playButton.Height / 2);
             timeline.Location = new Point(playButton.Width + 15, this.Height - (int)(playButton.Height * 1.025));
             timeLbl.Location = new Point(timeline.Location.X + timeline.Width, timeline.Location.Y + 1);
             timeLbl.BringToFront();
@@ -584,7 +585,6 @@ namespace LocalVideoPlayer
         #endregion
 
         #region Timeline
-
         private void Timeline_ValueChanged(object sender, long value)
         {
             string timeString;
@@ -594,9 +594,22 @@ namespace LocalVideoPlayer
                 TimeSpan lengthTime = TimeSpan.FromMilliseconds(mediaPlayer.Length);
                 TimeSpan currTime = TimeSpan.FromMilliseconds(mediaPlayer.Time);
 
-                if (value > 3600000) //hour in ms
+                if (lengthTime.TotalMilliseconds > 3600000) //hour in ms
                 {
                     timeString = currTime.ToString(@"hh\:mm\:ss") + "/" + lengthTime.ToString(@"hh\:mm\:ss");
+                    if (!shrinkTimeLine)
+                    {
+                        timeline.Invoke(new MethodInvoker(delegate
+                        {
+
+                            timeline.Size = new Size(this.Width - (int)(playButton.Width * 3) - 40, playButton.Height / 2);
+                        }));
+                        timeLbl.Invoke(new MethodInvoker(delegate
+                        {
+                            timeLbl.Location = new Point(timeline.Location.X + timeline.Width, timeline.Location.Y);
+                        }));
+                        shrinkTimeLine = true;
+                    }
                 }
                 else
                 {

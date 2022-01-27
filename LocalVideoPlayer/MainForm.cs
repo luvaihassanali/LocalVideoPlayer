@@ -1264,7 +1264,9 @@ namespace LocalVideoPlayer
             headerLabel.AutoSize = true;
             headerLabel.Padding = new Padding(20, 20, 20, 0);
 
-            Label overviewLabel = new Label() { Text = movie.Overview };
+            TimeSpan temp = TimeSpan.FromMinutes(movie.RunningTime);
+            string hour = temp.Hours > 1 ? "hours " : "hour ";
+            Label overviewLabel = new Label() { Text = "Running time: " + temp.Hours + " " + hour + temp.Minutes + " minutes\n\n" + movie.Overview };
             overviewLabel.Dock = DockStyle.Top;
             overviewLabel.Font = overviewFont;
             overviewLabel.AutoSize = true;
