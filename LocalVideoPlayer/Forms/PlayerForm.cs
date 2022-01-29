@@ -135,6 +135,7 @@ namespace LocalVideoPlayer
                 if (msg.Contains("stop"))
                 {
                     MouseWorker.DoMouseRightClick();
+                    MouseWorker.DoMouseClick();
                     PlayButton_Click(null, null);
                 }
             }

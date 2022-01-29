@@ -265,7 +265,7 @@ namespace LocalVideoPlayer
 
         }
 
-        public void DoMouseClick()
+        static public void DoMouseClick()
         {
             uint X = (uint)Cursor.Position.X;
             uint Y = (uint)Cursor.Position.Y;
