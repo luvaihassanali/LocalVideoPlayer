@@ -41,12 +41,12 @@ namespace LocalVideoPlayer
             serialPort = new SerialPort();
             string portNumber = ConfigurationManager.AppSettings["comPort"];
             serialPort.PortName = "COM" + portNumber;
-            serialPort.BaudRate = 115200;
+            serialPort.BaudRate = 9600;
             serialPort.DataBits = 8;
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
             serialPort.Handshake = Handshake.None;
-            serialPort.ReadTimeout = 200;
+            serialPort.ReadTimeout = 500;
             serialPort.DataReceived += SerialPort_DataReceived;
 
             try
@@ -130,18 +130,11 @@ namespace LocalVideoPlayer
             SerialPort serialPort = (SerialPort)sender;
             if (e.EventType == SerialData.Chars)
             {
-                string test = serialPort.ReadLine();
-                System.Diagnostics.Debug.WriteLine("Serial port: " + test);
-                if (test.Contains("stop"))
+                string msg = serialPort.ReadLine();
+                System.Diagnostics.Debug.WriteLine("Serial port: " + msg);
+                if (msg.Contains("stop"))
                 {
-                    if (mediaPlayer.IsPlaying)
-                    {
-                        mediaPlayer.Pause();
-                    }
-                    else
-                    {
-                        mediaPlayer.Play();
-                    }
+                    PlayButton_Click(null, null);
                 }
             }
         }
