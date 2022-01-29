@@ -25,7 +25,7 @@ namespace LocalVideoPlayer
         bool shrinkTimeLine = false;
         private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         private SerialPort serialPort;
-
+        
         public PlayerForm(string p, long s, int r, TvShow t, Episode ep, Form tf)
         {
             if (!DesignMode)
@@ -134,6 +134,7 @@ namespace LocalVideoPlayer
                 System.Diagnostics.Debug.WriteLine("Serial port: " + msg);
                 if (msg.Contains("stop"))
                 {
+                    MouseWorker.DoMouseRightClick();
                     PlayButton_Click(null, null);
                 }
             }
