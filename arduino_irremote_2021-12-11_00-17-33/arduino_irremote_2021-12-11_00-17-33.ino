@@ -72,7 +72,7 @@ void setup() {
   pinMode(joystickButtonPin, INPUT_PULLUP);
   pinMode(backButtonPin, INPUT_PULLUP);
 
-  IrSender.begin(IR_SEND_PIN, ENABLE_LED_FEEDBACK);
+  IrSender.begin(IR_SEND_PIN, DISABLE_LED_FEEDBACK);
   IrSender.enableIROut(38);
   Serial.println("Infared ready");
   digitalWrite(redLedPin, HIGH);

@@ -3,7 +3,7 @@
 #define DECODE_NEC // Includes Apple and Onkyo (Can't compile for Uno without)
 #define DECODE_SAMSUNG
 #define MARK_EXCESS_MICROS 10 // Adapt it to your IR receiver module. See also IRremote.h.
-//+#define NO_LED_FEEDBACK_CODE // halves ISR duration
+//#define NO_LED_FEEDBACK_CODE // halves ISR duration
 //#define DEBUG // Activate this for lots of lovely debug output from the decoders.
 //#define INFO // To see valuable informations from universal decoder for pulse width or pulse distance protocols
 #include <IRremote.hpp> // Needs to be after define statements
