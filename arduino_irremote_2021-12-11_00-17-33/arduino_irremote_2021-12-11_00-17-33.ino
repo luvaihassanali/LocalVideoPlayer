@@ -4,10 +4,10 @@
 #include <IRremote.h>
 #include <SoftwareSerial.h>
 
-const int IR_CODE_NUM_BITS = 32;
 const int soundBarPowerPin = 12;
 const int potentiometerPin = A5;
 const int backButtonPin = A2;
+const int changeSoundInputPin = A3;
 const int volOvPin = 11;
 const int redLedPin = 13;
 const int opticalPin = 10;
@@ -18,10 +18,8 @@ const int joystickRxPin = A0;
 const int joystickRyPin = A1;
 const int joystickButtonPin = 2;
 const int joystickThreshold = 50;
-//https://www.espressif.com/sites/default/files/documentation/4b-esp8266_at_command_examples_en.pdf
 const unsigned long keepAliveTimeout = 4999;
 
-//IRsend IrSender;
 int soundBarPowerPinState = 0;
 int tvPowerPinState = 0;
 int volumeValue = 0;
@@ -31,6 +29,8 @@ int volOvPinState = 0;
 int opticalPinState = 0;
 int scrollPinState = 0;
 int backButtonPinState = 0;
+int changeSoundInputPinState = 0;
+unsigned long timeValue = 0;
 
 SoftwareSerial esp8266(8, 7);
 String output = "";
@@ -48,13 +48,29 @@ int yPosition = 0;
 int joystickPinState = 0;
 int mapX = 0;
 int mapY = 0;
+
 bool soundBarPowerSwitch = false;
 bool tvPowerSwitch = false;
 bool inputSourceSwitch = false;
 bool volumeFirstRead = true;
 bool clientConnected = false;
 bool esp8266Init = false;
-unsigned long timeValue = 0;
+
+typedef uint16_t microseconds_t; 
+typedef uint16_t frequency_t;   
+
+static inline unsigned hz2khz(frequency_t f) { return f / 1000U; }
+
+const microseconds_t intro_Power[] PROGMEM = { 9024U, 4512U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 39756 };
+const microseconds_t repeat_Power[] PROGMEM = { 9024U, 2256U, 564U, 65535U };
+const microseconds_t intro_BT[] PROGMEM = { 9024U, 4512U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 564U, 564U, 1692U, 564U, 564U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 564U, 564U, 1692U, 564U, 564U, 564U, 1692U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 564U, 564U, 1692U, 564U, 39756 };
+const microseconds_t repeat_BT[] PROGMEM = { 9024U, 2256U, 564U, 65535U };
+const microseconds_t intro_Optical[] PROGMEM = { 9024U, 4512U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 564U, 564U, 1692U, 564U, 39756 };
+const microseconds_t repeat_Optical[] PROGMEM = { 9024U, 2256U, 564U, 65535U };
+const microseconds_t intro_up_arrow[] PROGMEM = { 9024U, 4512U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 39756 };
+const microseconds_t repeat_up_arrow[] PROGMEM = { 9024U, 2256U, 564U, 65535U };
+const microseconds_t intro_down_arrow[] PROGMEM = { 9024U, 4512U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 564U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 1692U, 564U, 39756 };
+const microseconds_t repeat_down_arrow[] PROGMEM = { 9024U, 2256U, 564U, 65535U };
 
 void setup() {
   Serial.begin(9600);
@@ -71,6 +87,7 @@ void setup() {
   pinMode(joystickRyPin, INPUT);
   pinMode(joystickButtonPin, INPUT_PULLUP);
   pinMode(backButtonPin, INPUT_PULLUP);
+  pinMode(changeSoundInputPin, INPUT_PULLUP);
 
   IrSender.begin(IR_SEND_PIN, DISABLE_LED_FEEDBACK);
   IrSender.enableIROut(38);
@@ -80,9 +97,11 @@ void setup() {
 
 void loop() {
   timeValue = millis();
+  
   while ((timeValue + keepAliveTimeout) > millis()) {
     InnerLoop();
   }
+  
   if (clientConnected) {
     keepAliveOutput = "ka\r\n";
     keepAliveSendLength = "AT+CIPSEND=0," + String(keepAliveOutput.length()) + "\r\n";
@@ -102,11 +121,7 @@ void InnerLoop() {
     if (soundBarPowerPinState == LOW) {
       Serial.println("Power off sound bar");
       digitalWrite(redLedPin, LOW);
-      IrSender.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
-      for (int i = 0; i < 150; i++) {
-        delay(10);
-        IrSender.sendNEC(0xFFFFFFFF, 0);
-      }
+      sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
       soundBarPowerSwitch = false;
       delay(250);
     }
@@ -114,7 +129,7 @@ void InnerLoop() {
     if (soundBarPowerPinState == LOW) {
       Serial.println("Power on sound bar");
       digitalWrite(redLedPin, LOW);
-      IrSender.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
+      sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
       soundBarPowerSwitch = true;
       delay(250);
     }
@@ -134,7 +149,7 @@ void InnerLoop() {
       Serial.print("  ");
       Serial.println(volumeLevel);
       digitalWrite(redLedPin, LOW);
-      IrSender.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
+      sendRaw(intro_down_arrow, 68U, repeat_down_arrow, 4U, 38400U, 1);
       volumeTracker = volumeLevel;
     } else {
       Serial.print("Volume up: ");
@@ -142,7 +157,7 @@ void InnerLoop() {
       Serial.print("  ");
       Serial.println(volumeLevel);
       digitalWrite(redLedPin, LOW);
-      IrSender.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
+      sendRaw(intro_up_arrow, 68U, repeat_up_arrow, 4U, 38400U, 1);
       volumeTracker = volumeLevel;
     }
     delay(250);
@@ -153,11 +168,11 @@ void InnerLoop() {
     if (volumeLevel < 7) {
       Serial.println("Volume down (override)");
       digitalWrite(redLedPin, LOW);
-      IrSender.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
+      sendRaw(intro_down_arrow, 68U, repeat_down_arrow, 4U, 38400U, 1);
     } else {
       Serial.println("Volume up (override)");
       digitalWrite(redLedPin, LOW);
-      IrSender.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
+      sendRaw(intro_up_arrow, 68U, repeat_up_arrow, 4U, 38400U, 1);
     }
     delay(250);
   }
@@ -167,7 +182,7 @@ void InnerLoop() {
     if (opticalPinState == LOW) {
       Serial.println("Bluetooth");
       digitalWrite(redLedPin, LOW);
-      IrSender.sendNEC(0x807F52ADU, IR_CODE_NUM_BITS);
+      sendRaw(intro_BT, 68U, repeat_BT, 4U, 38400U, 1);
       inputSourceSwitch = false;
       delay(250);
     }
@@ -175,29 +190,25 @@ void InnerLoop() {
     if (opticalPinState == LOW) {
       Serial.println("Optical");
       digitalWrite(redLedPin, LOW);
-      IrSender.sendNEC(0x807F926DU, IR_CODE_NUM_BITS);
+      sendRaw(intro_Optical, 68U, repeat_Optical, 4U, 38400U, 1);
       inputSourceSwitch = true;
       delay(250);
     }
   }
 
   tvPowerPinState = digitalRead(tvPowerPin);
-  if (tvPowerSwitch) {
-    if (tvPowerPinState == LOW) {
-      Serial.println("Power off tv");
-      digitalWrite(redLedPin, LOW);
-      IrSender.sendSAMSUNG(0xE0E040BF, IR_CODE_NUM_BITS);
-      tvPowerSwitch = false;
-      delay(250);
-    }
-  } else {
-    if (tvPowerPinState == LOW) {
-      Serial.println("Power on tv");
-      digitalWrite(redLedPin, LOW);
-      IrSender.sendSAMSUNG(0xE0E040BF, IR_CODE_NUM_BITS);
-      tvPowerSwitch = true;
-      delay(250);
-    }
+  if (tvPowerPinState == LOW) {
+    Serial.println("Power tv");
+    digitalWrite(redLedPin, LOW);
+    IrSender.sendSamsung(0x707, 0xE6, 0, false);
+    delay(250);
+  }
+
+  changeSoundInputPinState = digitalRead(changeSoundInputPin);
+  if (changeSoundInputPinState == LOW) {
+    Serial.println("Change sound input");
+    ChangeSoundInput();
+    delay(250);
   }
 
   xPosition = analogRead(joystickRxPin);
@@ -260,6 +271,21 @@ void InnerLoop() {
   digitalWrite(redLedPin, HIGH);
   if (clientConnected) {
     digitalWrite(blueLedPin, HIGH);
+  }
+}
+
+void ChangeSoundInput() {
+  Serial.println("here");
+}
+
+static void sendRaw(const microseconds_t intro[], size_t lengthIntro, const microseconds_t repeat[], size_t lengthRepeat, frequency_t frequency, unsigned times) {
+  if (lengthIntro > 0U) {
+    IrSender.sendRaw_P(intro, lengthIntro, hz2khz(frequency));
+  }
+  if (lengthRepeat > 0U) {
+    for (unsigned i = 0U; i < times - (lengthIntro > 0U); i++) {
+      IrSender.sendRaw_P(repeat, lengthRepeat, hz2khz(frequency));
+    }
   }
 }
 
@@ -335,14 +361,15 @@ void TcpDataIn(const int timeout) {
       dataInResponse += c;
     }
   }
+  
   if (dataInResponse.length() == 0) {
     if (!clientConnected) {
       FlashBlueLed();
     }
     return;
   }
+  
   Serial.println("received: " + dataInResponse);
-
   if (dataInResponse.indexOf("zzzz") > 0 || dataInResponse.indexOf("zzz") > 0 ||
       dataInResponse.indexOf("zz") > 0 || dataInResponse.indexOf("z") > 0) {
 
@@ -387,195 +414,3 @@ String TcpDataOut(String command, const int timeout) {
   Serial.println(dataOutResponse);
   return dataOutResponse;
 }
-
-/*
-  Serial.println(F("Enter number of signal to send (1 .. 20)"));
-  long commandno = Serial.parseInt();
-  joystickButtonPinitch (commandno) {
-  case 1L:
-    IrSender.sendNEC(0x807F08F7U, IR_CODE_NUM_BITS);
-    break;
-  case 2L:
-    IrSender.sendNEC(0x807FE817U, IR_CODE_NUM_BITS);
-    break;
-  case 3L:
-    IrSender.sendNEC(0x807F52ADU, IR_CODE_NUM_BITS);
-    break;
-  case 4L:
-    IrSender.sendNEC(0x807F926DU, IR_CODE_NUM_BITS);
-    break;
-  case 5L:
-    IrSender.sendNEC(0x807FE21DU, IR_CODE_NUM_BITS);
-    break;
-  case 6L:
-    IrSender.sendNEC(0x807F50AFU, IR_CODE_NUM_BITS);
-    break;
-  case 7L:
-    IrSender.sendNEC(0x807F8877U, IR_CODE_NUM_BITS);
-    break;
-  case 8L:
-    IrSender.sendNEC(0x807F28D7U, IR_CODE_NUM_BITS);
-    break;
-  case 9L:
-    IrSender.sendNEC(0x807F10EFU, IR_CODE_NUM_BITS);
-    break;
-  case 10L:
-    IrSender.sendNEC(0x807F906FU, IR_CODE_NUM_BITS);
-    break;
-  case 11L:
-    IrSender.sendNEC(0x807F7A85U, IR_CODE_NUM_BITS);
-    break;
-  case 12L:
-    IrSender.sendNEC(0x807FC23DU, IR_CODE_NUM_BITS);
-    break;
-  case 13L:
-    IrSender.sendNEC(0x807F02FDU, IR_CODE_NUM_BITS);
-    break;
-  case 14L:
-    IrSender.sendNEC(0x807FC837U, IR_CODE_NUM_BITS);
-    break;
-  case 15L:
-    IrSender.sendNEC(0x807FB24DU, IR_CODE_NUM_BITS);
-    break;
-  case 16L:
-    IrSender.sendNEC(0x807F32CDU, IR_CODE_NUM_BITS);
-    break;
-  case 17L:
-    IrSender.sendNEC(0x807FD22DU, IR_CODE_NUM_BITS);
-    break;
-  case 18L:
-    IrSender.sendNEC(0x807F0AF5U, IR_CODE_NUM_BITS);
-    break;
-  case 19L:
-    IrSender.sendNEC(0x807FF20DU, IR_CODE_NUM_BITS);
-    break;
-  case 20L:
-    IrSender.sendNEC(0x807F728DU, IR_CODE_NUM_BITS);
-    break;
-  case 21L:
-    IrSender.sendSAMSUNG(POWER, IR_CODE_NUM_BITS);
-    break;
-  case 22L:
-    IrSender.sendSAMSUNG(VOLUME_UP, IR_CODE_NUM_BITS);
-    break;
-  case 23L:
-    IrSender.sendSAMSUNG(VOLUME_DOWN, IR_CODE_NUM_BITS);
-    break;
-  default:
-    Serial.println(F("Invalid number entered, try again"));
-    break;
-  }
-
-  // --- SAMSUNG ---
-
-  #define POWER 0xE0E040BF
-  #define VOLUME_UP 0xE0E0E01F
-  #define VOLUME_DOWN 0xE0E0D02F
-
-  power
-
-  04:47:29.791 -> Protocol=SAMSUNG Address=0x707 Command=0xE6 Raw-Data=0x19E60707 32 bits LSB first
-  04:47:29.892 -> ERROR: Received address=0x707 != sent address=0xF1
-  04:47:29.938 -> ERROR: Received command=0xE6 != sent command=0x76
-
-  left
-  04:44:29.282 -> Protocol=SAMSUNG Address=0x707 Command=0x62 Raw-Data=0x9D620707 32 bits LSB first
-  04:44:29.382 -> ERROR: Received address=0x707 != sent address=0xF1
-  04:44:29.429 -> ERROR: Received command=0x62 != sent command=0x76
-
-  right
-
-  04:44:38.743 -> Protocol=SAMSUNG Address=0x707 Command=0x65 Raw-Data=0x9A650707 32 bits LSB first
-  04:44:38.787 -> ERROR: Received address=0x707 != sent address=0xF1
-  04:44:38.870 -> ERROR: Received command=0x65 != sent command=0x76
-
-  up
-  04:45:41.307 -> Protocol=SAMSUNG Address=0x707 Command=0x60 Raw-Data=0x9F600707 32 bits LSB first
-  04:45:41.407 -> ERROR: Received address=0x707 != sent address=0xF1
-  04:45:41.454 -> ERROR: Received command=0x60 != sent command=0x76
-
-  down
-  04:45:48.893 -> Protocol=SAMSUNG Address=0x707 Command=0x61 Raw-Data=0x9E610707 32 bits LSB first
-  04:45:48.940 -> ERROR: Received address=0x707 != sent address=0xF1
-  04:45:48.994 -> ERROR: Received command=0x61 != sent command=0x76
-
-  home
-
-  04:46:03.027 -> Protocol=SAMSUNG Address=0x707 Command=0x79 Raw-Data=0x86790707 32 bits LSB first
-  04:46:03.127 -> ERROR: Received address=0x707 != sent address=0xF1
-  04:46:03.181 -> ERROR: Received command=0x79 != sent command=0x76
-
-  ok
-
-  04:46:13.325 -> Protocol=SAMSUNG Address=0x707 Command=0x68 Raw-Data=0x97680707 32 bits LSB first
-  04:46:13.426 -> ERROR: Received address=0x707 != sent address=0xF1
-  04:46:13.473 -> ERROR: Received command=0x68 != sent command=0x76
-
-  back
-
-  04:46:22.735 -> ERROR: Received command=0x58 != sent command=0x76
-  04:46:23.993 -> Protocol=SAMSUNG Address=0x707 Command=0x58 Raw-Data=0xA7580707 32 bits LSB first
-  04:46:24.093 -> ERROR: Received address=0x707 != sent address=0xF1
-  04:46:24.139 -> ERROR: Received command=0x58 != sent command=0x76
-
-*/
-
-// Command #1: Power
-// Protocol: nec1, Parameters: hex=247U D=1U param3=0U param4=0U F=16U
-
-// Command #2: Mute
-// Protocol: nec1, Parameters: hex=23U D=1U param3=0U param4=0U F=23U
-
-// Command #3: BT
-// Protocol: nec1, Parameters: hex=173U D=1U param3=0U param4=0U F=74U
-
-// Command #4: Optical
-// Protocol: nec1, Parameters: hex=109U D=1U param3=0U param4=0U F=73U
-
-// Command #5: Line In
-// Protocol: nec1, Parameters: hex=29U D=1U param3=0U param4=0U F=71U
-
-// Command #6: USB
-// Protocol: nec1, Parameters: hex=175U D=1U param3=0U param4=0U F=10U
-
-// Command #7: up arrow
-// Protocol: nec1, Parameters: hex=119U D=1U param3=0U param4=0U F=17U
-
-// Command #8: right arrow
-// Protocol: nec1, Parameters: hex=215U D=1U param3=0U param4=0U F=20U
-
-// Command #9: down arrow
-// Protocol: nec1, Parameters: hex=239U D=1U param3=0U param4=0U F=8U
-
-// Command #10: left arrow
-// Protocol: nec1, Parameters: hex=111U D=1U param3=0U param4=0U F=9U
-
-// Command #11: Select
-// Protocol: nec1, Parameters: hex=133U D=1U param3=0U param4=0U F=94U
-
-// Command #12: General
-// Protocol: nec1, Parameters: hex=61U D=1U param3=0U param4=0U F=67U
-
-// Command #13: Voice
-// Protocol: nec1, Parameters: hex=253U D=1U param3=0U param4=0U F=64U
-
-// Command #14: Reset
-// Protocol: nec1, Parameters: hex=55U D=1U param3=0U param4=0U F=19U
-
-// Command #15: Bass
-// Protocol: nec1, Parameters: hex=77U D=1U param3=0U param4=0U F=77U
-
-// Command #16: Bass+
-// Protocol: nec1, Parameters: hex=205U D=1U param3=0U param4=0U F=76U
-
-// Command #17: Bass-
-// Protocol: nec1, Parameters: hex=45U D=1U param3=0U param4=0U F=75U
-
-// Command #18: Treble
-// Protocol: nec1, Parameters: hex=245U D=1U param3=0U param4=0U F=80U
-
-// Command #19: Treble+
-// Protocol: nec1, Parameters: hex=13U D=1U param3=0U param4=0U F=79U
-
-// Command #20: Treble-
-// Protocol: nec1, Parameters: hex=141U D=1U param3=0U param4=0U F=78U
