@@ -268,6 +268,7 @@
     <Content Include="Resources\blue_cursors_xl\blue_up_xl.cur">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="Resources\noprev_wide.png" />
     <None Include="Resources\ripple-red.gif" />
     <None Include="Resources\ripple-green.gif" />
   </ItemGroup>

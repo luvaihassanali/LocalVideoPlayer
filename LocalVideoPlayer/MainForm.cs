@@ -291,7 +291,14 @@ namespace LocalVideoPlayer
             PictureBox tvShowBackdropBox = new PictureBox();
             tvShowBackdropBox.Height = (int)(tvForm.Height / 1.777777777777778);
             string imagePath = tvShow.Backdrop;
-            tvShowBackdropBox.Image = Image.FromFile(imagePath);
+            try
+            {
+                tvShowBackdropBox.Image = Image.FromFile(imagePath);
+            }
+            catch
+            {
+                tvShowBackdropBox.Image = Properties.Resources.noprev;
+            }
             tvShowBackdropBox.Dock = DockStyle.Top;
             tvShowBackdropBox.SizeMode = PictureBoxSizeMode.StretchImage;
             tvShowBackdropBox.Name = "tvShowBackdropBox";
@@ -668,13 +675,20 @@ namespace LocalVideoPlayer
                 if (currEpisode.Backdrop != null)
                 {
                     string eImagePath = currEpisode.Backdrop;
-                    episodeBox.BackgroundImage = Image.FromFile(eImagePath);
+                    try
+                    {
+                        episodeBox.BackgroundImage = Image.FromFile(eImagePath);
+                    } 
+                    catch
+                    {
+                        episodeBox.BackgroundImage = Properties.Resources.noprev;
+                    }
                     episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
                 }
                 else
                 {
                     //To-do: make new no preview for episode box size
-                    episodeBox.BackgroundImage = Properties.Resources.noprevSeason;
+                    episodeBox.BackgroundImage = Properties.Resources.noprev;
                     episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
                 }
                 episodeBox.BackColor = SystemColors.Desktop;
@@ -1056,7 +1070,14 @@ namespace LocalVideoPlayer
                 if (currSeason.Poster != null)
                 {
                     string imagePath = currSeason.Poster;
-                    seasonBox.Image = Image.FromFile(imagePath);
+                    try
+                    {
+                        seasonBox.Image = Image.FromFile(imagePath);
+                    }
+                    catch
+                    {
+                        seasonBox.Image = Properties.Resources.noprevSeason;
+                    }
                 }
                 else if (currSeason.Id == -1)
                 {
@@ -1239,7 +1260,14 @@ namespace LocalVideoPlayer
 
             PictureBox movieBackdropBox = new PictureBox();
             string imagePath = movie.Backdrop;
-            movieBackdropBox.BackgroundImage = Image.FromFile(imagePath);
+            try
+            {
+                movieBackdropBox.BackgroundImage = Image.FromFile(imagePath);
+            }
+            catch
+            {
+                movieBackdropBox.BackgroundImage = Properties.Resources.noprevSeason;
+            }
             movieBackdropBox.BackgroundImageLayout = ImageLayout.Stretch;
             movieBackdropBox.BackColor = SystemColors.Desktop;
             movieBackdropBox.Dock = DockStyle.Top;
@@ -1342,7 +1370,14 @@ namespace LocalVideoPlayer
                 movieBox.Width = widthValue;
                 movieBox.Height = heightValue;
                 string imagePath = media.Movies[i].Poster;
-                movieBox.Image = Image.FromFile(imagePath);
+                try
+                {
+                    movieBox.Image = Image.FromFile(imagePath);
+                }
+                catch
+                {
+                    movieBox.Image = Properties.Resources.noprev;
+                }
                 movieBox.BackColor = SystemColors.Desktop;
                 movieBox.Left = movieBox.Width * currentPanel.Controls.Count;
                 movieBox.Cursor = blueHandCursor;
@@ -1385,7 +1420,14 @@ namespace LocalVideoPlayer
                 tvShowBox.Width = widthValue;
                 tvShowBox.Height = heightValue;
                 string imagePath = media.TvShows[i].Poster;
-                tvShowBox.Image = Image.FromFile(imagePath);
+                try
+                {
+                    tvShowBox.Image = Image.FromFile(imagePath);
+                }
+                catch
+                {
+                    tvShowBox.Image = Properties.Resources.noprev;
+                }
                 tvShowBox.BackColor = SystemColors.Desktop;
                 tvShowBox.Left = tvShowBox.Width * currentPanel.Controls.Count;
                 tvShowBox.Cursor = blueHandCursor;
