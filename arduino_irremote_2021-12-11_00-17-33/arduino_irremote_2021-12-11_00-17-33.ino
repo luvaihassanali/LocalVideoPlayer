@@ -275,7 +275,33 @@ void InnerLoop() {
 }
 
 void ChangeSoundInput() {
-  Serial.println("here");
+  int _delay = 250;
+  Serial.println("change sound input");
+  IrSender.sendSamsung(0x707, 0x79, 0, false); //home
+  Serial.println("home");
+  delay(_delay);
+  for(int i = 0; i < 16; i++) {
+    IrSender.sendSamsung(0x707, 0x65, 0, false); //left
+    Serial.println(String(i) + " left");
+    delay(_delay);
+  }
+  IrSender.sendSamsung(0x707, 0x62, 0, false); //right
+  Serial.println("right");
+  delay(_delay);
+  IrSender.sendSamsung(0x707, 0x60, 0, false); //up
+  Serial.println("up");
+  delay(_delay);
+  for(int i = 0; i < 3; i++) {
+    IrSender.sendSamsung(0x707, 0x62, 0, false); //right
+    Serial.println(String(i) + " right");
+    delay(_delay);    
+  }
+  IrSender.sendSamsung(0x707, 0x68, 0, false); //enter
+  Serial.println("enter");
+  delay(_delay);  
+  IrSender.sendSamsung(0x707, 0x79, 0, false); //home
+  Serial.println("home");
+  delay(_delay);
 }
 
 static void sendRaw(const microseconds_t intro[], size_t lengthIntro, const microseconds_t repeat[], size_t lengthRepeat, frequency_t frequency, unsigned times) {
