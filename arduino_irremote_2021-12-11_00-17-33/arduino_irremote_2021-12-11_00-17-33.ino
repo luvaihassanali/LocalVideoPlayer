@@ -20,6 +20,7 @@ const uint16_t SAMSUNG_UP = 0x60;
 const uint16_t SAMSUNG_DOWN = 0x61;
 const uint16_t SAMSUNG_VOL_UP = 0x7;
 const uint16_t SAMSUNG_VOL_DOWN = 0xB;
+const uint16_t SAMSUNG_STOP = 0x46;
 
 const int backButtonPin = A2;
 const int blueLedPin = 5;
@@ -41,7 +42,7 @@ const unsigned long keepAliveTimeout = 4999;
 int backButtonPinState = 0;
 int joystickXPos = 0;
 int joystickYPos = 0;
-int joystickPinState = 0;
+int joystickButtonPinState = 0;
 int joystickMapX = 0;
 int joystickMapY = 0;
 int opticalPinState = 0;
@@ -148,14 +149,21 @@ void InnerLoop() {
     volumeFirstRead = false;
   }
 
-  // If button held then  tv vol otherwise  sound bar
   tvVolumePinState = digitalRead(tvVolumePin);
   if (tvVolumePinState == LOW) {
+    // If button held then tv vol otherwise soundbar
     if (volumeLevel != volumeTracker) {
       TvVolume();
     }
     if (volOvPinState == LOW) {
       OverrideTvVolume();
+    }
+    // If button held and joystick button pushed send IR hub stop signal
+    if (joystickButtonPinState == LOW) {
+      digitalWrite(redLedPin, LOW);
+      Serial.println("stop");
+      IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_STOP, 0, false);
+      delay(250);
     }
   }
 
@@ -164,7 +172,7 @@ void InnerLoop() {
   }
 
   volOvPinState = digitalRead(volOvPin);
-  // Check tv volume pin state otherwise both override volume functions get exectuted when calling for tv only
+  // Block sound bar volume control while controlling tv
   if (volOvPinState == LOW && tvVolumePinState == HIGH) {
     OverrideSoundBarVolume();
   }
@@ -176,8 +184,8 @@ void InnerLoop() {
 
   tvPowerPinState = digitalRead(tvPowerPin);
   if (tvPowerPinState == LOW) {
-    Serial.println("Power tv");
     digitalWrite(redLedPin, LOW);
+    Serial.println("Power tv");
     IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_POWER, 0, false);
     delay(250);
   }
@@ -190,26 +198,26 @@ void InnerLoop() {
 
   joystickXPos = analogRead(joystickRxPin);
   joystickYPos = analogRead(joystickRyPin);
-  joystickPinState = digitalRead(joystickButtonPin);
+  joystickButtonPinState = digitalRead(joystickButtonPin);
   joystickMapX = map(joystickXPos, 0, 1023, -512, 512);
   joystickMapY = map(joystickYPos, 0, 1023, -512, 512);
   scrollPinState = digitalRead(scrollPin);
   backButtonPinState = digitalRead(backButtonPin);
 
   // If esp8266 not initialized joystick control sends infared tv remote signals
-  if ((backButtonPinState == 0 || joystickPinState == 0 || joystickMapX > joystickThreshold || joystickMapX < -joystickThreshold
+  if ((backButtonPinState == LOW || joystickButtonPinState == LOW || joystickMapX > joystickThreshold || joystickMapX < -joystickThreshold
        || joystickMapY > joystickThreshold || joystickMapY < -joystickThreshold) && !esp8266Init) {
     TvControl();
   }
 
   // Else joystick data is sent over tcp to control mouse movement
-  if ((joystickPinState == 0 || scrollPinState == 0 || joystickMapX > joystickThreshold || joystickMapX < -joystickThreshold
+  if ((joystickButtonPinState == LOW || scrollPinState == LOW || joystickMapX > joystickThreshold || joystickMapX < -joystickThreshold
        || joystickMapY > joystickThreshold || joystickMapY < -joystickThreshold) && clientConnected) {
     MouseControl();
   }
 
   // Initialize esp8266 as tcp server on scroll button press
-  if (scrollPinState == 0 && !esp8266Init) {
+  if (scrollPinState == LOW && !esp8266Init) {
     esp8266.begin(9600);
     Serial.println("Starting esp8266...");
     InitializeEsp8266();
@@ -371,10 +379,11 @@ void OverrideTvVolume() {
 
 void TvControl() {
   digitalWrite(redLedPin, LOW);
-  if (backButtonPinState == 0) {
+  if (backButtonPinState == LOW) {
     Serial.println("home");
     IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_HOME, 0, false);
-  } else if (joystickPinState == 0) {
+    // Block sending enter signal if sending stop signal
+  } else if (joystickButtonPinState == LOW && tvVolumePinState == HIGH) {
     Serial.println("enter");
     IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_ENTER, 0, false);
   } else if (joystickMapX > joystickThreshold) {
@@ -395,7 +404,8 @@ void TvControl() {
 
 void MouseControl() {
   digitalWrite(blueLedPin, LOW);
-  joystickOutput = String(joystickMapX) + "," + String(joystickMapY) + "," + String(joystickPinState) + "," + String(scrollPinState) + "\r\n";
+  // Data sent over tcp contains joystick x/y positions, joystick buttin pin state, and scroll button pin state
+  joystickOutput = String(joystickMapX) + "," + String(joystickMapY) + "," + String(joystickButtonPinState) + "," + String(scrollPinState) + "\r\n";
   joystickSendLength = "AT+CIPSEND=0," + String(joystickOutput.length()) + "\r\n";
   TcpDataOut(joystickSendLength, 10);
   TcpDataOut(joystickOutput, 100);
@@ -493,7 +503,7 @@ void TcpDataIn(const int timeout) {
     clientConnected = true;
     return;
   }
-  
+
   if (dataInResponse.indexOf("nlink") > 0) {
     Serial.println("Unlink detected");
     clientConnected = false;
@@ -522,7 +532,7 @@ String TcpDataOut(String command, const int timeout) {
     Serial.println("Error in TcpDataOut");
     ResetEsp8266();
   }
-  
+
   Serial.println(dataOutResponse);
   return dataOutResponse;
 }
