@@ -687,7 +687,6 @@ namespace LocalVideoPlayer
                 }
                 else
                 {
-                    //To-do: make new no preview for episode box size
                     episodeBox.BackgroundImage = Properties.Resources.noprev;
                     episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
                 }
