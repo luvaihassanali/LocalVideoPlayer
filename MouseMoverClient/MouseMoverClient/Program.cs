@@ -167,7 +167,8 @@ namespace MouseMoverClient
 
                             if (buffer.Contains("initack"))
                             {
-                                Log("initack received");
+                                // Send cursor to centre of screen
+                                Cursor.Position = new System.Drawing.Point(960, 540);
                                 StopTimer();
                                 StartTimer();
                             }
@@ -293,41 +294,6 @@ namespace MouseMoverClient
 
         static void DoMouseMove()
         {
-
-            /*if (jX > 490 || jY > 490 || jX < -490 || jY < -490)
-            {
-                Log("max");
-                jX = -jX;
-                jY = -jY;
-            }
-            else if ((jX > 319 && jX < 490) ||
-                     (jY > 319 && jY < 490) ||
-                     (jX < -319 && jX > -490) ||
-                     (jY < -319 && jY > -490))
-            {
-                Log("higher mid");
-                jX = -jX / 2;
-                jY = -jY / 2;
-            }
-            else if ((jX > 220 && jX < 319) ||
-                     (jY > 200 && jY < 319) ||
-                     (jX < -220 && jX > -319) ||
-                     (jY < -220 && jY > -319))
-            {
-                Log("lower mid");
-                jX = -jX / 4;
-                jY = -jY / 4;
-            }
-            else if ((jX < 220 && jX > -220) || (jY < 220 && jY > -220))
-            {
-                Log("min");
-                jX = -jX / 8;
-                jY = -jY / 8;
-            }
-            else
-            {
-                Log("idk");
-            }*/
             jX = -jX;
             jY = -jY;
             int divisor = 20;
@@ -345,9 +311,6 @@ namespace MouseMoverClient
                 Cursor.Position = new System.Drawing.Point(Cursor.Position.X + jX / divisor, Cursor.Position.Y + jY / divisor);
                 Thread.Sleep(1);
             }
-
-            //Cursor.Position = new System.Drawing.Point(Cursor.Position.X + tuple.Item1, Cursor.Position.Y + tuple.Item2);
-            //Log("Mouse position: " + Cursor.Position.ToString()); 
         }
 
         static void DoMouseClick()
