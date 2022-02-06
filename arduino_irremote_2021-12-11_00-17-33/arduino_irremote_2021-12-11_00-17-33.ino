@@ -283,7 +283,7 @@ void SoundBarInput() {
 void TvSoundInput() {
   IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_HOME, 0, false);
   Serial.println("home");
-  for (int i = 0; i < 17; i++) {
+  for (int i = 0; i < 20; i++) {
     IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_LEFT, 0, false);
     Serial.println(String(i) + " left");
     FlashRedLed();
