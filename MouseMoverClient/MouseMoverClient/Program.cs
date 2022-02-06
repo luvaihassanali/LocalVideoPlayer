@@ -277,15 +277,6 @@ namespace MouseMoverClient
             }
 
             DoMouseMove();
-
-            //NW 500, 500
-            //N -3, 500
-            //NE -499, 500
-            //E -500, 4
-            //SE -499, -499
-            //S -2, -500
-            //SW 500, -499
-            //W 500, 4 
         }
 
         #endregion

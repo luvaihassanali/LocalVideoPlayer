@@ -136,6 +136,8 @@ namespace LocalVideoPlayer
                 {
                     MouseWorker.DoMouseRightClick();
                     MouseWorker.DoMouseClick();
+                    this.Cursor = new Cursor(Cursor.Current.Handle);
+                    Cursor.Position = new Point(0, this.Height * 3);
                     PlayButton_Click(null, null);
                 }
             }
