@@ -53,6 +53,8 @@ namespace LocalVideoPlayer
 
         #endregion
 
+        static private bool debugLog;
+        static private string debugLogPath;
         private bool seasonFormOpen = false;
         private bool resetFormOpen = false;
         private bool isPlaying = false;
@@ -121,8 +123,8 @@ namespace LocalVideoPlayer
             loadingCircle2.Text = "loadingCircle2";
             seasonDimmerForm.Controls.Add(loadingCircle2);
 
-        #endregion
-    }
+            #endregion
+        }
 
         #region General form functions
 
@@ -130,7 +132,10 @@ namespace LocalVideoPlayer
         {
             loadingCircle1.Location = new Point(this.Width / 2 - loadingCircle1.Width / 2, this.Height / 2 - loadingCircle1.Height / 2);
             loadingLabel.Location = new Point(0, this.Height / 2 - loadingLabel.Height / 2 + 2);
-            loadingLabel.Size = new Size(this.Width, loadingLabel.Height); ;
+            loadingLabel.Size = new Size(this.Width, loadingLabel.Height);
+            debugLogPath = ConfigurationManager.AppSettings["debugLogPath"] + "lvp-debug.log";
+            debugLog = bool.Parse(ConfigurationManager.AppSettings["debugLog"]);
+            Log("Application start");
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -153,6 +158,8 @@ namespace LocalVideoPlayer
                 string mouseMoverPath = ConfigurationManager.AppSettings["mouseMoverPath"];
                 Process.Start(mouseMoverPath);
             }
+
+            Log("Application end");
         }
 
         private void CloseButton_Click(object sender, EventArgs e)
@@ -592,7 +599,7 @@ namespace LocalVideoPlayer
             }
 
             List<Control> episodePanelList = null;
-            if(tvShow.CurrSeason == -1)
+            if (tvShow.CurrSeason == -1)
             {
                 SplitContainer extrasContainer = CreateExtrasPicker(tvShow, tvForm);
                 extrasContainer.Dock = DockStyle.None;
@@ -603,13 +610,13 @@ namespace LocalVideoPlayer
                 extrasContainer.SplitterDistance = seasonButton.Width / 3;
                 extrasContainer.BringToFront();
                 DirView_NodeMouseClick(null, null);
-            } 
+            }
             else
             {
                 episodePanelList = CreateEpisodePanels(tvShow);
             }
 
-            if(episodePanelList != null)
+            if (episodePanelList != null)
             {
                 foreach (Control ep in episodePanelList)
                 {
@@ -634,7 +641,7 @@ namespace LocalVideoPlayer
                     }
                 }
             }
-            
+
             CustomDialog.UpdateScrollBar(customScrollbar, masterPanel);
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
 
@@ -678,7 +685,7 @@ namespace LocalVideoPlayer
                     try
                     {
                         episodeBox.BackgroundImage = Image.FromFile(eImagePath);
-                    } 
+                    }
                     catch
                     {
                         episodeBox.BackgroundImage = Properties.Resources.noprev;
@@ -750,7 +757,7 @@ namespace LocalVideoPlayer
             SplitContainer mainContainer = new SplitContainer();
             NoHScrollTree dirView = new NoHScrollTree();
             ListView fileView = new ListView();
-            
+
             mainContainer.Dock = DockStyle.Fill;
             mainContainer.Panel1.Controls.Add(dirView);
             mainContainer.Panel2.Controls.Add(fileView);
@@ -790,7 +797,7 @@ namespace LocalVideoPlayer
             fileView.SmallImageList = this.imageList1;
             fileView.UseCompatibleStateImageBehavior = false;
             fileView.View = View.Details;
-            
+
             dirView.BackColor = SystemColors.Desktop;
             dirView.ForeColor = SystemColors.Control;
             fileView.BackColor = SystemColors.Desktop;
@@ -803,7 +810,8 @@ namespace LocalVideoPlayer
             fileView.Scrollable = false;
             //ShowScrollBar(fileView.Handle, (int)SB_VERT, true);
 
-            fileView.DrawColumnHeader += (s, e) => {
+            fileView.DrawColumnHeader += (s, e) =>
+            {
                 headerDraw(s, e);
             };
 
@@ -859,13 +867,13 @@ namespace LocalVideoPlayer
             string extrasPath = extras.Episodes[0].Path;
             string[] extrasPathParts = extrasPath.Split('\\');
             extrasPath = "";
-            for(int i = 0; i < extrasPathParts.Length; i++)
+            for (int i = 0; i < extrasPathParts.Length; i++)
             {
                 extrasPath += extrasPathParts[i] + '\\';
                 if (extrasPathParts[i].Contains("Extras")) break;
             }
             PopulateTreeView(dirView, extrasPath);
-            
+
             return mainContainer;
         }
 
@@ -936,7 +944,8 @@ namespace LocalVideoPlayer
             if (itemsCount >= VisibleItem)
             {
                 ShowScrollBar(fileViewG.Handle, (int)SB_VERT, true);
-            } else
+            }
+            else
             {
                 ShowScrollBar(fileViewG.Handle, (int)SB_VERT, false);
             }
@@ -2082,7 +2091,7 @@ namespace LocalVideoPlayer
             string mediaPath = ConfigurationManager.AppSettings["mediaPath"];
             string mediaPathB = ConfigurationManager.AppSettings["mediaPathB"];
             ProcessDirectory(mediaPath, mediaPathB);
-            
+
             if (media == null) throw new ArgumentNullException();
 
             bool update = CheckForUpdates();
@@ -2172,6 +2181,17 @@ namespace LocalVideoPlayer
 
             if (tvForm != null)
                 tvForm.Refresh();
+        }
+
+        static public void Log(string message)
+        {
+            if (debugLog)
+            {
+                using (StreamWriter sw = File.AppendText(debugLogPath))
+                {
+                    sw.WriteLine("{0}:{1} - {2}", DateTime.Now.ToString("HH:mm:ss.fff"), (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod().Name, message);
+                }
+            }
         }
     }
 

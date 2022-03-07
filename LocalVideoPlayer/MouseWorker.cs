@@ -367,7 +367,7 @@ namespace LocalVideoPlayer
 
         public void Log(string message)
         {
-            System.Diagnostics.Debug.WriteLine("{0}: {1}", DateTime.Now.ToString("0:HH:mm:ss.fff"), message);
+            System.Diagnostics.Debug.WriteLine("{0}: {1}", DateTime.Now.ToString("HH:mm:ss.fff"), message);
         }
     }
 
