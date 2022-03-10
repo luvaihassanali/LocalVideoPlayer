@@ -135,31 +135,41 @@ namespace LocalVideoPlayer
             loadingLabel.Size = new Size(this.Width, loadingLabel.Height);
             debugLogPath = ConfigurationManager.AppSettings["debugLogPath"] + "lvp-debug.log";
             debugLog = bool.Parse(ConfigurationManager.AppSettings["debugLog"]);
-            Log("Application start");
+            Log(" <----------- Application Start ------------> ");
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (media != null)
+            try
             {
-                string jsonString = JsonConvert.SerializeObject(media);
-                File.WriteAllText(jsonFile, jsonString);
+                if (media != null)
+                {
+                    string jsonString = JsonConvert.SerializeObject(media);
+                    File.WriteAllText(jsonFile, jsonString);
+                }
+
+                //dimmerForm.Close();
+                //seasonDimmerForm.Close();
+                RestoreSystemCursor();
+
+                if (worker != null)
+                {
+                    worker.StopImmediately();
+                    worker = null;
+                }
+
+                if (mouseMoverClientKill)
+                {
+                    string mouseMoverPath = ConfigurationManager.AppSettings["mouseMoverPath"];
+                    Process.Start(mouseMoverPath);
+                }
             }
-
-            dimmerForm.Close();
-            seasonDimmerForm.Close();
-            RestoreSystemCursor();
-
-            worker.StopImmediately();
-            worker = null;
-
-            if (mouseMoverClientKill)
+            catch (Exception ex)
             {
-                string mouseMoverPath = ConfigurationManager.AppSettings["mouseMoverPath"];
-                Process.Start(mouseMoverPath);
+                Log("Application exit " + ex.Message);
             }
-
-            Log("Application end");
+            
+            Log(" <----------- Application End ------------> ");
         }
 
         private void CloseButton_Click(object sender, EventArgs e)
@@ -2183,6 +2193,31 @@ namespace LocalVideoPlayer
                 tvForm.Refresh();
         }
 
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Up)
+            {
+                Log("You pressed Up arrow key");
+                return true;
+            }
+            if (keyData == Keys.Down)
+            {
+                Log("You pressed Down arrow key");
+                return true;
+            }
+            if (keyData == Keys.Left)
+            {
+                Log("You pressed Left arrow key");
+                return true;
+            }
+            if (keyData == Keys.Right)
+            {
+                Log("You pressed Right arrow key");
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
         static public void Log(string message)
         {
             if (debugLog)
@@ -2190,6 +2225,7 @@ namespace LocalVideoPlayer
                 using (StreamWriter sw = File.AppendText(debugLogPath))
                 {
                     sw.WriteLine("{0}:{1} - {2}", DateTime.Now.ToString("HH:mm:ss.fff"), (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod().Name, message);
+                    Debug.WriteLine("{0}:{1} - {2}", DateTime.Now.ToString("HH:mm:ss.fff"), (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod().Name, message);
                 }
             }
         }

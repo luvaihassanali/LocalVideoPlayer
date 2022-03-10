@@ -36,30 +36,7 @@ namespace LocalVideoPlayer
             playButton.Cursor = blueHandCursor;
             videoView1.Cursor = Cursors.Default;
 
-            #region Serial port initialize 
-            
-            serialPort = new SerialPort();
-            string portNumber = ConfigurationManager.AppSettings["comPort"];
-            serialPort.PortName = "COM" + portNumber;
-            serialPort.BaudRate = 9600;
-            serialPort.DataBits = 8;
-            serialPort.Parity = Parity.None;
-            serialPort.StopBits = StopBits.One;
-            serialPort.Handshake = Handshake.None;
-            serialPort.ReadTimeout = 500;
-            serialPort.DataReceived += SerialPort_DataReceived;
-
-            try
-            {
-                serialPort.Open();
-                System.Diagnostics.Debug.WriteLine("Connected to serial");
-            }
-            catch
-            {
-                System.Diagnostics.Debug.WriteLine("Serial port does not exist");
-            }
-
-            #endregion
+            InitializeSerialPort();
 
             //To-do: some parameters are in tv object to remove from constructor
             tvForm = tf;
@@ -74,10 +51,10 @@ namespace LocalVideoPlayer
             timeline.Value = seekTime;
 
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
-            libVlc = new LibVLC(); 
+            libVlc = new LibVLC();
             //libVlc = new LibVLC("--verbose=2");
             //libVlc.SetLogFile("vlclog.txt");
-            //libVlc.Log += (sender, e) => Console.WriteLine($"[{e.Level}] {e.Module}:{e.Message}");
+            //libVlc.Log += (sender, e) => MainForm.Log($"[{e.Level}] {e.Module}:{e.Message}");
 
             #region Media player initialize 
 
@@ -125,13 +102,38 @@ namespace LocalVideoPlayer
             pollingTimer.Interval = 10000;
         }
 
+        private void InitializeSerialPort()
+        {
+            serialPort = new SerialPort();
+            string portNumber = ConfigurationManager.AppSettings["comPort"];
+            serialPort.PortName = "COM" + portNumber;
+            serialPort.BaudRate = 9600;
+            serialPort.DataBits = 8;
+            serialPort.Parity = Parity.None;
+            serialPort.StopBits = StopBits.One;
+            serialPort.Handshake = Handshake.None;
+            //Leave commented out to avoid timeout exception, default value = infinite, where no timeouts occur
+            //serialPort.ReadTimeout = 500;
+            serialPort.DataReceived += SerialPort_DataReceived;
+
+            try
+            {
+                serialPort.Open();
+                MainForm.Log("Connected to serial port");
+            }
+            catch
+            {
+                MainForm.Log("No device connected to serial port");
+            }
+        }
+
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             SerialPort serialPort = (SerialPort)sender;
             if (e.EventType == SerialData.Chars)
             {
                 string msg = serialPort.ReadLine();
-                System.Diagnostics.Debug.WriteLine("Serial port: " + msg);
+                MainForm.Log("Serial port received: " + msg);
                 if (msg.Contains("stop"))
                 {
                     MouseWorker.DoMouseRightClick();
@@ -163,7 +165,7 @@ namespace LocalVideoPlayer
             Media currentMedia = CreateMedia(libVlc, path, FromType.FromPath);
 
             bool result = mediaPlayer.Play(currentMedia);
-            //Console.WriteLine("LOAD: " + path);
+            MainForm.Log("Media loaded: " + path);
             if (seekTime != 0 && result)
             {
                 if (seekTime < currEpisode.Length)
@@ -332,95 +334,103 @@ namespace LocalVideoPlayer
 
         private void UpdateProgressBar()
         {
-            Panel episodePanel = null;
-            Panel mainPanel = null;
-            foreach (Control c in tvForm.Controls)
+            try
             {
-                Panel p_ = c as Panel;
-                if (p_ != null && p_.Name.Equals("tvFormMainPanel"))
+                Panel episodePanel = null;
+                Panel mainPanel = null;
+                foreach (Control c in tvForm.Controls)
                 {
-                    foreach (Control ctrl in p_.Controls)
+                    Panel p_ = c as Panel;
+                    if (p_ != null && p_.Name.Equals("tvFormMainPanel"))
                     {
-                        Panel p = ctrl as Panel;
-                        if (p != null && p.Name.Equals("mainPanel"))
+                        foreach (Control ctrl in p_.Controls)
                         {
-                            mainPanel = p;
-                            foreach (Control c_ in p.Controls)
+                            Panel p = ctrl as Panel;
+                            if (p != null && p.Name.Equals("mainPanel"))
                             {
-                                Panel ePanel = c_ as Panel;
-                                if (ePanel != null && ePanel.Name.Contains("episodePanel"))
+                                mainPanel = p;
+                                foreach (Control c_ in p.Controls)
                                 {
-                                    //To-do: if episode name is similar enough wrong progress bar updated
-                                    if (ePanel.Name.Contains(currEpisode.Name))
+                                    Panel ePanel = c_ as Panel;
+                                    if (ePanel != null && ePanel.Name.Contains("episodePanel"))
                                     {
-                                        episodePanel = ePanel;
-                                        //To-do: find more break points
-                                        break;
+                                        //To-do: if episode name is similar enough wrong progress bar updated
+                                        if (ePanel.Name.Contains(currEpisode.Name))
+                                        {
+                                            episodePanel = ePanel;
+                                            //To-do: find more break points
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            PictureBox pBox = null;
-            foreach (Control c in episodePanel.Controls)
-            {
-                pBox = c as PictureBox;
-                if (pBox != null) break;
-            }
-            if (episodePanel.Controls.Count == 3)
-            {
-                ProgressBar progressBar = CreateProgressBar(currEpisode.SavedTime, currEpisode.Length);
-                progressBar.Location = new Point(pBox.Location.X, pBox.Location.Y + pBox.Height);
-                if (episodePanel.InvokeRequired)
+                PictureBox pBox = null;
+                foreach (Control c in episodePanel.Controls)
                 {
-                    //https://stackoverflow.com/questions/229554/whats-the-difference-between-invoke-and-begininvoke
-                    episodePanel.Invoke(new MethodInvoker(delegate
+                    pBox = c as PictureBox;
+                    if (pBox != null) break;
+                }
+                if (episodePanel.Controls.Count == 3)
+                {
+                    ProgressBar progressBar = CreateProgressBar(currEpisode.SavedTime, currEpisode.Length);
+                    progressBar.Location = new Point(pBox.Location.X, pBox.Location.Y + pBox.Height);
+                    if (episodePanel.InvokeRequired)
+                    {
+                        //https://stackoverflow.com/questions/229554/whats-the-difference-between-invoke-and-begininvoke
+                        episodePanel.Invoke(new MethodInvoker(delegate
+                        {
+                            episodePanel.Controls.Add(progressBar);
+                        }));
+                    }
+                    else
                     {
                         episodePanel.Controls.Add(progressBar);
+                    }
+                }
+                else if (episodePanel.Controls.Count == 4)
+                {
+                    ProgressBar progressBar;
+                    foreach (Control c in episodePanel.Controls)
+                    {
+                        if (c.Name.Equals("pBar"))
+                        {
+                            progressBar = c as ProgressBar;
+                            if (progressBar.InvokeRequired)
+                            {
+                                progressBar.Invoke(new MethodInvoker(delegate
+                                {
+                                    progressBar.Value = (int)currEpisode.SavedTime;
+                                    progressBar.Update();
+                                }));
+                            }
+                            else
+                            {
+                                progressBar.Value = (int)currEpisode.SavedTime;
+                                progressBar.Update();
+                            }
+                        }
+                    }
+                }
+                if (mainPanel.InvokeRequired)
+                {
+                    mainPanel.Invoke(new MethodInvoker(delegate
+                    {
+                        mainPanel.Refresh();
                     }));
                 }
                 else
                 {
-                    episodePanel.Controls.Add(progressBar);
-                }
-            }
-            else if (episodePanel.Controls.Count == 4)
-            {
-                ProgressBar progressBar;
-                foreach (Control c in episodePanel.Controls)
-                {
-                    if (c.Name.Equals("pBar"))
-                    {
-                        progressBar = c as ProgressBar;
-                        if (progressBar.InvokeRequired)
-                        {
-                            progressBar.Invoke(new MethodInvoker(delegate
-                            {
-                                progressBar.Value = (int)currEpisode.SavedTime;
-                                progressBar.Update();
-                            }));
-                        }
-                        else
-                        {
-                            progressBar.Value = (int)currEpisode.SavedTime;
-                            progressBar.Update();
-                        }
-                    }
-                }
-            }
-            if (mainPanel.InvokeRequired)
-            {
-                mainPanel.Invoke(new MethodInvoker(delegate
-                {
                     mainPanel.Refresh();
-                }));
+                }
             }
-            else
+            catch (Exception ex)
             {
-                mainPanel.Refresh();
+                MessageBox.Show("UpdateProgressBar: ", ex.Message);
+                MainForm.Log("UpdateProgressBar: " + ex.Message);
             }
         }
 
@@ -483,15 +493,14 @@ namespace LocalVideoPlayer
                                 }
                                 else
                                 {
-                                    //Console.WriteLine("going from season " + (i) + " to " + (i + 1));
+                                    MainForm.Log(currTvShow.Name + " season change from " + (i) + " to " + (i + 1));
                                     currSeason = currTvShow.Seasons[i + 1];
                                     currTvShow.CurrSeason++;
                                     currEpisode = currSeason.Episodes[0];
                                     path = currEpisode.Path;
                                     timeline.Value = 0;
                                     Media nextMedia = CreateMedia(libVlc, path, FromType.FromPath);
-                                    //To-do: log?
-                                    //Console.WriteLine("NEXT: " + path);
+                                    MainForm.Log("Media loaded: " + path);
                                     System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
 
                                     foreach (Control c in tvForm.Controls)
@@ -539,7 +548,7 @@ namespace LocalVideoPlayer
                                 path = currEpisode.Path;
                                 timeline.Value = 0;
                                 Media nextMedia = CreateMedia(libVlc, path, FromType.FromPath);
-                                //Console.WriteLine("NEXT: " + path);
+                                MainForm.Log("Media loaded: " + path);
                                 System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
                                 return;
                             }
@@ -651,11 +660,11 @@ namespace LocalVideoPlayer
     public class RoundButton : Button
     {
         //https://stackoverflow.com/questions/3708113/round-shaped-buttons
-        protected override void OnPaint(System.Windows.Forms.PaintEventArgs e)
+        protected override void OnPaint(PaintEventArgs e)
         {
             GraphicsPath grPath = new GraphicsPath();
             grPath.AddEllipse(0, 0, ClientSize.Width, ClientSize.Height);
-            this.Region = new System.Drawing.Region(grPath);
+            this.Region = new Region(grPath);
             base.OnPaint(e);
         }
     }

@@ -198,7 +198,9 @@ namespace LocalVideoPlayer
                 {
                     reply = pingSender.Send(serverIp, timeout, buffer, options);
                 }
-                catch { }
+                catch 
+                { }
+
                 if (reply != null && reply.Status == IPStatus.Success)
                 {
                     Log("Ping success");
@@ -209,7 +211,12 @@ namespace LocalVideoPlayer
                     Log("Destination host unreachable");
                 }
 
-                Thread.Sleep(1000);
+                try
+                {
+                    Thread.Sleep(1000);
+                }
+                catch
+                { }
             }
         }
 
