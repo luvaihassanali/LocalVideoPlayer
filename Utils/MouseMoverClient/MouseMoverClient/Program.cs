@@ -35,7 +35,7 @@ namespace MouseMoverClient
 
         static string serverIp = "192.168.0.181";
         static int serverPort = 3000;
-        static bool serverOffline = true;
+        static bool serverIsNotConnected = true;
         static int jX;
         static int jY;
         static TcpClient client;
@@ -120,112 +120,97 @@ namespace MouseMoverClient
 
             try
             {
+                client = new TcpClient();
+                bool success = false;
+                IAsyncResult result = null;
+
+                result = client.BeginConnect(serverIp, serverPort, null, null);
+                success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(1));
+
+                while (!success)
+                {
+                    Log("Cannot connect to server. Trying again");
+                    return;
+                }
+
+                Byte[] data = System.Text.Encoding.ASCII.GetBytes("zzzz");
+                NetworkStream stream = null;
+
                 try
                 {
-                    client = new TcpClient();
-                    bool success = false;
-                    IAsyncResult result = null;
+                    stream = client.GetStream();
+                    Log("Connected.");
+                    Thread.Sleep(1000);
+                }
+                catch (System.InvalidOperationException)
+                {
+                    Log("Server not ready. Trying again");
+                    return;
+                }
 
-                    result = client.BeginConnect(serverIp, serverPort, null, null);
-                    success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(1));
+                stream.Write(data, 0, data.Length);
+                Log("Sent: init");
+                StartTimer();
 
-                    while (!success)
+                while (true)
+                {
+                    int i;
+                    Byte[] bytes = new Byte[256];
+                    String buffer = null;
+
+                    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                     {
-                        Log("Cannot connect to server. Trying again");
-                        return;
-                    }
+                        buffer = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
+                        Log("Received: " + buffer.Replace("\r\n", ""));
 
-                    Byte[] data = System.Text.Encoding.ASCII.GetBytes("zzzz");
-                    NetworkStream stream = null;
-
-                    try
-                    {
-                        stream = client.GetStream();
-                        Log("Connected.");
-                        Thread.Sleep(1000);
-                    }
-                    catch (System.InvalidOperationException)
-                    {
-                        Log("Server not ready. Trying again");
-                        return;
-                    }
-
-                    stream.Write(data, 0, data.Length);
-                    Log("Sent: init");
-                    StartTimer();
-
-                    while (true)
-                    {
-                        int i;
-                        Byte[] bytes = new Byte[256];
-                        String buffer = null;
-
-                        while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+                        if (buffer.Contains("initack"))
                         {
-                            buffer = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
-                            Log("Received: " + buffer.Replace("\r\n", ""));
-
-                            if (buffer.Contains("initack"))
-                            {
-                                // Send cursor to centre of screen
-                                Cursor.Position = new System.Drawing.Point(960, 540);
-                                StopTimer();
-                                StartTimer();
-                            }
-
-                            if (buffer.Contains("ka"))
-                            {
-                                StopTimer();
-                                Log("Sending ack");
-                                data = System.Text.Encoding.ASCII.GetBytes("ack");
-                                stream = client.GetStream();
-                                stream.Write(data, 0, data.Length);
-                                StartTimer();
-                            }
-
-                            if (!buffer.Contains("ok") && !buffer.Contains("ka") && !buffer.Contains("initack"))
-                            {
-                                ParseTcpDataIn(buffer);
-                            }
+                            // Send cursor to centre of screen
+                            Cursor.Position = new System.Drawing.Point(960, 540);
+                            StopTimer();
+                            StartTimer();
                         }
 
-                        Log("Stream end. Press any key");
-                        stream.Close();
-                        client.EndConnect(result);
-                        client.Close();
+                        if (buffer.Contains("ka"))
+                        {
+                            StopTimer();
+                            Log("Sending ack");
+                            data = System.Text.Encoding.ASCII.GetBytes("ack");
+                            stream = client.GetStream();
+                            stream.Write(data, 0, data.Length);
+                            StartTimer();
+                        }
+
+                        if (!buffer.Contains("ok") && !buffer.Contains("ka") && !buffer.Contains("initack"))
+                        {
+                            ParseTcpDataIn(buffer);
+                        }
                     }
+
+                    Log("Stream end. Press any key");
+                    stream.Close();
+                    client.EndConnect(result);
+                    client.Close();
                 }
-                catch (ArgumentNullException e)
-                {
-                    Log("ArgumentNullException: " + e);
-                }
-                catch (SocketException e)
-                {
-                    Log("SocketException: " + e);
-                }
-                finally
-                {
-                    if (client != null)
-                    {
-                        client.Close();
-                        client.Dispose();
-                    }
-                }
-            }
-            catch (ThreadAbortException)
-            {
-                throw;
             }
             catch (Exception e)
             {
-                Log(e.Message);
+                Log("ConnectToServerException: " + e.Message);
+            }
+            finally
+            {
+                if (client != null)
+                {
+                    client.Close();
+                    client.Dispose();
+                }
             }
         }
 
         static void CheckForServer()
         {
             Log("Pinging server...");
-            serverOffline = true;
+            serverIsNotConnected = true;
 
             Ping pingSender = new Ping();
             PingOptions options = new PingOptions();
@@ -234,20 +219,32 @@ namespace MouseMoverClient
             byte[] buffer = Encoding.ASCII.GetBytes(data);
             int timeout = 120;
 
-            while (serverOffline)
+            while (serverIsNotConnected)
             {
-                PingReply reply = pingSender.Send(serverIp, timeout, buffer, options);
+                PingReply reply = null;
+                try
+                {
+                    reply = pingSender.Send(serverIp, timeout, buffer, options);
+                }
+                catch
+                { }
+
                 if (reply.Status == IPStatus.Success)
                 {
                     Log("Ping success");
-                    serverOffline = false;
+                    serverIsNotConnected = false;
                 }
                 else
                 {
                     Log("Destination host unreachable");
                 }
 
-                Thread.Sleep(1000);
+                try
+                {
+                    Thread.Sleep(1000);
+                }
+                catch
+                { }
             }
         }
 
