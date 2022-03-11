@@ -20,17 +20,18 @@ namespace LocalVideoPlayer
         private const int MOUSEEVENTF_RIGHTUP = 0x10;
         private const int MOUSEEVENTF_WHEEL = 0x0800;
 
-        private Thread workerThread = null;
+        private bool serverIsNotConnected = true;
         private bool workerThreadRunning = false;
-        private int stopTimeout = 10000;
+        private int joystickX;
+        private int joystickY;
+        private int timelineShowTimeout = 10000;
         private MainForm mainForm;
+        private System.Timers.Timer pollingTimer;
+        private TcpClient client;
+        private Thread workerThread = null;
+
         private string serverIp = "192.168.0.181";
         private int serverPort = 3000;
-        private int jX;
-        private int jY;
-        private bool serverIsNotConnected = true;
-        private TcpClient client;
-        private System.Timers.Timer pollingTimer;
 
         public MouseWorker(MainForm m)
         {
@@ -197,7 +198,7 @@ namespace LocalVideoPlayer
 
                 try
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(3000);
                 }
                 catch
                 { }
@@ -212,8 +213,8 @@ namespace LocalVideoPlayer
                 Log("Error. Message incorrect format: " + data);
                 return;
             }
-            jX = Int32.Parse(dataSplit[0]);
-            jY = Int32.Parse(dataSplit[1]);
+            joystickX = Int32.Parse(dataSplit[0]);
+            joystickY = Int32.Parse(dataSplit[1]);
             int buttonState = Int32.Parse(dataSplit[2]);
             int scrollState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
@@ -225,8 +226,8 @@ namespace LocalVideoPlayer
 
             if (scrollState == 0)
             {
-                jY = jY * 2;
-                mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)jY, 0);
+                joystickY = joystickY * 2;
+                mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)joystickY, 0);
             }
             else
             {
@@ -236,21 +237,21 @@ namespace LocalVideoPlayer
 
         void DoMouseMove()
         {
-            jX = -jX;
-            jY = -jY;
+            joystickX = -joystickX;
+            joystickY = -joystickY;
             int divisor = 20;
-            if ((jX > 0 && jX < 150) || (jX < 0 && jX > -150))
+            if ((joystickX > 0 && joystickX < 150) || (joystickX < 0 && joystickX > -150))
             {
                 divisor = 60;
             }
-            else if ((jX > 150 && jX < 400) || (jX < -150 && jX > -400))
+            else if ((joystickX > 150 && joystickX < 400) || (joystickX < -150 && joystickX > -400))
             {
                 divisor = 40;
             }
 
             for (int i = 0; i < 15; i++)
             {
-                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + jX / divisor, Cursor.Position.Y + jY / divisor);
+                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + joystickX / divisor, Cursor.Position.Y + joystickY / divisor);
                 Thread.Sleep(1);
             }
 
@@ -292,7 +293,7 @@ namespace LocalVideoPlayer
 
         public void Stop()
         {
-            Stop(stopTimeout);
+            Stop(timelineShowTimeout);
         }
 
         public void Stop(int stopTimeout)

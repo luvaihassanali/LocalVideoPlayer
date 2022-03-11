@@ -45,10 +45,11 @@ namespace LocalVideoPlayer
             this.videoView1.Location = new System.Drawing.Point(0, 0);
             this.videoView1.MediaPlayer = null;
             this.videoView1.Name = "videoView1";
-            this.videoView1.Size = new System.Drawing.Size(800, 450);
+            this.videoView1.Size = new System.Drawing.Size(1920, 1050);
             this.videoView1.TabIndex = 4;
             this.videoView1.Text = "videoView1";
             this.videoView1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.VideoView1_MouseMove);
+            videoView1.Cursor = System.Windows.Forms.Cursors.Default;
             // 
             // timeline
             // 
@@ -78,6 +79,7 @@ namespace LocalVideoPlayer
             this.timeline.MouseEnter += new System.EventHandler(this.Control_MouseEnter);
             this.timeline.MouseLeave += new System.EventHandler(this.Control_MouseLeave);
             this.timeline.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Timeline_MouseUp);
+            this.timeline.Cursor = blueHandCursor;
             // 
             // playButton
             // 
@@ -95,6 +97,7 @@ namespace LocalVideoPlayer
             this.playButton.Click += new System.EventHandler(this.PlayButton_Click);
             this.playButton.MouseEnter += new System.EventHandler(this.Control_MouseEnter);
             this.playButton.MouseLeave += new System.EventHandler(this.Control_MouseLeave);
+            this.playButton.Cursor = blueHandCursor;
             // 
             // closeButton
             // 
@@ -112,6 +115,7 @@ namespace LocalVideoPlayer
             this.closeButton.Click += new System.EventHandler(this.CloseButton_Click);
             this.closeButton.MouseEnter += new System.EventHandler(this.Control_MouseEnter);
             this.closeButton.MouseLeave += new System.EventHandler(this.Control_MouseLeave);
+            this.closeButton.Cursor = blueHandCursor;
             // 
             // timeLbl
             // 
@@ -133,7 +137,7 @@ namespace LocalVideoPlayer
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.BackColor = System.Drawing.SystemColors.Desktop;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1920, 1050);
             this.Controls.Add(this.timeLbl);
             this.Controls.Add(this.playButton);
             this.Controls.Add(this.closeButton);
@@ -145,13 +149,11 @@ namespace LocalVideoPlayer
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.TopMost = true;
             this.TransparencyKey = System.Drawing.Color.DeepPink;
-            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.PlayerForm_FormClosing);
             this.Load += new System.EventHandler(this.PlayerForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.videoView1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion

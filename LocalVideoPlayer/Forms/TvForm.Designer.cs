@@ -1,5 +1,5 @@
 ﻿
-namespace LocalVideoPlayer.Forms
+namespace LocalVideoPlayer
 {
     partial class TvForm
     {
@@ -73,6 +73,7 @@ namespace LocalVideoPlayer.Forms
             this.closeButton.Size = new System.Drawing.Size(64, 64);
             this.closeButton.TabIndex = 10;
             this.closeButton.UseVisualStyleBackColor = true;
+            this.closeButton.Cursor = blueHandCursor;
             // 
             // resetButton
             // 
@@ -109,6 +110,7 @@ namespace LocalVideoPlayer.Forms
         }
 
         #endregion
+
         private RoundButton closeButton;
         private System.Windows.Forms.Button seasonButton;
         private System.Windows.Forms.Button resumeButton;

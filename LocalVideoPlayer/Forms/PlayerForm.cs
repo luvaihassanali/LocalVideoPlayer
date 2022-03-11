@@ -2,7 +2,6 @@
 using System;
 using System.Configuration;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.IO;
 using System.IO.Ports;
 using System.Windows.Forms;
@@ -11,50 +10,47 @@ namespace LocalVideoPlayer
 {
     public partial class PlayerForm : Form
     {
+        static private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
+        static public bool isPlaying = false;
+        private bool mouseDown = false;
+        private bool controlsVisible = false;
+        private bool shrinkTimeLine = false;
+        private int runningTime;
+        private long seekTime;
+        private string mediaPath;
+
+        private Episode currEpisode;
+        private Form tvForm;
         public LibVLC libVlc;
         public MediaPlayer mediaPlayer;
         private TvShow currTvShow;
-        private Form tvForm;
-        private Episode currEpisode;
-        private string path;
-        private long seekTime;
-        private int runningTime;
-        private Timer pollingTimer;
-        private bool mouseDown = false;
-        private bool controlsVisible = false;
-        bool shrinkTimeLine = false;
-        private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         private SerialPort serialPort;
-        
+        private Timer pollingTimer;
+
         public PlayerForm(string p, long s, int r, TvShow t, Episode ep, Form tf)
         {
-            if (!DesignMode)
-                Core.Initialize();
+            if (!DesignMode) Core.Initialize();
             InitializeComponent();
-            closeButton.Cursor = blueHandCursor;
-            timeline.Cursor = blueHandCursor;
-            playButton.Cursor = blueHandCursor;
-            videoView1.Cursor = Cursors.Default;
-
             InitializeSerialPort();
 
-            //To-do: some parameters are in tv object to remove from constructor
-            tvForm = tf;
             currEpisode = ep;
             currTvShow = t;
-            seekTime = s;
-            path = p;
+            mediaPath = p;
             runningTime = r;
+            seekTime = s;
+            tvForm = tf;
 
             long max = runningTime * 60000;
             timeline.Maximum = max;
             timeline.Value = seekTime;
 
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
+            //libVlc = new LibVLC("--verbose=2"); //libVlc.SetLogFile("vlclog.txt"); //libVlc.Log += (sender, e) => MainForm.Log($"[{e.Level}] {e.Module}:{e.Message}");
             libVlc = new LibVLC();
-            //libVlc = new LibVLC("--verbose=2");
-            //libVlc.SetLogFile("vlclog.txt");
-            //libVlc.Log += (sender, e) => MainForm.Log($"[{e.Level}] {e.Module}:{e.Message}");
+
+            pollingTimer = new Timer();
+            pollingTimer.Tick += new EventHandler(Polling_Tick);
+            pollingTimer.Interval = 10000;
 
             #region Media player initialize 
 
@@ -72,7 +68,7 @@ namespace LocalVideoPlayer
 
                 }
             };
-            
+
             mediaPlayer.LengthChanged += (sender, e) =>
             {
                 timeline.Maximum = mediaPlayer.Length;
@@ -84,72 +80,25 @@ namespace LocalVideoPlayer
 
             mediaPlayer.EncounteredError += (sender, e) =>
             {
-                throw new Exception("VLC error");
+                MainForm.Log("VLC Error: " + e.ToString());
+                throw new Exception("VLC error: " + e.ToString());
             };
 
             mediaPlayer.EndReached += MediaPlayer_EndReached;
 
             /*mediaPlayer.Buffering += (sender, e) =>
             {
-                //To-do: progress bar or wait cursor
                 //cast to MediaPlayer.Event.Buffering -> e.GetBuffering();
             };*/
 
             #endregion
-
-            pollingTimer = new Timer();
-            pollingTimer.Tick += new EventHandler(Polling_Tick);
-            pollingTimer.Interval = 10000;
-        }
-
-        private void InitializeSerialPort()
-        {
-            serialPort = new SerialPort();
-            string portNumber = ConfigurationManager.AppSettings["comPort"];
-            serialPort.PortName = "COM" + portNumber;
-            serialPort.BaudRate = 9600;
-            serialPort.DataBits = 8;
-            serialPort.Parity = Parity.None;
-            serialPort.StopBits = StopBits.One;
-            serialPort.Handshake = Handshake.None;
-            //Leave commented out to avoid timeout exception, default value = infinite, where no timeouts occur
-            //serialPort.ReadTimeout = 500;
-            serialPort.DataReceived += SerialPort_DataReceived;
-
-            try
-            {
-                serialPort.Open();
-                MainForm.Log("Connected to serial port");
-            }
-            catch
-            {
-                MainForm.Log("No device connected to serial port");
-            }
-        }
-
-        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
-            SerialPort serialPort = (SerialPort)sender;
-            if (e.EventType == SerialData.Chars)
-            {
-                string msg = serialPort.ReadLine();
-                MainForm.Log("Serial port received: " + msg);
-                if (msg.Contains("stop"))
-                {
-                    MouseWorker.DoMouseRightClick();
-                    MouseWorker.DoMouseClick();
-                    this.Cursor = new Cursor(Cursor.Current.Handle);
-                    Cursor.Position = new Point(0, this.Height * 3);
-                    PlayButton_Click(null, null);
-                }
-            }
         }
 
         #region General form functions
 
         private void PlayerForm_Load(object sender, EventArgs e)
         {
-            closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.25), (closeButton.Width / 4));
+            closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.25), closeButton.Width / 4);
             closeButton.BringToFront();
             playButton.Location = new Point(playButton.Width / 4 - 5, this.Height - (int)(playButton.Width * 1.25));
             playButton.BringToFront();
@@ -161,11 +110,10 @@ namespace LocalVideoPlayer
             this.Cursor = new Cursor(Cursor.Current.Handle);
             Cursor.Position = new Point(0, this.Height * 3);
 
-            FileInfo media = new FileInfo(path);
-            Media currentMedia = CreateMedia(libVlc, path, FromType.FromPath);
-
+            Media currentMedia = CreateMedia(libVlc, mediaPath, FromType.FromPath);
             bool result = mediaPlayer.Play(currentMedia);
-            MainForm.Log("Media loaded: " + path);
+            MainForm.Log("Media loaded: " + mediaPath);
+
             if (seekTime != 0 && result)
             {
                 if (seekTime < currEpisode.Length)
@@ -214,7 +162,7 @@ namespace LocalVideoPlayer
                     if (currEpisode == null) throw new ArgumentNullException();
                     if (currSeason == 0) throw new ArgumentNullException();
 
-                    if (path.Contains("Extras"))
+                    if (mediaPath.Contains("Extras"))
                     {
                         currEpisode.SavedTime = endTime;
                     }
@@ -241,19 +189,20 @@ namespace LocalVideoPlayer
                                 }
                             }
                             int lastEpisodeSeason = 0;
-                            Episode dummy = mainForm.GetTvEpisode(currTvShow.Name, currTvShow.LastEpisode.Name, out lastEpisodeSeason);
-                            if(lastEpisodeSeason == currSeason)
+                            Episode dummy = TvForm.GetTvEpisode(currTvShow.Name, currTvShow.LastEpisode.Name, out lastEpisodeSeason);
+                            if (lastEpisodeSeason == currSeason)
                             {
-                                if(currTvShow.LastEpisode.Id <= currEpisode.Id)
+                                if (currTvShow.LastEpisode.Id <= currEpisode.Id)
                                 {
                                     currTvShow.CurrSeason = currSeason;
                                     currTvShow.LastEpisode = currEpisode;
                                 }
-                            } else if (lastEpisodeSeason < currSeason)
+                            }
+                            else if (lastEpisodeSeason < currSeason)
                             {
                                 currTvShow.CurrSeason = currSeason;
                                 currTvShow.LastEpisode = currEpisode;
-                                
+
                             }
                         }
                     }
@@ -272,7 +221,7 @@ namespace LocalVideoPlayer
 
         private void CloseButton_Click(object sender, EventArgs e)
         {
-            if(mediaPlayer.IsPlaying)
+            if (mediaPlayer.IsPlaying)
             {
                 mediaPlayer.Pause();
             }
@@ -315,6 +264,53 @@ namespace LocalVideoPlayer
         private void Control_MouseLeave(object sender, EventArgs e)
         {
             pollingTimer.Start();
+        }
+
+        #endregion
+
+        #region Serial port
+
+        private void InitializeSerialPort()
+        {
+            serialPort = new SerialPort();
+            string portNumber = ConfigurationManager.AppSettings["comPort"];
+            serialPort.PortName = "COM" + portNumber;
+            serialPort.BaudRate = 9600;
+            serialPort.DataBits = 8;
+            serialPort.Parity = Parity.None;
+            serialPort.StopBits = StopBits.One;
+            serialPort.Handshake = Handshake.None;
+            //Leave commented out to avoid timeout exception, default value = infinite, where no timeouts occur
+            //serialPort.ReadTimeout = 500;
+            serialPort.DataReceived += SerialPort_DataReceived;
+
+            try
+            {
+                serialPort.Open();
+                MainForm.Log("Connected to serial port");
+            }
+            catch
+            {
+                MainForm.Log("No device connected to serial port");
+            }
+        }
+
+        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort serialPort = (SerialPort)sender;
+            if (e.EventType == SerialData.Chars)
+            {
+                string msg = serialPort.ReadLine();
+                MainForm.Log("Serial port received: " + msg);
+                if (msg.Contains("stop"))
+                {
+                    MouseWorker.DoMouseRightClick();
+                    MouseWorker.DoMouseClick();
+                    this.Cursor = new Cursor(Cursor.Current.Handle);
+                    Cursor.Position = new Point(0, this.Height * 3);
+                    PlayButton_Click(null, null);
+                }
+            }
         }
 
         #endregion
@@ -438,6 +434,47 @@ namespace LocalVideoPlayer
 
         #region Media player 
 
+        static public void LaunchVlc(string mediaName, string episodeName, string path, Form tvForm)
+        {
+            TvShow currTvShow = null;
+            Episode currEpisode = null;
+            Movie currMovie = null;
+            int currSeason = 0;
+
+            if (episodeName != null)
+            {
+                currTvShow = TvForm.GetTvShow(mediaName);
+                currEpisode = TvForm.GetTvEpisode(mediaName, episodeName, out currSeason);
+            }
+            else
+            {
+                currMovie = TvForm.GetMovie(mediaName);
+            }
+
+            long savedTime = 0;
+            int runningTime = 0;
+
+            if (currTvShow != null)
+            {
+                runningTime = currTvShow.RunningTime;
+                if (currEpisode != null)
+                {
+                    savedTime = currEpisode.SavedTime;
+                }
+            }
+            else if (currMovie != null)
+            {
+                runningTime = currMovie.RunningTime;
+            }
+
+            Form playerForm = new PlayerForm(path, savedTime, runningTime, currTvShow, currEpisode, tvForm); 
+            playerForm.ShowDialog();
+            playerForm.Dispose();
+
+            isPlaying = false;
+            if (tvForm != null) tvForm.Refresh();
+        }
+
         private Media CreateMedia(LibVLC libVlc, string path, FromType fromPath)
         {
             //Add application and vlc .exe to Graphics Settings with High Performance NVIDIA GPU preference
@@ -497,10 +534,10 @@ namespace LocalVideoPlayer
                                     currSeason = currTvShow.Seasons[i + 1];
                                     currTvShow.CurrSeason++;
                                     currEpisode = currSeason.Episodes[0];
-                                    path = currEpisode.Path;
+                                    mediaPath = currEpisode.Path;
                                     timeline.Value = 0;
-                                    Media nextMedia = CreateMedia(libVlc, path, FromType.FromPath);
-                                    MainForm.Log("Media loaded: " + path);
+                                    Media nextMedia = CreateMedia(libVlc, mediaPath, FromType.FromPath);
+                                    MainForm.Log("Media loaded: " + mediaPath);
                                     System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
 
                                     foreach (Control c in tvForm.Controls)
@@ -532,11 +569,11 @@ namespace LocalVideoPlayer
 
                                     if (mainForm.InvokeRequired)
                                     {
-                                        mainForm.BeginInvoke(new MethodInvoker(delegate { mainForm.UpdateTvForm(currTvShow); }));
+                                        mainForm.BeginInvoke(new MethodInvoker(delegate { TvForm.UpdateTvForm(currTvShow); }));
                                     }
                                     else
                                     {
-                                        mainForm.UpdateTvForm(currTvShow);
+                                        TvForm.UpdateTvForm(currTvShow);
                                     }
 
                                     return;
@@ -545,10 +582,10 @@ namespace LocalVideoPlayer
                             else
                             {
                                 currEpisode = currSeason.Episodes[j + 1];
-                                path = currEpisode.Path;
+                                mediaPath = currEpisode.Path;
                                 timeline.Value = 0;
-                                Media nextMedia = CreateMedia(libVlc, path, FromType.FromPath);
-                                MainForm.Log("Media loaded: " + path);
+                                Media nextMedia = CreateMedia(libVlc, mediaPath, FromType.FromPath);
+                                MainForm.Log("Media loaded: " + mediaPath);
                                 System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
                                 return;
                             }
@@ -655,17 +692,5 @@ namespace LocalVideoPlayer
 
         #endregion
 
-    }
-
-    public class RoundButton : Button
-    {
-        //https://stackoverflow.com/questions/3708113/round-shaped-buttons
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            GraphicsPath grPath = new GraphicsPath();
-            grPath.AddEllipse(0, 0, ClientSize.Width, ClientSize.Height);
-            this.Region = new Region(grPath);
-            base.OnPaint(e);
-        }
     }
 }
