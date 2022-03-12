@@ -54,13 +54,12 @@ namespace LocalVideoPlayer
         static public MediaModel media;
         static public Size mainFormSize;
         static public Point mainFormLoc;
-        static public ImageList imageList1;
         static private bool debugLog;
         static private string debugLogPath;
+        static public Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
 
         private bool mouseMoverClientKill = false;
         private CustomScrollbar customScrollbar = null;
-        private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         private Label movieLabel;
         private Label tvLabel;
         private MouseWorker worker = null;
@@ -71,8 +70,10 @@ namespace LocalVideoPlayer
             InitializeComponent();
             InitializeCustomCursor();
             InitializeDimmers();
-            InitializeImageList();
             InitializeMouseWorker();
+#if DEBUG
+            this.WindowState = FormWindowState.Normal;
+#endif
 
             backgroundWorker1.DoWork += new DoWorkEventHandler(BackgroundWorker1_DoWork);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BackgroundWorker1_RunWorkerCompleted);
@@ -339,16 +340,6 @@ namespace LocalVideoPlayer
             seasonDimmerForm.BackColor = Color.Black;
         }
 
-        private void InitializeImageList()
-        {
-            imageList1 = new ImageList(this.components);
-            ComponentResourceManager resources = new ComponentResourceManager(typeof(MainForm));
-            imageList1.ImageStream = (ImageListStreamer)resources.GetObject("imageList1.ImageStream");
-            imageList1.TransparentColor = Color.Transparent;
-            imageList1.Images.SetKeyName(0, "icons8-movies-folder-48.png");
-            imageList1.Images.SetKeyName(1, "icons8-movie-48.png");
-        }
-
         private void InitializeMouseWorker()
         {
             Process applicaitionProcess = Process.GetCurrentProcess();
@@ -370,25 +361,20 @@ namespace LocalVideoPlayer
 
         private void UpdateLoadingLabel(string text)
         {
+            bool bringToFront = false;
             if (text == null)
             {
-                loadingLabel.Invoke(new MethodInvoker(delegate
-                {
-                    loadingLabel.BringToFront();
-                }));
+                bringToFront = true;
             }
 
-            if (loadingLabel.InvokeRequired)
-            {
-                loadingLabel.Invoke(new MethodInvoker(delegate
-                {
-                    loadingLabel.Text = text;
-                }));
-            }
-            else
+            loadingLabel.Invoke(new MethodInvoker(delegate
             {
                 loadingLabel.Text = text;
-            }
+                if (bringToFront)
+                {
+                    loadingLabel.BringToFront();
+                }
+            }));
         }
 
         private async Task BuildCacheAsync()

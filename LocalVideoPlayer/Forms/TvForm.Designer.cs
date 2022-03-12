@@ -73,7 +73,7 @@ namespace LocalVideoPlayer
             this.closeButton.Size = new System.Drawing.Size(64, 64);
             this.closeButton.TabIndex = 10;
             this.closeButton.UseVisualStyleBackColor = true;
-            this.closeButton.Cursor = blueHandCursor;
+            this.closeButton.Cursor = MainForm.blueHandCursor;
             // 
             // resetButton
             // 

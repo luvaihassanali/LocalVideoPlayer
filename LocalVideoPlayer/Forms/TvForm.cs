@@ -14,17 +14,25 @@ namespace LocalVideoPlayer
     {
         static private bool seasonFormOpen = false;
         static private bool resetFormOpen = false;
-        static private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         static private MRG.Controls.UI.LoadingCircle seasonTransitionCircle;
-        static private TreeView dirViewG;
+        static private ImageList imageList1;
         static private ListView fileViewG;
+        static private TreeView dirViewG;
 
         public TvForm()
         {
             InitializeComponent();
             InitializeSeasonCircle();
+            InitializeImageList();
         }
 
+        private void InitializeImageList()
+        {
+            imageList1 = new ImageList();
+            imageList1.Images.Add(Properties.Resources.folder_icon);
+            imageList1.Images.Add(Properties.Resources.media_icon);
+
+        }
         public static TvShow GetTvShow(string name)
         {
             for (int i = 0; i < MainForm.media.TvShows.Length; i++)
@@ -158,7 +166,7 @@ namespace LocalVideoPlayer
                 resetButton.Padding = new Padding(1, 0, 0, 0);
                 resetButton.AutoSize = true;
                 resetButton.Location = new Point(tvForm.Width - resetButton.Width - 35, tvShowBackdropBox.Location.Y + tvShowBackdropBox.Height - resetButton.Height - 5);
-                resetButton.Cursor = blueHandCursor;
+                resetButton.Cursor = MainForm.blueHandCursor;
                 resetButton.Click += (s, e_) =>
                 {
                     resetFormOpen = true;
@@ -174,7 +182,7 @@ namespace LocalVideoPlayer
                 resumeButton.Font = mainHeaderFont;
                 resumeButton.AutoSize = true;
                 resumeButton.Location = new Point(tvShowBackdropBox.Location.X + 10, tvShowBackdropBox.Location.Y + 10);
-                resumeButton.Cursor = blueHandCursor;
+                resumeButton.Cursor = MainForm.blueHandCursor;
                 resumeButton.Click += (s, e_) =>
                 {
                     PlayerForm.isPlaying = true;
@@ -226,7 +234,10 @@ namespace LocalVideoPlayer
 
             tvForm.Deactivate += (s, ev) =>
             {
-                if (seasonFormOpen || PlayerForm.isPlaying || resetFormOpen) return;
+                if (seasonFormOpen || PlayerForm.isPlaying || resetFormOpen)
+                {
+                    return;
+                }
                 tvForm.Close();
                 Fader.FadeOut(MainForm.dimmerForm, Fader.FadeSpeed.Normal);
             };
@@ -251,7 +262,7 @@ namespace LocalVideoPlayer
             CustomScrollbar customScrollbar = CustomDialog.CreateScrollBar(tvFormMainPanel);
             customScrollbar.Scroll += (s, e_) =>
             {
-                seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
+                //seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
                 tvFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
                 if (customScrollbar.Value == 0)
                 {
@@ -306,11 +317,15 @@ namespace LocalVideoPlayer
             foreach (Control c in tvForm.Controls)
             {
                 if (c.Name.Equals("seasonButton"))
+                {
                     seasonButton = (Button)c;
+                }
             }
 
             if (tvShow.CurrSeason == -1)
+            {
                 seasonButton.Text = "Extras";
+            }
 
             seasonButton.Name = "seasonButton_" + tvShow.Name;
             seasonButton.Text = "Season " + tvShow.CurrSeason;
@@ -319,9 +334,9 @@ namespace LocalVideoPlayer
             seasonButton.Click += SeasonButton_Click;
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
             seasonButton.Size = new Size(episodePanelList[0].Width - 18, seasonButton.Height);
-            seasonButton.Cursor = blueHandCursor;
+            seasonButton.Cursor = MainForm.blueHandCursor;
 
-            seasonButton.MouseWheel += (s, e_) =>
+            /*seasonButton.MouseWheel += (s, e_) =>
             {
                 if (e_.Delta < 0) //if scrolling down
                 {
@@ -333,7 +348,7 @@ namespace LocalVideoPlayer
                     Cursor.Current = new Cursor(Cursor.Current.Handle);
                     Cursor.Position = new Point(Cursor.Position.X, Cursor.Position.Y - 50);
                 }
-            };
+            };*/
 
             tvForm.Show();
         }
@@ -528,7 +543,7 @@ namespace LocalVideoPlayer
                     episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
                 }
                 episodeBox.BackColor = SystemColors.Desktop;
-                episodeBox.Cursor = blueHandCursor;
+                episodeBox.Cursor = MainForm.blueHandCursor;
                 episodeBox.SizeMode = PictureBoxSizeMode.CenterImage;
                 episodeBox.Click += TvForm.TvShowEpisodeBox_Click;
                 episodeBox.Name = currEpisode.Path;
@@ -709,7 +724,7 @@ namespace LocalVideoPlayer
 
                 seasonBox.BackColor = SystemColors.Desktop;
                 seasonBox.Left = seasonBox.Width * currentPanel.Controls.Count;
-                seasonBox.Cursor = blueHandCursor;
+                seasonBox.Cursor = MainForm.blueHandCursor;
                 seasonBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 seasonBox.Padding = new Padding(5);
                 seasonBox.Name = (i + 1).ToString();
@@ -811,10 +826,10 @@ namespace LocalVideoPlayer
             mainContainer.Panel1.Controls.Add(dirView);
             mainContainer.Panel2.Controls.Add(fileView);
             mainContainer.Name = "extrasContainer";
-            dirView.Cursor = blueHandCursor;
+            dirView.Cursor = MainForm.blueHandCursor;
             dirView.Dock = DockStyle.Fill;
             dirView.ImageIndex = 0;
-            dirView.ImageList = MainForm.imageList1;
+            dirView.ImageList = imageList1;
             dirView.SelectedImageIndex = 0;
             dirView.NodeMouseClick += DirView_NodeMouseClick;
 
@@ -832,7 +847,6 @@ namespace LocalVideoPlayer
                 }
             };*/
 
-
             ColumnHeader c1 = new ColumnHeader();
             ColumnHeader c2 = new ColumnHeader();
             ColumnHeader c3 = new ColumnHeader();
@@ -841,9 +855,9 @@ namespace LocalVideoPlayer
             c3.Text = "Path";
 
             fileView.Columns.AddRange(new ColumnHeader[] { c1, c2, c3 });
-            fileView.Cursor = blueHandCursor;
+            fileView.Cursor = MainForm.blueHandCursor;
             fileView.Dock = DockStyle.Fill;
-            fileView.SmallImageList = MainForm.imageList1;
+            fileView.SmallImageList = imageList1;
             fileView.UseCompatibleStateImageBehavior = false;
             fileView.View = View.Details;
 
@@ -1076,7 +1090,7 @@ namespace LocalVideoPlayer
             closeButton.Name = "closeButton";
             closeButton.Size = new Size(64, 64);
             closeButton.Click += MainForm.CloseButton_Click;
-            closeButton.Cursor = blueHandCursor;
+            closeButton.Cursor = MainForm.blueHandCursor;
 
             movieForm.Controls.Add(closeButton);
             closeButton.Location = new Point(movieForm.Width - (int)(closeButton.Width * 1.165), (closeButton.Width / 8));
@@ -1097,7 +1111,7 @@ namespace LocalVideoPlayer
             movieBackdropBox.BackgroundImageLayout = ImageLayout.Stretch;
             movieBackdropBox.BackColor = SystemColors.Desktop;
             movieBackdropBox.Dock = DockStyle.Top;
-            movieBackdropBox.Cursor = blueHandCursor;
+            movieBackdropBox.Cursor = MainForm.blueHandCursor;
             movieBackdropBox.Height = (int)(movieForm.Height / 1.777777777777778);
             movieBackdropBox.SizeMode = PictureBoxSizeMode.CenterImage;
             movieBackdropBox.Name = movie.Path;

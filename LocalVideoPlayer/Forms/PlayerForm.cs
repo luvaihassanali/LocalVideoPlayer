@@ -10,11 +10,11 @@ namespace LocalVideoPlayer
 {
     public partial class PlayerForm : Form
     {
-        static private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         static public bool isPlaying = false;
         private bool mouseDown = false;
         private bool controlsVisible = false;
         private bool shrinkTimeLine = false;
+        private bool stopPressed = false;
         private int runningTime;
         private long seekTime;
         private string mediaPath;
@@ -32,7 +32,9 @@ namespace LocalVideoPlayer
             if (!DesignMode) Core.Initialize();
             InitializeComponent();
             InitializeSerialPort();
-
+#if DEBUG
+            this.WindowState = FormWindowState.Normal;
+#endif
             currEpisode = ep;
             currTvShow = t;
             mediaPath = p;
@@ -80,8 +82,7 @@ namespace LocalVideoPlayer
 
             mediaPlayer.EncounteredError += (sender, e) =>
             {
-                MainForm.Log("VLC Error: " + e.ToString());
-                throw new Exception("VLC error: " + e.ToString());
+                MainForm.Log("VLC ERROR: " + e.ToString());
             };
 
             mediaPlayer.EndReached += MediaPlayer_EndReached;
@@ -306,8 +307,20 @@ namespace LocalVideoPlayer
                 {
                     MouseWorker.DoMouseRightClick();
                     MouseWorker.DoMouseClick();
-                    this.Cursor = new Cursor(Cursor.Current.Handle);
-                    Cursor.Position = new Point(0, this.Height * 3);
+                    this.Invoke(new MethodInvoker(delegate
+                    {
+                        this.Cursor = new Cursor(Cursor.Current.Handle);
+                        if (!stopPressed)
+                        {
+                            Cursor.Position = new Point(0, this.Height / 4);
+                            stopPressed = true;
+                        }
+                        else
+                        {
+                            Cursor.Position = new Point(0, this.Height * 3);
+                            stopPressed = false;
+                        }
+                    }));
                     PlayButton_Click(null, null);
                 }
             }
@@ -348,10 +361,10 @@ namespace LocalVideoPlayer
                                 foreach (Control c_ in p.Controls)
                                 {
                                     Panel ePanel = c_ as Panel;
-                                    if (ePanel != null && ePanel.Name.Contains("episodePanel"))
+                                     if (ePanel != null && ePanel.Name.Contains("episodePanel"))
                                     {
-                                        //To-do: if episode name is similar enough wrong progress bar updated
-                                        if (ePanel.Name.Contains(currEpisode.Name))
+                                        string[] ePanelNameTrim = ePanel.Name.Split(new[] { ' ' }, 2);
+                                        if (ePanelNameTrim[1].Equals(currEpisode.Name))
                                         {
                                             episodePanel = ePanel;
                                             //To-do: find more break points
@@ -423,7 +436,7 @@ namespace LocalVideoPlayer
                     mainPanel.Refresh();
                 }
             }
-            catch (Exception ex)
+            catch (IndexOutOfRangeException ex)
             {
                 MessageBox.Show("UpdateProgressBar: ", ex.Message);
                 MainForm.Log("UpdateProgressBar: " + ex.Message);

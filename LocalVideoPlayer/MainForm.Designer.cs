@@ -6,7 +6,7 @@ namespace LocalVideoPlayer
         /// <summary>
         /// Required designer variable.
         /// </summary>
-        private System.ComponentModel.IContainer components = null;
+         System.ComponentModel.IContainer components = null;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -29,7 +29,6 @@ namespace LocalVideoPlayer
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.loadingCircle1 = new MRG.Controls.UI.LoadingCircle();
             this.loadingLabel = new System.Windows.Forms.Label();
@@ -38,6 +37,7 @@ namespace LocalVideoPlayer
             // 
             // loadingCircle1
             // 
+            this.loadingCircle1.Active = true;
             this.loadingCircle1.Color = System.Drawing.Color.DarkGray;
             this.loadingCircle1.InnerCircleRadius = 100;
             this.loadingCircle1.Location = new System.Drawing.Point(232, 40);
@@ -49,8 +49,6 @@ namespace LocalVideoPlayer
             this.loadingCircle1.SpokeThickness = 8;
             this.loadingCircle1.StylePreset = MRG.Controls.UI.LoadingCircle.StylePresets.MacOSX;
             this.loadingCircle1.TabIndex = 0;
-            this.loadingCircle1.Text = "";
-            this.loadingCircle1.Active = true;
             // 
             // loadingLabel
             // 
@@ -94,6 +92,7 @@ namespace LocalVideoPlayer
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.TransparencyKey = System.Drawing.Color.DeepPink;
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.Shown += new System.EventHandler(this.MainForm_Shown);
