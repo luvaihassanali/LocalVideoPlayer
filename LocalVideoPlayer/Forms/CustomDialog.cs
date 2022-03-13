@@ -15,14 +15,14 @@ namespace LocalVideoPlayer.Forms
         static internal int[] ShowResetSeasons(string tvShow, int numSeasons, int width, int height)
         {
             Font headerFont = new Font("Arial", 16, FontStyle.Bold);
-            Font buttonFont = new Font("Arial", 14, FontStyle.Regular);
             Font textFont = new Font("Arial", 12, FontStyle.Regular);
             Form resetForm = new Form();
             CustomScrollbar customScrollbar = null;
             List<Control> controls = new List<Control>();
             List<int> selectionList = new List<int>();
+            bool fillNotClear = false;
 
-            resetForm.Width = (int)(width / 1.5);
+            resetForm.Width = (int)(width / 3);
             resetForm.Height = (int)(height / 1.5);
             resetForm.MaximumSize = new Size(width, height - 100);
             resetForm.StartPosition = FormStartPosition.CenterScreen;
@@ -55,16 +55,16 @@ namespace LocalVideoPlayer.Forms
             headerLabel.Font = headerFont;
             headerLabel.AutoSize = true;
             headerLabel.Padding = new Padding(20, 20, 20, 15);
-            Size maxSize = new Size(width / 2, height);
+            Size maxSize = new Size(width / 3, height);
             headerLabel.MaximumSize = maxSize;
 
-            Button confirmation = new Button() { Text = "OK" };
-            confirmation.AutoSize = true;
-            confirmation.Font = buttonFont;
-            confirmation.Dock = DockStyle.Bottom;
-            confirmation.FlatStyle = FlatStyle.Flat;
-            confirmation.Cursor = blueHandCursor;
-            confirmation.Click += (sender, e) =>
+            Button confirmClear = new Button() { Text = "Clear" };
+            confirmClear.AutoSize = true;
+            confirmClear.Font = textFont;
+            confirmClear.Dock = DockStyle.Bottom;
+            confirmClear.FlatStyle = FlatStyle.Flat;
+            confirmClear.Cursor = blueHandCursor;
+            confirmClear.Click += (sender, e) =>
             {
                 bool selection = false;
                 foreach (Control c in controls)
@@ -83,6 +83,38 @@ namespace LocalVideoPlayer.Forms
                 if (selection)
                 {
                     resetForm.Close();
+                }
+                fillNotClear = true;
+            };
+
+            Button confirmFill = new Button() { Text = "Fill" };
+            confirmFill.AutoSize = true;
+            confirmFill.Font = textFont;
+            confirmFill.Dock = DockStyle.Bottom;
+            confirmFill.FlatStyle = FlatStyle.Flat;
+            confirmFill.Cursor = blueHandCursor;
+            confirmFill.Click += (sender, e) =>
+            {
+                bool selection = false;
+                foreach (Control c in controls)
+                {
+                    CheckBox box = c as CheckBox;
+                    if (box != null)
+                    {
+                        if (box.Checked)
+                        {
+                            selection = true;
+                            selectionList.Add(int.Parse(box.Name));
+                        }
+                    }
+                }
+
+                if (selection)
+                {
+                    if(!(selectionList[0] == 0))
+                    {
+                        resetForm.Close();
+                    }
                 }
             };
 
@@ -108,7 +140,7 @@ namespace LocalVideoPlayer.Forms
                     chkBox.Text = "All seasons";
                     chkBox.Click += (sender, e) =>
                     {
-                        resetFormMainPanel.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
+                        resetFormMainPanel.AutoScrollPosition = new Point(confirmClear.Location.X, confirmClear.Location.Y);
                         if (customScrollbar != null)
                         {
                             customScrollbar.Value = -resetFormMainPanel.AutoScrollPosition.Y;
@@ -125,7 +157,8 @@ namespace LocalVideoPlayer.Forms
             }
 
             resetFormMainPanel.Controls.Add(headerLabel);
-            resetFormMainPanel.Controls.Add(confirmation);
+            resetFormMainPanel.Controls.Add(confirmClear);
+            resetFormMainPanel.Controls.Add(confirmFill);
             resetFormMainPanel.Controls.Add(cancel);
             controls.Reverse();
             foreach (Control c in controls)
@@ -138,7 +171,7 @@ namespace LocalVideoPlayer.Forms
             {
                 customScrollbar = CreateScrollBar(resetFormMainPanel);
                 resetForm.Width += 2;
-
+                resetFormMainPanel.Padding = new Padding(0, 0, customScrollbar.Width / 2 - 2, 2);
                 customScrollbar.Scroll += (s, e) =>
                 {
                     resetFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
@@ -159,6 +192,13 @@ namespace LocalVideoPlayer.Forms
             resetForm.ShowDialog();
             resetForm.Dispose();
 
+            if(fillNotClear)
+            {
+                selectionList.Insert(0, 1);
+            } else
+            {
+                selectionList.Insert(0, 0);
+            }
             return selectionList.ToArray();         
         }
 
@@ -210,14 +250,14 @@ namespace LocalVideoPlayer.Forms
             Size maxSize = new Size(width / 2, height);
             headerLabel.MaximumSize = maxSize;
 
-            Button confirmation = new Button() { Text = "OK" };
-            confirmation.AutoSize = true;
-            confirmation.Font = textFont;
-            confirmation.Dock = DockStyle.Bottom;
-            confirmation.FlatStyle = FlatStyle.Flat;
-            confirmation.Cursor = blueHandCursor;
+            Button confirm = new Button() { Text = "OK" };
+            confirm.AutoSize = true;
+            confirm.Font = textFont;
+            confirm.Dock = DockStyle.Bottom;
+            confirm.FlatStyle = FlatStyle.Flat;
+            confirm.Cursor = blueHandCursor;
 
-            confirmation.Click += (sender, e) =>
+            confirm.Click += (sender, e) =>
             {
                 bool selection = false;
                 foreach (Control c in controls)
@@ -249,7 +289,7 @@ namespace LocalVideoPlayer.Forms
                 radioBtn.Name = info[1][i];
                 radioBtn.Click += (sender, e) =>
                 {
-                    optionsFormMainPanel.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
+                    optionsFormMainPanel.AutoScrollPosition = new Point(confirm.Location.X, confirm.Location.Y);
                     if (customScrollbar != null)
                     {
                         customScrollbar.Value = -optionsFormMainPanel.AutoScrollPosition.Y;
@@ -268,7 +308,7 @@ namespace LocalVideoPlayer.Forms
                 descLabel.Click += (sender, e) =>
                 {
                     radioBtn.Checked = true;
-                    optionsFormMainPanel.AutoScrollPosition = new Point(confirmation.Location.X, confirmation.Location.Y);
+                    optionsFormMainPanel.AutoScrollPosition = new Point(confirm.Location.X, confirm.Location.Y);
                     if (customScrollbar != null)
                     {
                         customScrollbar.Value = -optionsFormMainPanel.AutoScrollPosition.Y;
@@ -278,7 +318,7 @@ namespace LocalVideoPlayer.Forms
             }
 
             optionsFormMainPanel.Controls.Add(headerLabel);
-            optionsFormMainPanel.Controls.Add(confirmation);
+            optionsFormMainPanel.Controls.Add(confirm);
 
             controls.Reverse();
             foreach (Control c in controls)
@@ -291,7 +331,7 @@ namespace LocalVideoPlayer.Forms
             {
                 customScrollbar = CreateScrollBar(optionsFormMainPanel);
                 optionsForm.Width += 2;
-
+                optionsFormMainPanel.Padding = new Padding(0, 0, customScrollbar.Width / 2 - 2, 2);
                 customScrollbar.Scroll += (s, e) =>
                 {
                     optionsFormMainPanel.AutoScrollPosition = new Point(0, customScrollbar.Value);
@@ -368,14 +408,14 @@ namespace LocalVideoPlayer.Forms
             headerLabel.Padding = new Padding(20, 20, 20, 15);
             customMessageForm.Controls.Add(headerLabel);
 
-            Button confirmation = new Button() { Text = "OK" };
-            confirmation.AutoSize = true;
-            confirmation.Font = textFont;
-            confirmation.Dock = DockStyle.Bottom;
-            confirmation.FlatStyle = FlatStyle.Flat;
-            confirmation.Cursor = blueHandCursor;
-            confirmation.Click += (sender, e) => { customMessageForm.Close(); };
-            customMessageForm.Controls.Add(confirmation);
+            Button confirm = new Button() { Text = "OK" };
+            confirm.AutoSize = true;
+            confirm.Font = textFont;
+            confirm.Dock = DockStyle.Bottom;
+            confirm.FlatStyle = FlatStyle.Flat;
+            confirm.Cursor = blueHandCursor;
+            confirm.Click += (sender, e) => { customMessageForm.Close(); };
+            customMessageForm.Controls.Add(confirm);
 
             customMessageForm.Deactivate += (s, e) =>
             {

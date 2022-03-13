@@ -101,7 +101,7 @@ namespace LocalVideoPlayer
 
             PictureBox pictureBox = null;
             pictureBox = sender as PictureBox;
-            
+
             TvShow tvShow = GetTvShow(pictureBox.Name);
 
             tvForm.Name = tvShow.Name;
@@ -179,7 +179,9 @@ namespace LocalVideoPlayer
                     resetFormOpen = true;
                     int[] seasons = CustomDialog.ShowResetSeasons(tvShow.Name, tvShow.Seasons.Length, MainForm.mainFormSize.Width, MainForm.mainFormSize.Height);
                     if (seasons.Length != 0)
+                    {
                         ResetSeasons(tvShow, seasons);
+                    }
                     resetFormOpen = false;
                     resetButton.Visible = false;
                 };
@@ -192,7 +194,7 @@ namespace LocalVideoPlayer
                     PlayerForm.LaunchVlc(tvShow.Name, lastEpisode.Name, lastEpisode.Path, tvForm);
                     PlayerForm.isPlaying = false;
                 };
-            } 
+            }
             else
             {
                 tvShowBackdropBox.Click += (s, e_) =>
@@ -219,7 +221,7 @@ namespace LocalVideoPlayer
             headerLabel.Name = "headerLabel";
             headerLabel.Click += (s, e_) =>
             {
-                if(showResetButton)
+                if (showResetButton)
                 {
                     resetButton.Visible = true;
                 }
@@ -289,7 +291,7 @@ namespace LocalVideoPlayer
                 else
                 {
                     closeButton.Visible = false;
-                    showResetButton = true;
+                    showResetButton = false;
                     if (resetButton != null)
                     {
                         resetButton.Visible = false;
@@ -535,7 +537,15 @@ namespace LocalVideoPlayer
 
                 if (currEpisode.SavedTime != 0)
                 {
-                    ProgressBar progressBar = PlayerForm.CreateProgressBar(currEpisode.SavedTime, currEpisode.Length);
+                    ProgressBar progressBar;
+                    if (currEpisode.Length == 0)
+                    {
+                        progressBar = PlayerForm.CreateProgressBar(currEpisode.SavedTime, tvShow.RunningTime);
+                    }
+                    else
+                    {
+                        progressBar = PlayerForm.CreateProgressBar(currEpisode.SavedTime, currEpisode.Length);
+                    }
                     episodePanel.Controls.Add(progressBar);
                 }
 
@@ -598,7 +608,12 @@ namespace LocalVideoPlayer
 
         static private void ResetSeasons(TvShow tvShow, int[] seasonsSelection)
         {
-            if (seasonsSelection[0] == 0)
+            bool fillNotClear = false;
+            if (seasonsSelection[0] == 1)
+            {
+                fillNotClear = true;
+            }
+            if (seasonsSelection[1] == 0)
             {
                 tvShow.LastEpisode = null;
                 for (int j = 0; j < tvShow.Seasons.Length; j++)
@@ -607,21 +622,47 @@ namespace LocalVideoPlayer
                     for (int k = 0; k < currSeason.Episodes.Length; k++)
                     {
                         Episode currEpisode = currSeason.Episodes[k];
-                        currEpisode.SavedTime = 0;
+                        if (fillNotClear)
+                        {
+                            currEpisode.SavedTime = 0;
+                        }
+                        else
+                        {
+                            currEpisode.SavedTime = tvShow.RunningTime;
+                        }
                     }
                 }
             }
             else
             {
-                for (int i = 0; i < seasonsSelection.Length; i++)
+                for (int i = 1; i < seasonsSelection.Length; i++)
                 {
                     int seasonIndex = seasonsSelection[i] - 1;
                     Season currSeason = tvShow.Seasons[seasonIndex];
                     for (int j = 0; j < currSeason.Episodes.Length; j++)
                     {
                         Episode currEpisode = currSeason.Episodes[j];
-                        currEpisode.SavedTime = 0;
+                        if (fillNotClear)
+                        {
+                            currEpisode.SavedTime = 0;
+                        }
+                        else
+                        {
+                            if (currEpisode.Length != 0)
+                            {
+                                currEpisode.SavedTime = currEpisode.Length;
+                            }
+                            else
+                            {
+                                currEpisode.SavedTime = tvShow.RunningTime;
+                            }
+                        }
                     }
+                }
+                if (fillNotClear)
+                {
+                    tvShow.CurrSeason = seasonsSelection.Length;
+                    tvShow.LastEpisode = tvShow.Seasons[tvShow.CurrSeason].Episodes[0];
                 }
             }
             UpdateTvForm(tvShow);
@@ -808,6 +849,7 @@ namespace LocalVideoPlayer
             mainContainer.Panel1.Controls.Add(dirView);
             mainContainer.Panel2.Controls.Add(fileView);
             mainContainer.Name = "extrasContainer";
+
             dirView.Cursor = MainForm.blueHandCursor;
             dirView.Dock = DockStyle.Fill;
             dirView.ImageIndex = 0;
@@ -977,7 +1019,8 @@ namespace LocalVideoPlayer
             dirView.ExpandAll();
         }
 
-        static private void GetDirectories(DirectoryInfo[] subDirs, TreeNode nodeToAddTo) {
+        static private void GetDirectories(DirectoryInfo[] subDirs, TreeNode nodeToAddTo)
+        {
             TreeNode aNode;
             DirectoryInfo[] subSubDirs;
             foreach (DirectoryInfo subDir in subDirs)
