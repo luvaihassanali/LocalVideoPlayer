@@ -384,12 +384,12 @@ namespace LocalVideoPlayer
             CancellationTokenSource source = new CancellationTokenSource();
             CancellationToken token = source.Token;
 
-            // loop through media... check for identifying item only from api...if not there update
+            // Loop through media... check for identifying item only from api...if not there update
             using (System.Net.WebClient client = new System.Net.WebClient())
             {
                 for (int i = 0; i < media.Movies.Length; i++)
                 {
-                    //if id is not 0 expected to be init
+                    // If id is not 0 expected to be init
                     if (media.Movies[i].Id != 0) continue;
                     UpdateLoadingLabel("Processing: " + media.Movies[i].Name);
                     Movie movie = media.Movies[i];
@@ -884,7 +884,7 @@ namespace LocalVideoPlayer
                     string episodeName = episodeNameNumber[1].Substring(0, fileSuffixIndex).Trim();
                     Episode episode = new Episode(0, episodeName, episodeEntries[j]);
                     season.Episodes[j] = episode;
-                    //TO-DO: catch error when no number % name
+                    //To-do: catch error when no number % name
                 }
                 show.Seasons[i] = season;
             }
@@ -1041,7 +1041,7 @@ namespace LocalVideoPlayer
 
     public class RoundButton : Button
     {
-        //https://stackoverflow.com/questions/3708113/round-shaped-buttons
+        // https://stackoverflow.com/questions/3708113/round-shaped-buttons
         protected override void OnPaint(PaintEventArgs e)
         {
             System.Drawing.Drawing2D.GraphicsPath grPath = new System.Drawing.Drawing2D.GraphicsPath();

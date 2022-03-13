@@ -13,7 +13,7 @@ namespace LocalVideoPlayer
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, CallingConvention = System.Runtime.InteropServices.CallingConvention.StdCall)]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
 
-        //Mouse actions
+        // Mouse actions
         private const int MOUSEEVENTF_LEFTDOWN = 0x02;
         private const int MOUSEEVENTF_LEFTUP = 0x04;
         private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
@@ -278,7 +278,6 @@ namespace LocalVideoPlayer
                 if (workerThread == null)
                 {
                     workerThread = new Thread(new ThreadStart(this.DoWork));
-                    //workerThread.Priority = ThreadPriority.Normal;
                     workerThread.IsBackground = true;
                     workerThread.Name = "LocalVideoPlayer mouse thread";
                     workerThreadRunning = true;
@@ -346,7 +345,7 @@ namespace LocalVideoPlayer
             }
         }
 
-        //check if current thread needs to sleep
+        // Check if current thread needs to sleep
         public void Join(int timeoutMs, Thread workerToWatch)
         {
             DateTime endDateTimeOut = DateTime.UtcNow.AddMilliseconds(timeoutMs);

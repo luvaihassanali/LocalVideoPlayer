@@ -30,9 +30,8 @@ namespace LocalVideoPlayer
         private void InitializeComponent()
         {
             this.seasonButton = new System.Windows.Forms.Button();
-            this.resumeButton = new System.Windows.Forms.Button();
-            this.closeButton = new LocalVideoPlayer.RoundButton();
             this.resetButton = new System.Windows.Forms.Button();
+            this.closeButton = new LocalVideoPlayer.RoundButton();
             this.SuspendLayout();
             // 
             // seasonButton
@@ -47,19 +46,19 @@ namespace LocalVideoPlayer
             this.seasonButton.UseVisualStyleBackColor = true;
             this.seasonButton.Visible = false;
             // 
-            // resumeButton
+            // resetButton
             // 
-            this.resumeButton.AutoSize = true;
-            this.resumeButton.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.resumeButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.resumeButton.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.resumeButton.Location = new System.Drawing.Point(182, 172);
-            this.resumeButton.Name = "resumeButton";
-            this.resumeButton.Size = new System.Drawing.Size(84, 31);
-            this.resumeButton.TabIndex = 12;
-            this.resumeButton.Text = "Resume";
-            this.resumeButton.UseVisualStyleBackColor = true;
-            this.resumeButton.Visible = false;
+            this.resetButton.AutoSize = true;
+            this.resetButton.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.resetButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.resetButton.Font = new System.Drawing.Font("Arial", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.resetButton.Location = new System.Drawing.Point(176, 168);
+            this.resetButton.Name = "resetButton";
+            this.resetButton.Size = new System.Drawing.Size(62, 30);
+            this.resetButton.TabIndex = 13;
+            this.resetButton.Text = "Reset";
+            this.resetButton.UseVisualStyleBackColor = true;
+            this.resetButton.Visible = false;
             // 
             // closeButton
             // 
@@ -73,21 +72,6 @@ namespace LocalVideoPlayer
             this.closeButton.Size = new System.Drawing.Size(64, 64);
             this.closeButton.TabIndex = 10;
             this.closeButton.UseVisualStyleBackColor = true;
-            this.closeButton.Cursor = MainForm.blueHandCursor;
-            // 
-            // resetButton
-            // 
-            this.resetButton.AutoSize = true;
-            this.resetButton.FlatAppearance.MouseOverBackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.resetButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.resetButton.Font = new System.Drawing.Font("Arial", 3.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.resetButton.Location = new System.Drawing.Point(272, 176);
-            this.resetButton.Name = "resetButton";
-            this.resetButton.Size = new System.Drawing.Size(30, 18);
-            this.resetButton.TabIndex = 13;
-            this.resetButton.Text = "Reset";
-            this.resetButton.UseVisualStyleBackColor = true;
-            this.resetButton.Visible = false;
             // 
             // TvForm
             // 
@@ -96,7 +80,6 @@ namespace LocalVideoPlayer
             this.BackColor = System.Drawing.SystemColors.Desktop;
             this.ClientSize = new System.Drawing.Size(438, 367);
             this.Controls.Add(this.resetButton);
-            this.Controls.Add(this.resumeButton);
             this.Controls.Add(this.seasonButton);
             this.Controls.Add(this.closeButton);
             this.DoubleBuffered = true;
@@ -107,13 +90,13 @@ namespace LocalVideoPlayer
             this.Text = "tvForm";
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         #endregion
 
         private RoundButton closeButton;
         private System.Windows.Forms.Button seasonButton;
-        private System.Windows.Forms.Button resumeButton;
         private System.Windows.Forms.Button resetButton;
     }
 }

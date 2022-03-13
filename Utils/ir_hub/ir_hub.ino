@@ -108,9 +108,10 @@ void ParseIrValue(uint32_t rawData) {
       Serial.println("stop");
       // Wait for the transmission of outgoing serial data to complete
       Serial.flush();
+      Led13Blink();
       break;
   }
-  delay(250);
+  delay(200);
 }
 
 // https://github.com/Arduino-IRremote/Arduino-IRremote/tree/master/examples/SendRawDemo
@@ -159,8 +160,8 @@ void PowerSoundBarLong() {
       Serial.println("Power off");
     }
     sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
-    delay(100);
-    sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
+    //delay(100);
+    //sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
     powerPressed = false;
     return;
   } else {
@@ -168,8 +169,14 @@ void PowerSoundBarLong() {
       Serial.println("Power on");
     }
     sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
-    delay(100);
-    sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
+    //delay(100);
+    //sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
     powerPressed = true;
   }
+}
+
+void Led13Blink() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(50);
+  digitalWrite(LED_BUILTIN, LOW);
 }

@@ -52,7 +52,7 @@ namespace LocalVideoPlayer
 
             pollingTimer = new Timer();
             pollingTimer.Tick += new EventHandler(Polling_Tick);
-            pollingTimer.Interval = 10000;
+            pollingTimer.Interval = 2000;
 
             #region Media player initialize 
 
@@ -87,11 +87,6 @@ namespace LocalVideoPlayer
 
             mediaPlayer.EndReached += MediaPlayer_EndReached;
 
-            /*mediaPlayer.Buffering += (sender, e) =>
-            {
-                //cast to MediaPlayer.Event.Buffering -> e.GetBuffering();
-            };*/
-
             #endregion
         }
 
@@ -109,7 +104,7 @@ namespace LocalVideoPlayer
             timeLbl.BringToFront();
 
             this.Cursor = new Cursor(Cursor.Current.Handle);
-            Cursor.Position = new Point(0, this.Height * 3);
+            Cursor.Position = new Point(500, this.Height * 3);
 
             Media currentMedia = CreateMedia(libVlc, mediaPath, FromType.FromPath);
             bool result = mediaPlayer.Play(currentMedia);
@@ -281,8 +276,6 @@ namespace LocalVideoPlayer
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
             serialPort.Handshake = Handshake.None;
-            //Leave commented out to avoid timeout exception, default value = infinite, where no timeouts occur
-            //serialPort.ReadTimeout = 500;
             serialPort.DataReceived += SerialPort_DataReceived;
 
             try
@@ -305,20 +298,27 @@ namespace LocalVideoPlayer
                 MainForm.Log("Serial port received: " + msg);
                 if (msg.Contains("stop"))
                 {
-                    MouseWorker.DoMouseRightClick();
-                    MouseWorker.DoMouseClick();
                     this.Invoke(new MethodInvoker(delegate
                     {
                         this.Cursor = new Cursor(Cursor.Current.Handle);
                         if (!stopPressed)
                         {
-                            Cursor.Position = new Point(0, this.Height / 4);
+                            MouseWorker.DoMouseRightClick();
+                            MouseWorker.DoMouseClick();
+                            Cursor.Position = new Point(65, this.Height - 65);
                             stopPressed = true;
                         }
                         else
                         {
-                            Cursor.Position = new Point(0, this.Height * 3);
+                            Cursor.Position = new Point(500, this.Height * 3);
                             stopPressed = false;
+                            MouseWorker.DoMouseRightClick();
+                            MouseWorker.DoMouseClick();
+                            if (!pollingTimer.Enabled)
+                            {
+                                pollingTimer.Enabled = true;
+                                pollingTimer.Start();
+                            }
                         }
                     }));
                     PlayButton_Click(null, null);
@@ -389,7 +389,7 @@ namespace LocalVideoPlayer
                     progressBar.Location = new Point(pBox.Location.X, pBox.Location.Y + pBox.Height);
                     if (episodePanel.InvokeRequired)
                     {
-                        //https://stackoverflow.com/questions/229554/whats-the-difference-between-invoke-and-begininvoke
+                        // https://stackoverflow.com/questions/229554/whats-the-difference-between-invoke-and-begininvoke
                         episodePanel.Invoke(new MethodInvoker(delegate
                         {
                             episodePanel.Controls.Add(progressBar);
@@ -490,10 +490,10 @@ namespace LocalVideoPlayer
 
         private Media CreateMedia(LibVLC libVlc, string path, FromType fromPath)
         {
-            //Add application and vlc .exe to Graphics Settings with High Performance NVIDIA GPU preference
+            // Add application and vlc .exe to Graphics Settings with High Performance NVIDIA GPU preference
             Media media = new Media(libVlc, path, FromType.FromPath);
             media.AddOption(":avcodec-hw=auto");
-            //media.AddOption(":avcodec-threads=6");
+            media.AddOption(":no-sub-autodetect-file");
             media.AddOption(":no-mkv-preload-local-dir");
             return media;
         }
