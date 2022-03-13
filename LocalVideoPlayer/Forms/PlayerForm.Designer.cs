@@ -49,6 +49,7 @@ namespace LocalVideoPlayer
             this.videoView1.Size = new System.Drawing.Size(1920, 1050);
             this.videoView1.TabIndex = 4;
             this.videoView1.Text = "videoView1";
+            this.videoView1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.videoView1_KeyDown);
             this.videoView1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.VideoView1_MouseMove);
             // 
             // timeline

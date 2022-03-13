@@ -1023,6 +1023,11 @@ namespace LocalVideoPlayer
                 Log("You pressed Right arrow key");
                 return true;
             }
+            if (keyData == Keys.Space)
+            {
+                Log("Space");
+                return true;
+            }
             return base.ProcessCmdKey(ref msg, keyData);
         }
 

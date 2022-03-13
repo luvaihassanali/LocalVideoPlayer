@@ -301,6 +301,7 @@ namespace LocalVideoPlayer
 
             tvFormMainPanel.MouseWheel += (s, e_) =>
             {
+                tvFormMainPanel.Focus();
                 seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
                 int newVal = -tvFormMainPanel.AutoScrollPosition.Y;
                 if (newVal == 0)
@@ -443,7 +444,7 @@ namespace LocalVideoPlayer
                 mainPanel.Controls.Add(extrasContainer);
                 extrasContainer.Location = new Point(seasonButton.Location.X, 120);
                 extrasContainer.Width = seasonButton.Width;
-                extrasContainer.Height = MainForm.mainFormSize.Height / 2;
+                extrasContainer.Height = MainForm.mainFormSize.Height / 3;
                 extrasContainer.SplitterDistance = seasonButton.Width / 3;
                 extrasContainer.BringToFront();
                 DirView_NodeMouseClick(null, null);

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Configuration;
+using System.IO.Ports;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
@@ -26,6 +28,7 @@ namespace LocalVideoPlayer
         private int joystickY;
         private int timelineShowTimeout = 10000;
         private MainForm mainForm;
+        private SerialPort serialPort;
         private System.Timers.Timer pollingTimer;
         private TcpClient client;
         private Thread workerThread = null;
@@ -36,7 +39,57 @@ namespace LocalVideoPlayer
         public MouseWorker(MainForm m)
         {
             mainForm = m;
+            InitializeSerialPort();
         }
+
+        #region Serial port
+
+        private void InitializeSerialPort()
+        {
+            serialPort = new SerialPort();
+            string portNumber = ConfigurationManager.AppSettings["comPort"];
+            serialPort.PortName = "COM" + portNumber;
+            serialPort.BaudRate = 9600;
+            serialPort.DataBits = 8;
+            serialPort.Parity = Parity.None;
+            serialPort.StopBits = StopBits.One;
+            serialPort.Handshake = Handshake.None;
+            serialPort.DataReceived += SerialPort_DataReceived;
+
+            try
+            {
+                serialPort.Open();
+                MainForm.Log("Connected to serial port");
+            }
+            catch
+            {
+                MainForm.Log("No device connected to serial port");
+            }
+        }
+
+        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort serialPort = (SerialPort)sender;
+            if (e.EventType == SerialData.Chars)
+            {
+                string msg = serialPort.ReadLine();
+                MainForm.Log("Serial port received: " + msg);
+                if (msg.Contains("stop"))
+                {
+                    FormCollection formCollection = Application.OpenForms;
+                    foreach (Form f_ in formCollection)
+                    {
+                        if (f_.Name.Equals("PlayerForm"))
+                        {
+                            PlayerForm pf = (PlayerForm)f_;
+                            pf.InitiatePause();
+                        }
+                    }
+                }
+            }
+        }
+
+        #endregion
 
         private void DoWork()
         {
@@ -297,6 +350,13 @@ namespace LocalVideoPlayer
 
         public void Stop(int stopTimeout)
         {
+
+            if (serialPort != null)
+            {
+                serialPort.Close();
+                serialPort.Dispose();
+            }
+
             if (pollingTimer != null)
             {
                 pollingTimer.Stop();

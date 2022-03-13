@@ -1,9 +1,7 @@
 ﻿using LibVLCSharp.Shared;
 using System;
-using System.Configuration;
 using System.Drawing;
 using System.IO;
-using System.IO.Ports;
 using System.Windows.Forms;
 
 namespace LocalVideoPlayer
@@ -24,14 +22,12 @@ namespace LocalVideoPlayer
         public LibVLC libVlc;
         public MediaPlayer mediaPlayer;
         private TvShow currTvShow;
-        private SerialPort serialPort;
         private Timer pollingTimer;
 
         public PlayerForm(string p, long s, int r, TvShow t, Episode ep, Form tf)
         {
             if (!DesignMode) Core.Initialize();
             InitializeComponent();
-            InitializeSerialPort();
 #if DEBUG
             this.WindowState = FormWindowState.Normal;
 #endif
@@ -123,12 +119,6 @@ namespace LocalVideoPlayer
 
         private void PlayerForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (serialPort != null)
-            {
-                serialPort.Close();
-                serialPort.Dispose();
-            }
-
             if (pollingTimer != null)
             {
                 if (pollingTimer.Enabled)
@@ -239,6 +229,12 @@ namespace LocalVideoPlayer
                 mediaPlayer.Play();
                 pollingTimer.Start();
             }
+
+            if (sender == null)
+            {
+                MouseWorker.DoMouseRightClick();
+                MouseWorker.DoMouseRightClick();
+            }
         }
 
         private void Polling_Tick(object sender, EventArgs e)
@@ -260,70 +256,6 @@ namespace LocalVideoPlayer
         private void Control_MouseLeave(object sender, EventArgs e)
         {
             pollingTimer.Start();
-        }
-
-        #endregion
-
-        #region Serial port
-
-        private void InitializeSerialPort()
-        {
-            serialPort = new SerialPort();
-            string portNumber = ConfigurationManager.AppSettings["comPort"];
-            serialPort.PortName = "COM" + portNumber;
-            serialPort.BaudRate = 9600;
-            serialPort.DataBits = 8;
-            serialPort.Parity = Parity.None;
-            serialPort.StopBits = StopBits.One;
-            serialPort.Handshake = Handshake.None;
-            serialPort.DataReceived += SerialPort_DataReceived;
-
-            try
-            {
-                serialPort.Open();
-                MainForm.Log("Connected to serial port");
-            }
-            catch
-            {
-                MainForm.Log("No device connected to serial port");
-            }
-        }
-
-        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
-            SerialPort serialPort = (SerialPort)sender;
-            if (e.EventType == SerialData.Chars)
-            {
-                string msg = serialPort.ReadLine();
-                MainForm.Log("Serial port received: " + msg);
-                if (msg.Contains("stop"))
-                {
-                    this.Invoke(new MethodInvoker(delegate
-                    {
-                        this.Cursor = new Cursor(Cursor.Current.Handle);
-                        if (!stopPressed)
-                        {
-                            MouseWorker.DoMouseRightClick();
-                            MouseWorker.DoMouseClick();
-                            Cursor.Position = new Point(65, this.Height - 65);
-                            stopPressed = true;
-                        }
-                        else
-                        {
-                            Cursor.Position = new Point(500, this.Height * 3);
-                            stopPressed = false;
-                            MouseWorker.DoMouseRightClick();
-                            MouseWorker.DoMouseClick();
-                            if (!pollingTimer.Enabled)
-                            {
-                                pollingTimer.Enabled = true;
-                                pollingTimer.Start();
-                            }
-                        }
-                    }));
-                    PlayButton_Click(null, null);
-                }
-            }
         }
 
         #endregion
@@ -636,6 +568,44 @@ namespace LocalVideoPlayer
                 timeLbl.Visible = true;
                 controlsVisible = true;
             }
+        }
+
+        private void videoView1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Space)
+            {
+                MainForm.Log("Space bar pause");
+                InitiatePause();
+            }
+        }
+
+        public void InitiatePause()
+        {
+            this.Invoke(new MethodInvoker(delegate
+            {
+                this.Cursor = new Cursor(Cursor.Current.Handle);
+                if (!stopPressed)
+                {
+                    //MouseWorker.DoMouseRightClick();
+                    //MouseWorker.DoMouseClick();
+                    Cursor.Position = new Point(65, this.Height - 65);
+                    stopPressed = true;
+                }
+                else
+                {
+                    Cursor.Position = new Point(500, this.Height * 3);
+                    //MouseWorker.DoMouseRightClick();
+                    //MouseWorker.DoMouseClick();
+                    if (!pollingTimer.Enabled)
+                    {
+                        pollingTimer.Enabled = true;
+                        pollingTimer.Start();
+                    }
+                    stopPressed = false;
+                }
+            }));
+
+            PlayButton_Click(null, null);
         }
 
         #endregion
