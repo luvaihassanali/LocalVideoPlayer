@@ -100,7 +100,7 @@ namespace LocalVideoPlayer
             timeLbl.BringToFront();
 
             this.Cursor = new Cursor(Cursor.Current.Handle);
-            Cursor.Position = new Point(500, this.Height * 3);
+            Cursor.Position = new Point(500, this.Height * 4);
 
             Media currentMedia = CreateMedia(libVlc, mediaPath, FromType.FromPath);
             bool result = mediaPlayer.Play(currentMedia);
@@ -164,16 +164,7 @@ namespace LocalVideoPlayer
                         {
                             currEpisode.SavedTime = endTime;
 
-                            MainForm mainForm = null;
-                            FormCollection formCollection = Application.OpenForms;
-                            foreach (Form f_ in formCollection)
-                            {
-
-                                if (f_.Name.Equals("MainForm"))
-                                {
-                                    mainForm = (MainForm)f_;
-                                }
-                            }
+                            MainForm mainForm = (MainForm)GetForm("MainForm");
                             int lastEpisodeSeason = 0;
                             Episode dummy = TvForm.GetTvEpisode(currTvShow.Name, currTvShow.LastEpisode.Name, out lastEpisodeSeason);
                             if (lastEpisodeSeason == currSeason)
@@ -256,6 +247,20 @@ namespace LocalVideoPlayer
         private void Control_MouseLeave(object sender, EventArgs e)
         {
             pollingTimer.Start();
+        }
+
+        private Form GetForm(string name)
+        {
+            FormCollection formCollection = Application.OpenForms;
+            foreach (Form f_ in formCollection)
+            {
+                if (f_.Name.Equals(name))
+                {
+                    return f_;
+                }
+            }
+            MainForm.Log("GetForm null (PlayerForm)");
+            throw new ArgumentNullException();
         }
 
         #endregion
@@ -500,16 +505,7 @@ namespace LocalVideoPlayer
                                             }
                                         }
                                     }
-                                    MainForm mainForm = null;
-                                    FormCollection formCollection = Application.OpenForms;
-                                    foreach (Form f_ in formCollection)
-                                    {
-
-                                        if (f_.Name.Equals("MainForm"))
-                                        {
-                                            mainForm = (MainForm)f_;
-                                        }
-                                    }
+                                    MainForm mainForm = (MainForm)GetForm("MainForm");
                                     if (mainForm == null) throw new ArgumentNullException();
 
                                     if (mainForm.InvokeRequired)
@@ -593,7 +589,7 @@ namespace LocalVideoPlayer
                 }
                 else
                 {
-                    Cursor.Position = new Point(500, this.Height * 3);
+                    Cursor.Position = new Point(500, this.Height * 4);
                     //MouseWorker.DoMouseRightClick();
                     //MouseWorker.DoMouseClick();
                     if (!pollingTimer.Enabled)

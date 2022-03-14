@@ -49,14 +49,15 @@ namespace LocalVideoPlayer
 
         #endregion
 
+        static public Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         static public Form dimmerForm;
         static public Form seasonDimmerForm;
+        static public LayoutModel layout;
         static public MediaModel media;
-        static public Size mainFormSize;
         static public Point mainFormLoc;
+        static public Size mainFormSize;
         static private bool debugLog;
         static private string debugLogPath;
-        static public Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
 
         private bool mouseMoverClientKill = false;
         private CustomScrollbar customScrollbar = null;
@@ -64,7 +65,7 @@ namespace LocalVideoPlayer
         private Label tvLabel;
         private MouseWorker worker = null;
         private Panel mainFormMainPanel = null;
-
+        
         public MainForm()
         {
             InitializeComponent();
@@ -229,6 +230,7 @@ namespace LocalVideoPlayer
                 movieBox.Name = media.Movies[i].Name;
                 movieBox.Click += TvForm.MovieBox_Click;
                 currentPanel.Controls.Add(movieBox);
+                layout.controlList.Add(movieBox);
                 count++;
             }
 
@@ -260,6 +262,7 @@ namespace LocalVideoPlayer
                 }
 
                 PictureBox tvShowBox = new PictureBox();
+
                 tvShowBox.Width = widthValue;
                 tvShowBox.Height = heightValue;
                 string imagePath = media.TvShows[i].Poster;
@@ -279,6 +282,7 @@ namespace LocalVideoPlayer
                 tvShowBox.Name = media.TvShows[i].Name;
                 tvShowBox.Click += TvForm.TvShowBox_Click;
                 currentPanel.Controls.Add(tvShowBox);
+                layout.controlList.Add(tvShowBox);
                 count++;
             }
 
@@ -965,7 +969,10 @@ namespace LocalVideoPlayer
         {
             loadingLabel.Dispose();
             this.Padding = new Padding(5, 20, 20, 20);
+            layout = new LayoutModel(media.Count);
+            layout.mainFormClose = closeButton;
             InitializetGui();
+            layout.Initialize();
             loadingCircle1.Dispose();
         }
 

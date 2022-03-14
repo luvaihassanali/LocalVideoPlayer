@@ -26,6 +26,8 @@ namespace LocalVideoPlayer
             set => tvShows = value;
         }
 
+        public (int, int) Count => (movies.Length, tvShows.Length);
+
         internal bool Compare(MediaModel prevMedia)
         {
             Array.Sort(this.Movies, Movie.SortMoviesAlphabetically());

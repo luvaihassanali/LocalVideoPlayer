@@ -76,17 +76,24 @@ namespace LocalVideoPlayer
                 MainForm.Log("Serial port received: " + msg);
                 if (msg.Contains("stop"))
                 {
-                    FormCollection formCollection = Application.OpenForms;
-                    foreach (Form f_ in formCollection)
-                    {
-                        if (f_.Name.Equals("PlayerForm"))
-                        {
-                            PlayerForm pf = (PlayerForm)f_;
-                            pf.InitiatePause();
-                        }
-                    }
+                    PlayerForm pf = (PlayerForm)GetForm("PlayerForm");
+                    pf.InitiatePause();
                 }
             }
+        }
+
+        private Form GetForm(string name)
+        {
+            FormCollection formCollection = Application.OpenForms;
+            foreach (Form f_ in formCollection)
+            {
+                if (f_.Name.Equals(name))
+                {
+                    return f_;
+                }
+            }
+            MainForm.Log("GetForm null (Mouse Worker)");
+            throw new ArgumentNullException();
         }
 
         #endregion
@@ -103,6 +110,8 @@ namespace LocalVideoPlayer
                 ConnectToServer();
             }
         }
+
+        #region Timer functions
 
         private void StartTimer()
         {
@@ -125,6 +134,10 @@ namespace LocalVideoPlayer
             StopImmediately();
             Start();
         }
+
+        #endregion
+
+        #region TCP functions 
 
         private void ConnectToServer()
         {
@@ -288,6 +301,10 @@ namespace LocalVideoPlayer
             }
         }
 
+        #endregion
+
+        #region Mouse functions 
+
         void DoMouseMove()
         {
             joystickX = -joystickX;
@@ -323,6 +340,10 @@ namespace LocalVideoPlayer
             uint Y = (uint)Cursor.Position.Y;
             mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP, X, Y, 0, 0);
         }
+
+        #endregion
+
+        #region Thread functions
 
         public void Start()
         {
@@ -415,6 +436,8 @@ namespace LocalVideoPlayer
                 Thread.Sleep(100);
             }
         }
+
+        #endregion
 
         public void Log(string message)
         {
