@@ -7,7 +7,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -969,7 +968,7 @@ namespace LocalVideoPlayer
         {
             loadingLabel.Dispose();
             this.Padding = new Padding(5, 20, 20, 20);
-            layout = new LayoutModel(media.Count);
+            layout = new LayoutModel(media.Count, this);
             layout.mainFormClose = closeButton;
             InitializetGui();
             layout.Initialize();
@@ -1013,26 +1012,25 @@ namespace LocalVideoPlayer
             if (keyData == Keys.Up)
             {
                 Log("You pressed Up arrow key");
+                layout.moveCurrentPoint(layout.up);
                 return true;
             }
             if (keyData == Keys.Down)
             {
                 Log("You pressed Down arrow key");
+                layout.moveCurrentPoint(layout.down);
                 return true;
             }
             if (keyData == Keys.Left)
             {
                 Log("You pressed Left arrow key");
+                layout.moveCurrentPoint(layout.left);
                 return true;
             }
             if (keyData == Keys.Right)
             {
                 Log("You pressed Right arrow key");
-                return true;
-            }
-            if (keyData == Keys.Space)
-            {
-                Log("Space");
+                layout.moveCurrentPoint(layout.right);
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);
