@@ -10,15 +10,14 @@ namespace LocalVideoPlayer
         private bool onMainForm = true;
         private bool onTvForm = false;
         private bool onPlayerForm = false;
-        public MainForm mainForm = null;
-        private Panel mainFormMainPanel = null;
+        private bool onMovieForm = false;
+
+        public Panel mainFormMainPanel = null;
         public Control mainFormClose = null;
-        public TvForm tvForm = null;
-        private PictureBox tvBackdropPictureBox = null;
-        private Control tvFormClose = null;
-        public Form movieForm = null;
-        private PictureBox movieBackropPictureBox = null;
-        private Control movieFormClose = null;
+        public Panel tvFormMainPanel = null;
+        public Control tvFormClose = null;
+        public PictureBox movieBackropBox = null;
+        public Control movieFormClose = null;
         public PlayerForm playerForm = null;
         public Control playerFormClose = null;
         public Control playButton = null;
@@ -28,82 +27,194 @@ namespace LocalVideoPlayer
         private int tvShowCount;
         private List<int[]> mainFormGrid = new List<int[]>();
         private List<Control[]> mainFormControlGrid = new List<Control[]>();
-        public List<Control> controlList = new List<Control>();
-
+        public List<Control> mainFormControlList = new List<Control>();
+        public List<Control> tvFormControlList = new List<Control>();
+        private int tvFormControlIndex = 0;
+        private Control currentControl = null;
         private (int x, int y) currentPoint = (0, 0);
+        private (int x, int y) returnPointA = (0, 0);
+        private (int x, int y) returnPointB = (0, 0);
+        private (int x, int y) returnPointC = (0, 0);
         public (int x, int y) up = (-1, 0);
         public (int x, int y) down = (1, 0);
         public (int x, int y) left = (0, -1);
         public (int x, int y) right = (0, 1);
 
-        public LayoutModel((int m, int t) mediaCount, MainForm m)
+        public LayoutModel((int m, int t) mediaCount)
         {
-            mainForm = m;
             movieCount = mediaCount.m;
             tvShowCount = mediaCount.t;
-            buildGrid(false);
-            buildGrid(true);
-
+            BuildMainGrid(false);
+            BuildMainGrid(true);
         }
 
         public void Initialize()
         {
-            foreach (Control c in mainForm.Controls)
+            if (onMainForm)
             {
-                Panel p_ = c as Panel;
-                if (p_ != null && p_.Name.Equals("mainFormMainPanel"))
-                {
-                    mainFormMainPanel = p_;
-                }
-
+                BuildMainControlGrid();
+                currentControl = mainFormControlGrid[0][0];
+                CenterMouseOverControl(currentControl);
             }
-            buildControlGrid();
-            CenterMouseOverControl(mainFormControlGrid[0][0]);
-            printGrid();
-            printControlGrid();
         }
-        
-        public void moveCurrentPoint((int x, int y) movePoint)
+
+        public void Select(string controlName)
+        {
+            if (onMainForm)
+            {
+                onMainForm = false;
+                returnPointA = currentPoint;
+                bool isMovie = MainForm.media.IsMovie(controlName);
+                if (isMovie)
+                {
+                    onMovieForm = true;
+                    currentControl = movieBackropBox;
+                    CenterMouseOverControl(currentControl);
+                }
+                else
+                {
+                    onTvForm = true;
+                    // collect tv controls into list (only up down)
+                    // add move points
+                    // do season form
+                    // player form...
+                    currentPoint = (tvFormControlIndex, -1);
+                    currentControl = tvFormControlList[tvFormControlIndex];
+                    CenterMouseOverControl(currentControl);
+                }
+            }
+        }
+
+        public void CloseCurrentForm()
+        {
+            if (onMainForm)
+            {
+                mainFormMainPanel.ScrollControlIntoView(mainFormClose);
+                CenterMouseOverControl(mainFormClose);
+                MouseWorker.DoMouseClick();
+            }
+
+            if (onMovieForm)
+            {
+                onMovieForm = false;
+                onMainForm = true;
+                CenterMouseOverControl(movieFormClose);
+                MouseWorker.DoMouseClick();
+                currentPoint = returnPointA;
+                currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
+                CenterMouseOverControl(currentControl);
+            }
+
+            if (onTvForm)
+            {
+                tvFormControlList.Clear();
+                tvFormControlIndex = 0;
+                onTvForm = false;
+                onMainForm = true;
+                CenterMouseOverControl(tvFormClose);
+                MouseWorker.DoMouseClick();
+                currentPoint = returnPointA;
+                currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
+                CenterMouseOverControl(currentControl);
+            }
+        }
+
+        public void MovePointPosition((int x, int y) movePoint)
+        {
+            if (onMainForm) MoveMainGridPoint(movePoint);
+            if (onTvForm) MoveTvPoint(movePoint.x);
+        }
+
+        private void MoveTvPoint(int rX)
+        {
+            int newIndex = currentPoint.x + rX;
+            if (newIndex < 0 || newIndex >= tvFormControlList.Count) return;
+            currentPoint = (newIndex, currentPoint.y);
+            currentControl = tvFormControlList[newIndex]; 
+            tvFormMainPanel.ScrollControlIntoView(currentControl);
+            CenterMouseOverControl(currentControl);
+        }
+
+        public void CenterMouseOverControl(Control ctl)
+        {
+            Point target = new Point((ctl.Left + ctl.Right) / 2, (ctl.Top + ctl.Bottom) / 2);
+            Point targetPos = ctl.Parent.PointToScreen(target);
+            Cursor.Position = targetPos;
+        }
+
+        #region Main form grid
+
+        public void MoveMainGridPoint((int x, int y) movePoint)
         {
             (int x, int y) newPoint = (currentPoint.x + movePoint.x, currentPoint.y + movePoint.y);
-            if (OutOfRange(newPoint)) return;
+            if (OutOfMainGridRange(newPoint)) return;
+
             if (mainFormControlGrid[newPoint.x][newPoint.y] == null)
             {
-                newPoint = GetNextPoint(newPoint, movePoint);
-                if (newPoint.x == -1) return;
-
+                (int x, int y) candidatePoint = ClosestMainGridPoint(newPoint);
+                if (candidatePoint.x != -1)
+                {
+                    newPoint = candidatePoint;
+                }
+                else
+                {
+                    newPoint = NextMainGridPoint(newPoint, movePoint);
+                    if (newPoint.x == -1) return;
+                }
             }
+
             mainFormGrid[newPoint.x][newPoint.y] = 2;
             mainFormGrid[currentPoint.x][currentPoint.y] = 1;
             currentPoint = newPoint;
-            printGrid();
-            printControlGrid();
-            Control currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
+
+            currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
             mainFormMainPanel.ScrollControlIntoView(currentControl);
             CenterMouseOverControl(currentControl);
         }
 
-        public (int x, int y) GetNextPoint((int x, int y) currentPoint, (int x, int y) movePoint)
+        public (int x, int y) NextMainGridPoint((int x, int y) currentPoint, (int x, int y) movePoint)
         {
             (int x, int y) nextPoint = (currentPoint.x + movePoint.x, currentPoint.y + movePoint.y);
-            if (OutOfRange(nextPoint)) return (-1, -1);
+            if (OutOfMainGridRange(nextPoint)) return (-1, -1);
             if (mainFormControlGrid[nextPoint.x][nextPoint.y] == null)
             {
-                GetNextPoint(nextPoint, movePoint);
-            } else
+                NextMainGridPoint(nextPoint, movePoint);
+            }
+            else
             {
                 return nextPoint;
             }
             return (-1, -1);
         }
 
-        private bool OutOfRange((int x, int y) testPoint)
+        private (int x, int y) ClosestMainGridPoint((int x, int y) nextPoint)
+        {
+            int low = nextPoint.y - 1;
+            int high = nextPoint.y + 1;
+            while (low >= 0 || high > 6)
+            {
+                if (low >= 0)
+                {
+                    if (mainFormControlGrid[nextPoint.x][low] != null) return (nextPoint.x, low);
+                }
+
+                if (high < 6)
+                {
+                    if (mainFormControlGrid[nextPoint.x][high] != null) return (nextPoint.x, high);
+                }
+                low--;
+                high++;
+            }
+            return (-1, -1);
+        }
+
+        private bool OutOfMainGridRange((int x, int y) testPoint)
         {
             if (testPoint.y < 0 || testPoint.x < 0 || testPoint.y >= 6 || testPoint.x >= mainFormGrid.Count) return true;
             return false;
         }
 
-        private void buildControlGrid()
+        private void BuildMainControlGrid()
         {
             int count = 0;
             int rowIndex = 0;
@@ -120,10 +231,10 @@ namespace LocalVideoPlayer
                 if (mainFormGrid[rowIndex][count] == 0)
                 {
                     mainFormControlGrid[rowIndex][count] = null;
-                } 
+                }
                 else
                 {
-                    mainFormControlGrid[rowIndex][count] = controlList[controlIndex];
+                    mainFormControlGrid[rowIndex][count] = mainFormControlList[controlIndex];
                     controlIndex++;
                 }
                 count++;
@@ -147,14 +258,14 @@ namespace LocalVideoPlayer
                 }
                 else
                 {
-                    mainFormControlGrid[rowIndex][count] = controlList[controlIndex];
+                    mainFormControlGrid[rowIndex][count] = mainFormControlList[controlIndex];
                     controlIndex++;
                 }
                 count++;
             }
         }
 
-        private void buildGrid(bool movie)
+        private void BuildMainGrid(bool movie)
         {
             int currentCount = movie ? movieCount : tvShowCount;
             int count = 0;
@@ -180,14 +291,11 @@ namespace LocalVideoPlayer
             }
         }
 
-        public void CenterMouseOverControl(Control ctl)
-        {
-            Point target = new Point((ctl.Left + ctl.Right) / 2, (ctl.Top + ctl.Bottom) / 2);
-            Point targetPos = ctl.Parent.PointToScreen(target);
-            Cursor.Position = targetPos;
-        }
+        #endregion
 
-        private void printGrid()
+        #region Print functions
+
+        private void PrintMainGrid()
         {
             foreach (int[] row in mainFormGrid)
             {
@@ -205,7 +313,7 @@ namespace LocalVideoPlayer
             Console.WriteLine();
         }
 
-        private void printControlGrid()
+        private void PrintMainControlGrid()
         {
             foreach (Control[] row in mainFormControlGrid)
             {
@@ -223,5 +331,7 @@ namespace LocalVideoPlayer
             }
             Console.WriteLine();
         }
+
+        #endregion
     }
 }

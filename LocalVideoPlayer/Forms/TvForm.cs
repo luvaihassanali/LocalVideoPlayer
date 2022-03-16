@@ -14,7 +14,6 @@ namespace LocalVideoPlayer
     {
         static private bool seasonFormOpen = false;
         static private bool resetFormOpen = false;
-        static private bool showResetButton = false;
         static private MRG.Controls.UI.LoadingCircle seasonTransitionCircle;
         static private ImageList imageList1;
         static private ListView fileViewG;
@@ -97,7 +96,7 @@ namespace LocalVideoPlayer
 
         static public void TvShowBox_Click(object sender, EventArgs e)
         {
-            Form tvForm = new TvForm();
+            TvForm tvForm = new TvForm();
 
             PictureBox pictureBox = null;
             pictureBox = sender as PictureBox;
@@ -113,6 +112,7 @@ namespace LocalVideoPlayer
             tvFormMainPanel.AutoScroll = true;
             tvFormMainPanel.Name = "tvFormMainPanel";
             tvForm.Controls.Add(tvFormMainPanel);
+            MainForm.layout.tvFormMainPanel = tvFormMainPanel;
 
             List<Control> episodePanelList = null;
             Button seasonButton = null;
@@ -125,6 +125,7 @@ namespace LocalVideoPlayer
             }
             closeButton.Click += MainForm.CloseButton_Click;
             closeButton.Location = new Point(tvForm.Width - (int)(closeButton.Width * 1.65), closeButton.Width / 8);
+            MainForm.layout.tvFormClose = closeButton;
 
             Font mainHeaderFont = new Font("Arial", 26, FontStyle.Bold);
             Font episodeHeaderFont = new Font("Arial", 16, FontStyle.Bold);
@@ -154,57 +155,46 @@ namespace LocalVideoPlayer
             {
                 tvShowBackdropBox.Image = null;
             };
+            MainForm.layout.tvFormControlList.Add(tvShowBackdropBox);
 
             Button resetButton = null;
+            foreach (Control c in tvForm.Controls)
+            {
+                if (c.Name.Equals("resetButton"))
+                    resetButton = (Button)c;
+            }
+
+            resetButton.BringToFront();
+            resetButton.Padding = new Padding(1, 0, 0, 0);
+            resetButton.AutoSize = true;
+            resetButton.Location = new Point(tvForm.Width - resetButton.Width - 35, tvShowBackdropBox.Location.Y + tvShowBackdropBox.Height - resetButton.Height - 5);
+            resetButton.Cursor = MainForm.blueHandCursor;
+            resetButton.Click += (s, e_) =>
+            {
+                resetFormOpen = true;
+                int[] seasons = CustomDialog.ShowResetSeasons(tvShow, MainForm.mainFormSize.Width, MainForm.mainFormSize.Height);
+                if (seasons.Length != 1)
+                {
+                    tvForm.ResetSeasons(tvShow, seasons);
+                }
+                resetFormOpen = false;
+                resetButton.Visible = false;
+            };
+
             if (tvShow.LastEpisode != null)
             {
                 int currSeason = 0;
                 Episode ep = GetTvEpisode(tvShow.Name, tvShow.LastEpisode.Name, out currSeason);
                 tvShow.CurrSeason = currSeason;
-
-                foreach (Control c in tvForm.Controls)
-                {
-                    if (c.Name.Equals("resetButton"))
-                        resetButton = (Button)c;
-                }
-
-                showResetButton = true;
-                resetButton.BringToFront();
-                resetButton.Padding = new Padding(1, 0, 0, 0);
-                resetButton.AutoSize = true;
-                resetButton.Location = new Point(tvForm.Width - resetButton.Width - 35, tvShowBackdropBox.Location.Y + tvShowBackdropBox.Height - resetButton.Height - 5);
-                resetButton.Cursor = MainForm.blueHandCursor;
-                resetButton.Click += (s, e_) =>
-                {
-                    resetFormOpen = true;
-                    int[] seasons = CustomDialog.ShowResetSeasons(tvShow.Name, tvShow.Seasons.Length, MainForm.mainFormSize.Width, MainForm.mainFormSize.Height);
-                    if (seasons.Length != 0)
-                    {
-                        ResetSeasons(tvShow, seasons);
-                    }
-                    resetFormOpen = false;
-                    resetButton.Visible = false;
-                };
-
-                //To-do: UpdateTvForm so resume button shows / click button do right thing
-                tvShowBackdropBox.Click += (s, e_) =>
-                {
-                    PlayerForm.isPlaying = true;
-                    Episode lastEpisode = tvShow.LastEpisode;
-                    PlayerForm.LaunchVlc(tvShow.Name, lastEpisode.Name, lastEpisode.Path, tvForm);
-                    PlayerForm.isPlaying = false;
-                };
             }
-            else
+
+            tvShowBackdropBox.Click += (s, e_) =>
             {
-                tvShowBackdropBox.Click += (s, e_) =>
-                {
-                    PlayerForm.isPlaying = true;
-                    Episode firstEpisode = tvShow.Seasons[0].Episodes[0];
-                    PlayerForm.LaunchVlc(tvShow.Name, firstEpisode.Name, firstEpisode.Path, tvForm);
-                    PlayerForm.isPlaying = false;
-                };
-            }
+                PlayerForm.isPlaying = true;
+                Episode currEpisode = tvShow.LastEpisode == null ? tvShow.Seasons[0].Episodes[0] : tvShow.LastEpisode;
+                PlayerForm.LaunchVlc(tvShow.Name, currEpisode.Name, currEpisode.Path, tvForm);
+                PlayerForm.isPlaying = false;
+            };
 
             Panel mainPanel = new Panel();
             mainPanel.BackColor = SystemColors.Desktop;
@@ -221,7 +211,8 @@ namespace LocalVideoPlayer
             headerLabel.Name = "headerLabel";
             headerLabel.Click += (s, e_) =>
             {
-                if (showResetButton)
+                int newVal = -tvFormMainPanel.AutoScrollPosition.Y;
+                if (newVal == 0)
                 {
                     resetButton.Visible = true;
                 }
@@ -242,9 +233,9 @@ namespace LocalVideoPlayer
             episodeHeaderLabel.Name = "episodeHeaderLabel";
 
             episodePanelList = CreateEpisodePanels(tvShow);
+            MainForm.layout.tvFormControlList.AddRange(episodePanelList);
             episodePanelList.Reverse();
             mainPanel.Controls.AddRange(episodePanelList.ToArray());
-
             tvFormMainPanel.Controls.Add(mainPanel);
             mainPanel.Controls.Add(episodeHeaderLabel);
 
@@ -286,12 +277,10 @@ namespace LocalVideoPlayer
                 if (customScrollbar.Value == 0)
                 {
                     closeButton.Visible = true;
-                    showResetButton = true;
                 }
                 else
                 {
                     closeButton.Visible = false;
-                    showResetButton = false;
                     if (resetButton != null)
                     {
                         resetButton.Visible = false;
@@ -307,12 +296,10 @@ namespace LocalVideoPlayer
                 if (newVal == 0)
                 {
                     closeButton.Visible = true;
-                    showResetButton = true;
                 }
                 else
                 {
                     closeButton.Visible = false;
-                    showResetButton = false;
                     if (resetButton != null)
                     {
                         resetButton.Visible = false;
@@ -347,8 +334,9 @@ namespace LocalVideoPlayer
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
             seasonButton.Size = new Size(episodePanelList[0].Width - 18, seasonButton.Height);
             seasonButton.Cursor = MainForm.blueHandCursor;
-
+            MainForm.layout.tvFormControlList.Insert(1, seasonButton);
             tvForm.Show();
+            MainForm.layout.Select(tvShow.Name);
         }
 
         #endregion
@@ -374,7 +362,6 @@ namespace LocalVideoPlayer
             CustomScrollbar customScrollbar = null;
             Label overviewLabel = null;
             Button seasonButton = null;
-            Button resetButton = null;
 
             foreach (Control c in tvForm.Controls)
             {
@@ -387,10 +374,6 @@ namespace LocalVideoPlayer
                 if (tempButton != null && tempButton.Name.Contains("seasonButton"))
                 {
                     seasonButton = tempButton;
-                }
-                if (tempButton != null && tempButton.Name.Contains("resetButton"))
-                {
-                    resetButton = tempButton;
                 }
 
                 //To-do: remove cast and just check names
@@ -479,11 +462,6 @@ namespace LocalVideoPlayer
             CustomDialog.UpdateScrollBar(customScrollbar, masterPanel);
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
 
-            if (tvShow.LastEpisode == null)
-            {
-                tvForm.Controls.Remove(resetButton);
-            }
-
             mainPanel.Refresh();
         }
 
@@ -541,7 +519,7 @@ namespace LocalVideoPlayer
                     ProgressBar progressBar;
                     if (currEpisode.Length == 0)
                     {
-                        progressBar = PlayerForm.CreateProgressBar(currEpisode.SavedTime, tvShow.RunningTime);
+                        progressBar = PlayerForm.CreateProgressBar(currEpisode.SavedTime, tvShow.RunningTime * 60000);
                     }
                     else
                     {
@@ -607,12 +585,12 @@ namespace LocalVideoPlayer
 
         #region Seasons
 
-        static private void ResetSeasons(TvShow tvShow, int[] seasonsSelection)
+        public void ResetSeasons(TvShow tvShow, int[] seasonsSelection)
         {
-            bool fillNotClear = false;
+            bool fill = false;
             if (seasonsSelection[0] == 1)
             {
-                fillNotClear = true;
+                fill = true;
             }
             if (seasonsSelection[1] == 0)
             {
@@ -623,16 +601,18 @@ namespace LocalVideoPlayer
                     for (int k = 0; k < currSeason.Episodes.Length; k++)
                     {
                         Episode currEpisode = currSeason.Episodes[k];
-                        if (fillNotClear)
+                        if (fill)
                         {
-                            currEpisode.SavedTime = 0;
+                            currEpisode.SavedTime = tvShow.RunningTime * 60000;
                         }
                         else
                         {
-                            currEpisode.SavedTime = tvShow.RunningTime;
+                            currEpisode.SavedTime = 0;
                         }
                     }
                 }
+                tvShow.CurrSeason = 1;
+                tvShow.LastEpisode = null;
             }
             else
             {
@@ -643,11 +623,7 @@ namespace LocalVideoPlayer
                     for (int j = 0; j < currSeason.Episodes.Length; j++)
                     {
                         Episode currEpisode = currSeason.Episodes[j];
-                        if (fillNotClear)
-                        {
-                            currEpisode.SavedTime = 0;
-                        }
-                        else
+                        if (fill)
                         {
                             if (currEpisode.Length != 0)
                             {
@@ -655,17 +631,19 @@ namespace LocalVideoPlayer
                             }
                             else
                             {
-                                currEpisode.SavedTime = tvShow.RunningTime;
+                                currEpisode.SavedTime = tvShow.RunningTime * 60000;
                             }
+                        }
+                        else
+                        {
+                            currEpisode.SavedTime = 0;
                         }
                     }
                 }
-                if (fillNotClear)
-                {
-                    tvShow.CurrSeason = seasonsSelection.Length;
-                    tvShow.LastEpisode = tvShow.Seasons[tvShow.CurrSeason].Episodes[0];
-                }
+                tvShow.CurrSeason = fill ? seasonsSelection[1] + 1 : seasonsSelection[seasonsSelection.Length - 1];
+                tvShow.LastEpisode = fill ? tvShow.Seasons[tvShow.CurrSeason - 1].Episodes[0] : tvShow.Seasons[tvShow.CurrSeason - 1].Episodes[0];
             }
+            seasonButton.Text = "Season " + tvShow.CurrSeason;
             UpdateTvForm(tvShow);
         }
 
@@ -779,9 +757,7 @@ namespace LocalVideoPlayer
 
                     tvShow.CurrSeason = seasonNum;
                     b.Text = "Season " + seasonNum;
-
-                    if (seasonNum == -1)
-                        b.Text = "Extras";
+                    if (seasonNum == -1) b.Text = "Extras";
 
                     seasonForm.Close();
                 };
@@ -1090,6 +1066,7 @@ namespace LocalVideoPlayer
 
             movieForm.Controls.Add(closeButton);
             closeButton.Location = new Point(movieForm.Width - (int)(closeButton.Width * 1.165), (closeButton.Width / 8));
+            MainForm.layout.movieFormClose = closeButton;
 
             Font headerFont = new Font("Arial", 24, FontStyle.Bold);
             Font overviewFont = new Font("Arial", 12, FontStyle.Regular);
@@ -1122,6 +1099,7 @@ namespace LocalVideoPlayer
             {
                 movieBackdropBox.Image = null;
             };
+            MainForm.layout.movieBackropBox = movieBackdropBox;
 
             Label headerLabel = new Label() { Text = movie.Name + " (" + movie.Date.GetValueOrDefault().Year + ")" };
             headerLabel.Dock = DockStyle.Top;
@@ -1154,9 +1132,45 @@ namespace LocalVideoPlayer
             Fader.FadeInCustom(MainForm.dimmerForm, Fader.FadeSpeed.Normal, 0.8);
             MainForm.dimmerForm.Location = MainForm.mainFormLoc;
             movieForm.Show();
+            MainForm.layout.Select(movie.Name);
         }
 
         #endregion
 
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Up)
+            {
+                MainForm.layout.MovePointPosition(MainForm.layout.up);
+                return true;
+            }
+            if (keyData == Keys.Down)
+            {
+                MainForm.layout.MovePointPosition(MainForm.layout.down);
+                return true;
+            }
+            if (keyData == Keys.Left)
+            {
+                MainForm.layout.MovePointPosition(MainForm.layout.left);
+                return true;
+            }
+            if (keyData == Keys.Right)
+            {
+                MainForm.layout.MovePointPosition(MainForm.layout.right);
+                return true;
+            }
+            if (keyData == Keys.Enter)
+            {
+                MouseWorker.DoMouseClick();
+                MainForm.layout.Select(String.Empty);
+                return true;
+            }
+            if (keyData == Keys.Escape)
+            {
+                MainForm.layout.CloseCurrentForm();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
     }
 }

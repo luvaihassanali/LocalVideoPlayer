@@ -28,6 +28,14 @@ namespace LocalVideoPlayer
 
         public (int, int) Count => (movies.Length, tvShows.Length);
 
+        public bool IsMovie(string name)
+        {
+            for (int i = 0; i < movies.Length; i++)
+            {
+                if (name.Equals(movies[i].Name)) return true;
+            }
+            return false;
+        }
         internal bool Compare(MediaModel prevMedia)
         {
             Array.Sort(this.Movies, Movie.SortMoviesAlphabetically());

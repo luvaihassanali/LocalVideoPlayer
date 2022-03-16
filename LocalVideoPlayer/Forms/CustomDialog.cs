@@ -12,7 +12,7 @@ namespace LocalVideoPlayer.Forms
 
         #region Reset seasons
 
-        static internal int[] ShowResetSeasons(string tvShow, int numSeasons, int width, int height)
+        static internal int[] ShowResetSeasons(TvShow tvShow, int width, int height)
         {
             Font headerFont = new Font("Arial", 16, FontStyle.Bold);
             Font textFont = new Font("Arial", 12, FontStyle.Regular);
@@ -20,7 +20,7 @@ namespace LocalVideoPlayer.Forms
             CustomScrollbar customScrollbar = null;
             List<Control> controls = new List<Control>();
             List<int> selectionList = new List<int>();
-            bool fillNotClear = false;
+            bool fill = false;
 
             resetForm.Width = (int)(width / 3);
             resetForm.Height = (int)(height / 1.5);
@@ -49,8 +49,8 @@ namespace LocalVideoPlayer.Forms
                 resetForm.Activate();
                 return;
             };
-
-            Label headerLabel = new Label() { Text = "Reset " + tvShow + " progress" };
+            String epString = tvShow.LastEpisode == null ? "-" : tvShow.LastEpisode.Id.ToString();
+            Label headerLabel = new Label() { Text = "Reset " + tvShow.Name + " (" + "S" + tvShow.CurrSeason + "E" + epString + ")" };
             headerLabel.Dock = DockStyle.Top;
             headerLabel.Font = headerFont;
             headerLabel.AutoSize = true;
@@ -66,6 +66,7 @@ namespace LocalVideoPlayer.Forms
             confirmClear.Cursor = blueHandCursor;
             confirmClear.Click += (sender, e) =>
             {
+                fill = false;
                 bool selection = false;
                 foreach (Control c in controls)
                 {
@@ -84,7 +85,6 @@ namespace LocalVideoPlayer.Forms
                 {
                     resetForm.Close();
                 }
-                fillNotClear = true;
             };
 
             Button confirmFill = new Button() { Text = "Fill" };
@@ -95,6 +95,7 @@ namespace LocalVideoPlayer.Forms
             confirmFill.Cursor = blueHandCursor;
             confirmFill.Click += (sender, e) =>
             {
+                fill = true;
                 bool selection = false;
                 foreach (Control c in controls)
                 {
@@ -126,6 +127,7 @@ namespace LocalVideoPlayer.Forms
             cancel.Cursor = blueHandCursor;
             cancel.Click += (sender, e) => { resetForm.Close(); };
 
+            int numSeasons = tvShow.Seasons.Length;
             for (int i = 0; i <= numSeasons; i++)
             {
                 CheckBox chkBox = new CheckBox { Text = "Season " + i };
@@ -192,7 +194,7 @@ namespace LocalVideoPlayer.Forms
             resetForm.ShowDialog();
             resetForm.Dispose();
 
-            if(fillNotClear)
+            if(fill)
             {
                 selectionList.Insert(0, 1);
             } else

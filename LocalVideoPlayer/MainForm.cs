@@ -75,6 +75,8 @@ namespace LocalVideoPlayer
             this.WindowState = FormWindowState.Normal;
 #endif
 
+            closeButton.Click += new EventHandler(CloseButton_Click);
+
             backgroundWorker1.DoWork += new DoWorkEventHandler(BackgroundWorker1_DoWork);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BackgroundWorker1_RunWorkerCompleted);
             backgroundWorker1.RunWorkerAsync();
@@ -183,10 +185,12 @@ namespace LocalVideoPlayer
             mainFormMainPanel.AutoScroll = true;
             mainFormMainPanel.Name = "mainFormMainPanel";
             mainFormMainPanel.MouseWheel += MainFormMainPanel_MouseWheel;
+            layout.mainFormMainPanel = mainFormMainPanel;
 
             closeButton.Visible = true;
             closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.75), (closeButton.Width / 6));
             closeButton.Cursor = blueHandCursor;
+            layout.mainFormClose = closeButton;
 
             Panel currentPanel = null;
             int count = 0;
@@ -229,7 +233,7 @@ namespace LocalVideoPlayer
                 movieBox.Name = media.Movies[i].Name;
                 movieBox.Click += TvForm.MovieBox_Click;
                 currentPanel.Controls.Add(movieBox);
-                layout.controlList.Add(movieBox);
+                layout.mainFormControlList.Add(movieBox);
                 count++;
             }
 
@@ -281,7 +285,7 @@ namespace LocalVideoPlayer
                 tvShowBox.Name = media.TvShows[i].Name;
                 tvShowBox.Click += TvForm.TvShowBox_Click;
                 currentPanel.Controls.Add(tvShowBox);
-                layout.controlList.Add(tvShowBox);
+                layout.mainFormControlList.Add(tvShowBox);
                 count++;
             }
 
@@ -968,8 +972,7 @@ namespace LocalVideoPlayer
         {
             loadingLabel.Dispose();
             this.Padding = new Padding(5, 20, 20, 20);
-            layout = new LayoutModel(media.Count, this);
-            layout.mainFormClose = closeButton;
+            layout = new LayoutModel(media.Count);
             InitializetGui();
             layout.Initialize();
             loadingCircle1.Dispose();
@@ -1011,26 +1014,32 @@ namespace LocalVideoPlayer
         {
             if (keyData == Keys.Up)
             {
-                Log("You pressed Up arrow key");
-                layout.moveCurrentPoint(layout.up);
+                layout.MovePointPosition(layout.up);
                 return true;
             }
             if (keyData == Keys.Down)
             {
-                Log("You pressed Down arrow key");
-                layout.moveCurrentPoint(layout.down);
+                layout.MovePointPosition(layout.down);
                 return true;
             }
             if (keyData == Keys.Left)
             {
-                Log("You pressed Left arrow key");
-                layout.moveCurrentPoint(layout.left);
+                layout.MovePointPosition(layout.left);
                 return true;
             }
             if (keyData == Keys.Right)
             {
-                Log("You pressed Right arrow key");
-                layout.moveCurrentPoint(layout.right);
+                layout.MovePointPosition(layout.right);
+                return true;
+            }
+            if (keyData == Keys.Enter)
+            {
+                MouseWorker.DoMouseClick();
+                return true;
+            }
+            if (keyData == Keys.Escape)
+            {
+                layout.CloseCurrentForm();
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);
