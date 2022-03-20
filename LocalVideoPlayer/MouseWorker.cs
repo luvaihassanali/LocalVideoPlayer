@@ -91,6 +91,9 @@ namespace LocalVideoPlayer
                 }
                 switch (msg)
                 {
+                    case "power":
+                        DoMouseClick();
+                        break;
                     case "stop": case "pause": case "play":
                         PlayerForm pf = (PlayerForm)GetForm("PlayerForm");
                         pf.InitiatePause();

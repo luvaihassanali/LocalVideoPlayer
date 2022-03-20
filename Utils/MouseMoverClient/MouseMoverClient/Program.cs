@@ -124,6 +124,9 @@ namespace MouseMoverClient
                 switch (msg)
                 {
                     case "power":
+                        // Send cursor to centre of screen
+                        Cursor.Position = new System.Drawing.Point(960, 540);
+                        DoMouseClick();
                         string launchMsg = @"
                         
     ██╗      █████╗ ██╗   ██╗███╗   ██╗ ██████╗██╗  ██╗██╗███╗   ██╗ ██████╗          
@@ -135,7 +138,7 @@ namespace MouseMoverClient
                                                                                   
 ";
                         Console.WriteLine(launchMsg);
-                        var script = "Enable-ScheduledTask -TaskName \"LocalVideoPlayer\";Start-ScheduledTask -TaskName \"LocalVideoPlayer\";Disable-ScheduledTask -TaskName \"LocalVideoPlayer\"";
+                        var script = "Start-ScheduledTask -TaskName \"LocalVideoPlayer\"";
                         var powerShell = PowerShell.Create().AddScript(script);
                         powerShell.Invoke();
                         break;
