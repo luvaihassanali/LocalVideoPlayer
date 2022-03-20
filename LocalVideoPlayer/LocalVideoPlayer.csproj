@@ -110,6 +110,7 @@
     <Compile Include="Forms\TvForm.Designer.cs">
       <DependentUpon>TvForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="LayoutModel.cs" />
     <Compile Include="Libs\Fader.cs" />
     <Compile Include="Libs\LoadingCircle.cs">
       <SubType>Component</SubType>
@@ -171,7 +172,6 @@
     <None Include="Resources\blue_cursors_xl\blue_working_xl_clean.ani">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Resources\pause.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\play.png" />
@@ -183,11 +183,11 @@
     <None Include="Resources\smallPlay.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\customscrollbar_src\TestApp\CustomControls\CustomControls.csproj">
+    <ProjectReference Include="..\Libs\customscrollbar_src\TestApp\CustomControls\CustomControls.csproj">
       <Project>{5b85e2d7-2005-4496-b5d7-59c68a1ec91d}</Project>
       <Name>CustomControls</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MAC_Slider_src\MAC_Slider_C_Sharp_src\MACTrackBarLib\MACTrackBarLib.csproj">
+    <ProjectReference Include="..\Libs\MAC_Slider_src\MAC_Slider_C_Sharp_src\MACTrackBarLib\MACTrackBarLib.csproj">
       <Project>{77a112b1-5440-440b-a0f6-2edcc5b093cb}</Project>
       <Name>MACTrackBarLib</Name>
     </ProjectReference>
@@ -268,6 +268,8 @@
     <Content Include="Resources\blue_cursors_xl\blue_up_xl.cur">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="Resources\media-icon.png" />
+    <None Include="Resources\folder-icon.png" />
     <None Include="Resources\noprev_wide.png" />
     <None Include="Resources\ripple-red.gif" />
     <None Include="Resources\ripple-green.gif" />

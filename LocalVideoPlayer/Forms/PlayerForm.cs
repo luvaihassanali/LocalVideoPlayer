@@ -1,83 +1,54 @@
 ﻿using LibVLCSharp.Shared;
 using System;
-using System.Configuration;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.IO;
-using System.IO.Ports;
 using System.Windows.Forms;
 
 namespace LocalVideoPlayer
 {
     public partial class PlayerForm : Form
     {
+        static public bool isPlaying = false;
+        private bool mouseDown = false;
+        private bool controlsVisible = false;
+        private bool shrinkTimeLine = false;
+        private bool stopPressed = false;
+        private int runningTime;
+        private long seekTime;
+        private string mediaPath;
+
+        private Episode currEpisode;
+        private Form tvForm;
         public LibVLC libVlc;
         public MediaPlayer mediaPlayer;
         private TvShow currTvShow;
-        private Form tvForm;
-        private Episode currEpisode;
-        private string path;
-        private long seekTime;
-        private int runningTime;
         private Timer pollingTimer;
-        private bool mouseDown = false;
-        private bool controlsVisible = false;
-        bool shrinkTimeLine = false;
-        private Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
-        private SerialPort serialPort;
-        
+
         public PlayerForm(string p, long s, int r, TvShow t, Episode ep, Form tf)
         {
-            if (!DesignMode)
-                Core.Initialize();
+            if (!DesignMode) Core.Initialize();
             InitializeComponent();
-            closeButton.Cursor = blueHandCursor;
-            timeline.Cursor = blueHandCursor;
-            playButton.Cursor = blueHandCursor;
-            videoView1.Cursor = Cursors.Default;
-
-            #region Serial port initialize 
-            
-            serialPort = new SerialPort();
-            string portNumber = ConfigurationManager.AppSettings["comPort"];
-            serialPort.PortName = "COM" + portNumber;
-            serialPort.BaudRate = 9600;
-            serialPort.DataBits = 8;
-            serialPort.Parity = Parity.None;
-            serialPort.StopBits = StopBits.One;
-            serialPort.Handshake = Handshake.None;
-            serialPort.ReadTimeout = 500;
-            serialPort.DataReceived += SerialPort_DataReceived;
-
-            try
-            {
-                serialPort.Open();
-                System.Diagnostics.Debug.WriteLine("Connected to serial");
-            }
-            catch
-            {
-                System.Diagnostics.Debug.WriteLine("Serial port does not exist");
-            }
-
-            #endregion
-
-            //To-do: some parameters are in tv object to remove from constructor
-            tvForm = tf;
+#if DEBUG
+            this.WindowState = FormWindowState.Normal;
+#endif
             currEpisode = ep;
             currTvShow = t;
-            seekTime = s;
-            path = p;
+            mediaPath = p;
             runningTime = r;
+            seekTime = s;
+            tvForm = tf;
 
             long max = runningTime * 60000;
             timeline.Maximum = max;
             timeline.Value = seekTime;
 
             DirectoryInfo d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "libvlc", IntPtr.Size == 4 ? "win-x86" : "win-x64"));
-            libVlc = new LibVLC(); 
-            //libVlc = new LibVLC("--verbose=2");
-            //libVlc.SetLogFile("vlclog.txt");
-            //libVlc.Log += (sender, e) => Console.WriteLine($"[{e.Level}] {e.Module}:{e.Message}");
+            //libVlc = new LibVLC("--verbose=2"); //libVlc.SetLogFile("vlclog.txt"); //libVlc.Log += (sender, e) => MainForm.Log($"[{e.Level}] {e.Module}:{e.Message}");
+            libVlc = new LibVLC();
+
+            pollingTimer = new Timer();
+            pollingTimer.Tick += new EventHandler(Polling_Tick);
+            pollingTimer.Interval = 2000;
 
             #region Media player initialize 
 
@@ -95,7 +66,7 @@ namespace LocalVideoPlayer
 
                 }
             };
-            
+
             mediaPlayer.LengthChanged += (sender, e) =>
             {
                 timeline.Maximum = mediaPlayer.Length;
@@ -107,47 +78,19 @@ namespace LocalVideoPlayer
 
             mediaPlayer.EncounteredError += (sender, e) =>
             {
-                throw new Exception("VLC error");
+                MainForm.Log("VLC ERROR: " + e.ToString());
             };
 
             mediaPlayer.EndReached += MediaPlayer_EndReached;
 
-            /*mediaPlayer.Buffering += (sender, e) =>
-            {
-                //To-do: progress bar or wait cursor
-                //cast to MediaPlayer.Event.Buffering -> e.GetBuffering();
-            };*/
-
             #endregion
-
-            pollingTimer = new Timer();
-            pollingTimer.Tick += new EventHandler(Polling_Tick);
-            pollingTimer.Interval = 10000;
-        }
-
-        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
-            SerialPort serialPort = (SerialPort)sender;
-            if (e.EventType == SerialData.Chars)
-            {
-                string msg = serialPort.ReadLine();
-                System.Diagnostics.Debug.WriteLine("Serial port: " + msg);
-                if (msg.Contains("stop"))
-                {
-                    MouseWorker.DoMouseRightClick();
-                    MouseWorker.DoMouseClick();
-                    this.Cursor = new Cursor(Cursor.Current.Handle);
-                    Cursor.Position = new Point(0, this.Height * 3);
-                    PlayButton_Click(null, null);
-                }
-            }
         }
 
         #region General form functions
 
         private void PlayerForm_Load(object sender, EventArgs e)
         {
-            closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.25), (closeButton.Width / 4));
+            closeButton.Location = new Point(this.Width - (int)(closeButton.Width * 1.25), closeButton.Width / 4);
             closeButton.BringToFront();
             playButton.Location = new Point(playButton.Width / 4 - 5, this.Height - (int)(playButton.Width * 1.25));
             playButton.BringToFront();
@@ -155,15 +98,16 @@ namespace LocalVideoPlayer
             timeline.Location = new Point(playButton.Width + 15, this.Height - (int)(playButton.Height * 1.025));
             timeLbl.Location = new Point(timeline.Location.X + timeline.Width, timeline.Location.Y + 1);
             timeLbl.BringToFront();
+            MainForm.layout.playerFormClose = closeButton;
+            MainForm.layout.playButton = playButton;
 
             this.Cursor = new Cursor(Cursor.Current.Handle);
-            Cursor.Position = new Point(0, this.Height * 3);
+            Cursor.Position = new Point(500, this.Height * 4);
 
-            FileInfo media = new FileInfo(path);
-            Media currentMedia = CreateMedia(libVlc, path, FromType.FromPath);
-
+            Media currentMedia = CreateMedia(libVlc, mediaPath, FromType.FromPath);
             bool result = mediaPlayer.Play(currentMedia);
-            //Console.WriteLine("LOAD: " + path);
+            MainForm.Log("Media loaded: " + mediaPath);
+
             if (seekTime != 0 && result)
             {
                 if (seekTime < currEpisode.Length)
@@ -177,12 +121,6 @@ namespace LocalVideoPlayer
 
         private void PlayerForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (serialPort != null)
-            {
-                serialPort.Close();
-                serialPort.Dispose();
-            }
-
             if (pollingTimer != null)
             {
                 if (pollingTimer.Enabled)
@@ -212,7 +150,7 @@ namespace LocalVideoPlayer
                     if (currEpisode == null) throw new ArgumentNullException();
                     if (currSeason == 0) throw new ArgumentNullException();
 
-                    if (path.Contains("Extras"))
+                    if (mediaPath.Contains("Extras"))
                     {
                         currEpisode.SavedTime = endTime;
                     }
@@ -228,30 +166,22 @@ namespace LocalVideoPlayer
                         {
                             currEpisode.SavedTime = endTime;
 
-                            MainForm mainForm = null;
-                            FormCollection formCollection = Application.OpenForms;
-                            foreach (Form f_ in formCollection)
-                            {
-
-                                if (f_.Name.Equals("MainForm"))
-                                {
-                                    mainForm = (MainForm)f_;
-                                }
-                            }
+                            MainForm mainForm = (MainForm)GetForm("MainForm");
                             int lastEpisodeSeason = 0;
-                            Episode dummy = mainForm.GetTvEpisode(currTvShow.Name, currTvShow.LastEpisode.Name, out lastEpisodeSeason);
-                            if(lastEpisodeSeason == currSeason)
+                            Episode dummy = TvForm.GetTvEpisode(currTvShow.Name, currTvShow.LastEpisode.Name, out lastEpisodeSeason);
+                            if (lastEpisodeSeason == currSeason)
                             {
-                                if(currTvShow.LastEpisode.Id <= currEpisode.Id)
+                                if (currTvShow.LastEpisode.Id <= currEpisode.Id)
                                 {
                                     currTvShow.CurrSeason = currSeason;
                                     currTvShow.LastEpisode = currEpisode;
                                 }
-                            } else if (lastEpisodeSeason < currSeason)
+                            }
+                            else if (lastEpisodeSeason < currSeason)
                             {
                                 currTvShow.CurrSeason = currSeason;
                                 currTvShow.LastEpisode = currEpisode;
-                                
+
                             }
                         }
                     }
@@ -270,7 +200,7 @@ namespace LocalVideoPlayer
 
         private void CloseButton_Click(object sender, EventArgs e)
         {
-            if(mediaPlayer.IsPlaying)
+            if (mediaPlayer.IsPlaying)
             {
                 mediaPlayer.Pause();
             }
@@ -291,6 +221,12 @@ namespace LocalVideoPlayer
                 playButton.BackgroundImage = Properties.Resources.play64;
                 mediaPlayer.Play();
                 pollingTimer.Start();
+            }
+
+            if (sender == null)
+            {
+                MouseWorker.DoMouseRightClick();
+                MouseWorker.DoMouseRightClick();
             }
         }
 
@@ -315,6 +251,20 @@ namespace LocalVideoPlayer
             pollingTimer.Start();
         }
 
+        private Form GetForm(string name)
+        {
+            FormCollection formCollection = Application.OpenForms;
+            foreach (Form f_ in formCollection)
+            {
+                if (f_.Name.Equals(name))
+                {
+                    return f_;
+                }
+            }
+            MainForm.Log("GetForm null");
+            throw new ArgumentNullException();
+        }
+
         #endregion
 
         #region Progress bar
@@ -332,95 +282,103 @@ namespace LocalVideoPlayer
 
         private void UpdateProgressBar()
         {
-            Panel episodePanel = null;
-            Panel mainPanel = null;
-            foreach (Control c in tvForm.Controls)
+            try
             {
-                Panel p_ = c as Panel;
-                if (p_ != null && p_.Name.Equals("tvFormMainPanel"))
+                Panel episodePanel = null;
+                Panel mainPanel = null;
+                foreach (Control c in tvForm.Controls)
                 {
-                    foreach (Control ctrl in p_.Controls)
+                    Panel p_ = c as Panel;
+                    if (p_ != null && p_.Name.Equals("tvFormMainPanel"))
                     {
-                        Panel p = ctrl as Panel;
-                        if (p != null && p.Name.Equals("mainPanel"))
+                        foreach (Control ctrl in p_.Controls)
                         {
-                            mainPanel = p;
-                            foreach (Control c_ in p.Controls)
+                            Panel p = ctrl as Panel;
+                            if (p != null && p.Name.Equals("mainPanel"))
                             {
-                                Panel ePanel = c_ as Panel;
-                                if (ePanel != null && ePanel.Name.Contains("episodePanel"))
+                                mainPanel = p;
+                                foreach (Control c_ in p.Controls)
                                 {
-                                    //To-do: if episode name is similar enough wrong progress bar updated
-                                    if (ePanel.Name.Contains(currEpisode.Name))
+                                    Panel ePanel = c_ as Panel;
+                                     if (ePanel != null && ePanel.Name.Contains("episodePanel"))
                                     {
-                                        episodePanel = ePanel;
-                                        //To-do: find more break points
-                                        break;
+                                        string[] ePanelNameTrim = ePanel.Name.Split(new[] { ' ' }, 2);
+                                        if (ePanelNameTrim[1].Equals(currEpisode.Name))
+                                        {
+                                            episodePanel = ePanel;
+                                            //To-do: find more break points
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            PictureBox pBox = null;
-            foreach (Control c in episodePanel.Controls)
-            {
-                pBox = c as PictureBox;
-                if (pBox != null) break;
-            }
-            if (episodePanel.Controls.Count == 3)
-            {
-                ProgressBar progressBar = CreateProgressBar(currEpisode.SavedTime, currEpisode.Length);
-                progressBar.Location = new Point(pBox.Location.X, pBox.Location.Y + pBox.Height);
-                if (episodePanel.InvokeRequired)
+                PictureBox pBox = null;
+                foreach (Control c in episodePanel.Controls)
                 {
-                    //https://stackoverflow.com/questions/229554/whats-the-difference-between-invoke-and-begininvoke
-                    episodePanel.Invoke(new MethodInvoker(delegate
+                    pBox = c as PictureBox;
+                    if (pBox != null) break;
+                }
+                if (episodePanel.Controls.Count == 3)
+                {
+                    ProgressBar progressBar = CreateProgressBar(currEpisode.SavedTime, currEpisode.Length);
+                    progressBar.Location = new Point(pBox.Location.X, pBox.Location.Y + pBox.Height);
+                    if (episodePanel.InvokeRequired)
+                    {
+                        // https://stackoverflow.com/questions/229554/whats-the-difference-between-invoke-and-begininvoke
+                        episodePanel.Invoke(new MethodInvoker(delegate
+                        {
+                            episodePanel.Controls.Add(progressBar);
+                        }));
+                    }
+                    else
                     {
                         episodePanel.Controls.Add(progressBar);
+                    }
+                }
+                else if (episodePanel.Controls.Count == 4)
+                {
+                    ProgressBar progressBar;
+                    foreach (Control c in episodePanel.Controls)
+                    {
+                        if (c.Name.Equals("pBar"))
+                        {
+                            progressBar = c as ProgressBar;
+                            if (progressBar.InvokeRequired)
+                            {
+                                progressBar.Invoke(new MethodInvoker(delegate
+                                {
+                                    progressBar.Value = (int)currEpisode.SavedTime;
+                                    progressBar.Update();
+                                }));
+                            }
+                            else
+                            {
+                                progressBar.Value = (int)currEpisode.SavedTime;
+                                progressBar.Update();
+                            }
+                        }
+                    }
+                }
+                if (mainPanel.InvokeRequired)
+                {
+                    mainPanel.Invoke(new MethodInvoker(delegate
+                    {
+                        mainPanel.Refresh();
                     }));
                 }
                 else
                 {
-                    episodePanel.Controls.Add(progressBar);
-                }
-            }
-            else if (episodePanel.Controls.Count == 4)
-            {
-                ProgressBar progressBar;
-                foreach (Control c in episodePanel.Controls)
-                {
-                    if (c.Name.Equals("pBar"))
-                    {
-                        progressBar = c as ProgressBar;
-                        if (progressBar.InvokeRequired)
-                        {
-                            progressBar.Invoke(new MethodInvoker(delegate
-                            {
-                                progressBar.Value = (int)currEpisode.SavedTime;
-                                progressBar.Update();
-                            }));
-                        }
-                        else
-                        {
-                            progressBar.Value = (int)currEpisode.SavedTime;
-                            progressBar.Update();
-                        }
-                    }
-                }
-            }
-            if (mainPanel.InvokeRequired)
-            {
-                mainPanel.Invoke(new MethodInvoker(delegate
-                {
                     mainPanel.Refresh();
-                }));
+                }
             }
-            else
+            catch (IndexOutOfRangeException ex)
             {
-                mainPanel.Refresh();
+                MessageBox.Show("UpdateProgressBar: ", ex.Message);
+                MainForm.Log("UpdateProgressBar: " + ex.Message);
             }
         }
 
@@ -428,12 +386,54 @@ namespace LocalVideoPlayer
 
         #region Media player 
 
+        static public void LaunchVlc(string mediaName, string episodeName, string path, Form tvForm)
+        {
+            TvShow currTvShow = null;
+            Episode currEpisode = null;
+            Movie currMovie = null;
+            int currSeason = 0;
+
+            if (episodeName != null)
+            {
+                currTvShow = TvForm.GetTvShow(mediaName);
+                currEpisode = TvForm.GetTvEpisode(mediaName, episodeName, out currSeason);
+            }
+            else
+            {
+                currMovie = TvForm.GetMovie(mediaName);
+            }
+
+            long savedTime = 0;
+            int runningTime = 0;
+
+            if (currTvShow != null)
+            {
+                runningTime = currTvShow.RunningTime;
+                if (currEpisode != null)
+                {
+                    savedTime = currEpisode.SavedTime;
+                }
+            }
+            else if (currMovie != null)
+            {
+                runningTime = currMovie.RunningTime;
+            }
+
+            Form playerForm = new PlayerForm(path, savedTime, runningTime, currTvShow, currEpisode, tvForm);
+            MainForm.layout.Select("playerForm");
+            playerForm.ShowDialog();
+            playerForm.Dispose();
+
+            isPlaying = false;
+            if (tvForm != null) tvForm.Refresh();
+        }
+
         private Media CreateMedia(LibVLC libVlc, string path, FromType fromPath)
         {
-            //Add application and vlc .exe to Graphics Settings with High Performance NVIDIA GPU preference
+            // Add application and vlc .exe to Graphics Settings with High Performance NVIDIA GPU preference
             Media media = new Media(libVlc, path, FromType.FromPath);
             media.AddOption(":avcodec-hw=auto");
-            //media.AddOption(":avcodec-threads=6");
+            media.AddOption(":no-sub-autodetect-file");
             media.AddOption(":no-mkv-preload-local-dir");
             return media;
         }
@@ -483,15 +483,14 @@ namespace LocalVideoPlayer
                                 }
                                 else
                                 {
-                                    //Console.WriteLine("going from season " + (i) + " to " + (i + 1));
+                                    MainForm.Log(currTvShow.Name + " season change from " + (i) + " to " + (i + 1));
                                     currSeason = currTvShow.Seasons[i + 1];
                                     currTvShow.CurrSeason++;
                                     currEpisode = currSeason.Episodes[0];
-                                    path = currEpisode.Path;
+                                    mediaPath = currEpisode.Path;
                                     timeline.Value = 0;
-                                    Media nextMedia = CreateMedia(libVlc, path, FromType.FromPath);
-                                    //To-do: log?
-                                    //Console.WriteLine("NEXT: " + path);
+                                    Media nextMedia = CreateMedia(libVlc, mediaPath, FromType.FromPath);
+                                    MainForm.Log("Media loaded: " + mediaPath);
                                     System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
 
                                     foreach (Control c in tvForm.Controls)
@@ -509,25 +508,16 @@ namespace LocalVideoPlayer
                                             }
                                         }
                                     }
-                                    MainForm mainForm = null;
-                                    FormCollection formCollection = Application.OpenForms;
-                                    foreach (Form f_ in formCollection)
-                                    {
-
-                                        if (f_.Name.Equals("MainForm"))
-                                        {
-                                            mainForm = (MainForm)f_;
-                                        }
-                                    }
+                                    MainForm mainForm = (MainForm)GetForm("MainForm");
                                     if (mainForm == null) throw new ArgumentNullException();
 
                                     if (mainForm.InvokeRequired)
                                     {
-                                        mainForm.BeginInvoke(new MethodInvoker(delegate { mainForm.UpdateTvForm(currTvShow); }));
+                                        mainForm.BeginInvoke(new MethodInvoker(delegate { TvForm.UpdateTvForm(currTvShow); }));
                                     }
                                     else
                                     {
-                                        mainForm.UpdateTvForm(currTvShow);
+                                        TvForm.UpdateTvForm(currTvShow);
                                     }
 
                                     return;
@@ -536,10 +526,10 @@ namespace LocalVideoPlayer
                             else
                             {
                                 currEpisode = currSeason.Episodes[j + 1];
-                                path = currEpisode.Path;
+                                mediaPath = currEpisode.Path;
                                 timeline.Value = 0;
-                                Media nextMedia = CreateMedia(libVlc, path, FromType.FromPath);
-                                //Console.WriteLine("NEXT: " + path);
+                                Media nextMedia = CreateMedia(libVlc, mediaPath, FromType.FromPath);
+                                MainForm.Log("Media loaded: " + mediaPath);
                                 System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
                                 return;
                             }
@@ -577,6 +567,44 @@ namespace LocalVideoPlayer
                 timeLbl.Visible = true;
                 controlsVisible = true;
             }
+        }
+
+        private void videoView1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Space)
+            {
+                MainForm.Log("Space bar pause");
+                InitiatePause();
+            }
+        }
+
+        public void InitiatePause()
+        {
+            this.Invoke(new MethodInvoker(delegate
+            {
+                this.Cursor = new Cursor(Cursor.Current.Handle);
+                if (!stopPressed)
+                {
+                    //MouseWorker.DoMouseRightClick();
+                    //MouseWorker.DoMouseClick();
+                    Cursor.Position = new Point(65, this.Height - 65);
+                    stopPressed = true;
+                }
+                else
+                {
+                    Cursor.Position = new Point(500, this.Height * 4);
+                    //MouseWorker.DoMouseRightClick();
+                    //MouseWorker.DoMouseClick();
+                    if (!pollingTimer.Enabled)
+                    {
+                        pollingTimer.Enabled = true;
+                        pollingTimer.Start();
+                    }
+                    stopPressed = false;
+                }
+            }));
+
+            PlayButton_Click(null, null);
         }
 
         #endregion
@@ -646,17 +674,5 @@ namespace LocalVideoPlayer
 
         #endregion
 
-    }
-
-    public class RoundButton : Button
-    {
-        //https://stackoverflow.com/questions/3708113/round-shaped-buttons
-        protected override void OnPaint(System.Windows.Forms.PaintEventArgs e)
-        {
-            GraphicsPath grPath = new GraphicsPath();
-            grPath.AddEllipse(0, 0, ClientSize.Width, ClientSize.Height);
-            this.Region = new System.Drawing.Region(grPath);
-            base.OnPaint(e);
-        }
     }
 }

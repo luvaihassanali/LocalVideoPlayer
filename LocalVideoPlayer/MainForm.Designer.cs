@@ -6,7 +6,7 @@ namespace LocalVideoPlayer
         /// <summary>
         /// Required designer variable.
         /// </summary>
-        private System.ComponentModel.IContainer components = null;
+         System.ComponentModel.IContainer components = null;
 
         /// <summary>
         /// Clean up any resources being used.
@@ -29,29 +29,15 @@ namespace LocalVideoPlayer
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.loadingCircle1 = new MRG.Controls.UI.LoadingCircle();
             this.loadingLabel = new System.Windows.Forms.Label();
             this.closeButton = new LocalVideoPlayer.RoundButton();
-            this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.SuspendLayout();
-            // 
-            // loadingLabel
-            // 
-            this.loadingLabel.Font = new System.Drawing.Font("Arial", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.loadingLabel.ForeColor = System.Drawing.SystemColors.GrayText;
-            this.loadingLabel.Location = new System.Drawing.Point(0, 192);
-            this.loadingLabel.Name = "loadingLabel";
-            this.loadingLabel.Size = new System.Drawing.Size(800, 32);
-            this.loadingLabel.TabIndex = 11;
-            this.loadingLabel.Text = "...";
-            this.loadingLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // loadingCircle1
             // 
-            this.loadingCircle1.Active = false;
+            this.loadingCircle1.Active = true;
             this.loadingCircle1.Color = System.Drawing.Color.DarkGray;
             this.loadingCircle1.InnerCircleRadius = 100;
             this.loadingCircle1.Location = new System.Drawing.Point(232, 40);
@@ -63,7 +49,17 @@ namespace LocalVideoPlayer
             this.loadingCircle1.SpokeThickness = 8;
             this.loadingCircle1.StylePreset = MRG.Controls.UI.LoadingCircle.StylePresets.MacOSX;
             this.loadingCircle1.TabIndex = 0;
-            this.loadingCircle1.Text = "loadingCircle1";
+            // 
+            // loadingLabel
+            // 
+            this.loadingLabel.Font = new System.Drawing.Font("Arial", 15.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.loadingLabel.ForeColor = System.Drawing.SystemColors.GrayText;
+            this.loadingLabel.Location = new System.Drawing.Point(0, 192);
+            this.loadingLabel.Name = "loadingLabel";
+            this.loadingLabel.Size = new System.Drawing.Size(800, 32);
+            this.loadingLabel.TabIndex = 11;
+            this.loadingLabel.Text = "...";
+            this.loadingLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             // 
             // closeButton
             // 
@@ -78,21 +74,13 @@ namespace LocalVideoPlayer
             this.closeButton.TabIndex = 10;
             this.closeButton.UseVisualStyleBackColor = true;
             this.closeButton.Visible = false;
-            this.closeButton.Click += new System.EventHandler(this.CloseButton_Click);
-            // 
-            // imageList1
-            // 
-            this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
-            this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
-            this.imageList1.Images.SetKeyName(0, "icons8-movies-folder-48.png");
-            this.imageList1.Images.SetKeyName(1, "icons8-movie-48.png");
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Desktop;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1918, 1048);
             this.ControlBox = false;
             this.Controls.Add(this.loadingCircle1);
             this.Controls.Add(this.loadingLabel);
@@ -106,17 +94,17 @@ namespace LocalVideoPlayer
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
+            this.Shown += new System.EventHandler(this.MainForm_Shown);
             this.ResumeLayout(false);
 
         }
 
-        #endregion
+#endregion
 
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private RoundButton closeButton;
         private MRG.Controls.UI.LoadingCircle loadingCircle1;
         private System.Windows.Forms.Label loadingLabel;
-        private System.Windows.Forms.ImageList imageList1;
     }
 }
 

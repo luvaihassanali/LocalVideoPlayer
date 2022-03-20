@@ -32,22 +32,24 @@ namespace LocalVideoPlayer
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PlayerForm));
             this.videoView1 = new LibVLCSharp.WinForms.VideoView();
             this.timeline = new XComponent.SliderBar.MACTrackBar();
+            this.timeLbl = new System.Windows.Forms.Label();
             this.playButton = new LocalVideoPlayer.RoundButton();
             this.closeButton = new LocalVideoPlayer.RoundButton();
-            this.timeLbl = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.videoView1)).BeginInit();
             this.SuspendLayout();
             // 
             // videoView1
             // 
             this.videoView1.BackColor = System.Drawing.Color.Black;
+            this.videoView1.Cursor = System.Windows.Forms.Cursors.Default;
             this.videoView1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.videoView1.Location = new System.Drawing.Point(0, 0);
             this.videoView1.MediaPlayer = null;
             this.videoView1.Name = "videoView1";
-            this.videoView1.Size = new System.Drawing.Size(800, 450);
+            this.videoView1.Size = new System.Drawing.Size(1920, 1050);
             this.videoView1.TabIndex = 4;
             this.videoView1.Text = "videoView1";
+            this.videoView1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.videoView1_KeyDown);
             this.videoView1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.VideoView1_MouseMove);
             // 
             // timeline
@@ -78,6 +80,20 @@ namespace LocalVideoPlayer
             this.timeline.MouseEnter += new System.EventHandler(this.Control_MouseEnter);
             this.timeline.MouseLeave += new System.EventHandler(this.Control_MouseLeave);
             this.timeline.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Timeline_MouseUp);
+            // 
+            // timeLbl
+            // 
+            this.timeLbl.AutoSize = true;
+            this.timeLbl.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.timeLbl.ForeColor = System.Drawing.SystemColors.Control;
+            this.timeLbl.Location = new System.Drawing.Point(696, 416);
+            this.timeLbl.Name = "timeLbl";
+            this.timeLbl.Padding = new System.Windows.Forms.Padding(2, 10, 5, 9);
+            this.timeLbl.Size = new System.Drawing.Size(104, 38);
+            this.timeLbl.TabIndex = 11;
+            this.timeLbl.Tag = "";
+            this.timeLbl.Text = "00:00/00:00";
+            this.timeLbl.Visible = false;
             // 
             // playButton
             // 
@@ -113,27 +129,13 @@ namespace LocalVideoPlayer
             this.closeButton.MouseEnter += new System.EventHandler(this.Control_MouseEnter);
             this.closeButton.MouseLeave += new System.EventHandler(this.Control_MouseLeave);
             // 
-            // timeLbl
-            // 
-            this.timeLbl.AutoSize = true;
-            this.timeLbl.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.timeLbl.ForeColor = System.Drawing.SystemColors.Control;
-            this.timeLbl.Location = new System.Drawing.Point(696, 416);
-            this.timeLbl.Name = "timeLbl";
-            this.timeLbl.Padding = new System.Windows.Forms.Padding(2, 10, 5, 9);
-            this.timeLbl.Size = new System.Drawing.Size(104, 38);
-            this.timeLbl.TabIndex = 11;
-            this.timeLbl.Tag = "";
-            this.timeLbl.Text = "00:00/00:00";
-            this.timeLbl.Visible = false;
-            // 
             // PlayerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.BackColor = System.Drawing.SystemColors.Desktop;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1920, 1050);
             this.Controls.Add(this.timeLbl);
             this.Controls.Add(this.playButton);
             this.Controls.Add(this.closeButton);
@@ -158,8 +160,8 @@ namespace LocalVideoPlayer
 
         private LibVLCSharp.WinForms.VideoView videoView1;
         private XComponent.SliderBar.MACTrackBar timeline;
-        private RoundButton closeButton;
-        private RoundButton playButton;
+        public RoundButton closeButton;
+        public RoundButton playButton;
         private System.Windows.Forms.Label timeLbl;
     }
 }

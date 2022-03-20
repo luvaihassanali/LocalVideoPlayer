@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Configuration;
+using System.IO.Ports;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
@@ -10,32 +12,112 @@ namespace LocalVideoPlayer
 {
     class MouseWorker
     {
+        #region Dll Import
+
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, CallingConvention = System.Runtime.InteropServices.CallingConvention.StdCall)]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
 
-        //Mouse actions
         private const int MOUSEEVENTF_LEFTDOWN = 0x02;
         private const int MOUSEEVENTF_LEFTUP = 0x04;
         private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
         private const int MOUSEEVENTF_RIGHTUP = 0x10;
         private const int MOUSEEVENTF_WHEEL = 0x0800;
 
-        private Thread workerThread = null;
-        private bool workerThreadRunning = false;
-        private int stopTimeout = 10000;
-        private MainForm mainForm;
+        #endregion
+
+        private bool hideCursor = true;
         private string serverIp = "192.168.0.181";
         private int serverPort = 3000;
-        private int jX;
-        private int jY;
-        private bool serverOffline = true;
-        private TcpClient client;
-        private System.Timers.Timer pollingTimer;
 
-        public MouseWorker(MainForm m)
+        private bool serverIsNotConnected = true;
+        private bool workerThreadRunning = false;
+        private int joystickX;
+        private int joystickY;
+        private int timelineShowTimeout = 10000;
+        private LayoutModel layout;
+        private SerialPort serialPort;
+        private System.Timers.Timer pollingTimer;
+        private TcpClient client;
+        private Thread workerThread = null;
+
+        public MouseWorker()
         {
-            mainForm = m;
         }
+
+        #region Serial port
+
+        public void InitializeSerialPort(LayoutModel layoutModel)
+        {
+            layout = layoutModel;
+            serialPort = new SerialPort();
+            string portNumber = ConfigurationManager.AppSettings["comPort"];
+            serialPort.PortName = "COM" + portNumber;
+            serialPort.BaudRate = 9600;
+            serialPort.DataBits = 8;
+            serialPort.Parity = Parity.None;
+            serialPort.StopBits = StopBits.One;
+            serialPort.Handshake = Handshake.None;
+            serialPort.DataReceived += SerialPort_DataReceived;
+            if (hideCursor) Cursor.Hide();
+
+            try
+            {
+                serialPort.Open();
+                MainForm.Log("Connected to serial port");
+            }
+            catch
+            {
+                MainForm.Log("No device connected to serial port");
+            }
+        }
+
+        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort serialPort = (SerialPort)sender;
+            if (e.EventType == SerialData.Chars)
+            {
+                string msg = serialPort.ReadLine();
+                msg = msg.Replace("\r", "");
+                if (hideCursor) Cursor.Hide();
+                switch (msg)
+                {
+                    case "stop": case "pause": case "play":
+                        PlayerForm pf = (PlayerForm)GetForm("PlayerForm");
+                        pf.InitiatePause();
+                        break;
+                    case "up":
+                        layout.MovePointPosition(layout.up);
+                        break;
+                    case "down":
+                        layout.MovePointPosition(layout.down);
+                        break;
+                    case "right":
+                        layout.MovePointPosition(layout.right);
+                        break;
+                    case "left":
+                        layout.MovePointPosition(layout.left);
+                        break;
+                    case "enter":
+                        if (layout.onMainForm)
+                        {
+                            DoMouseClick();
+                        } else
+                        {
+                            DoMouseClick();
+                            layout.Select(String.Empty);
+                        }
+                        break;
+                    case "back":
+                        layout.CloseCurrentForm();
+                        break;
+                    default:
+                        MainForm.Log("Unknown msg received: " + msg);
+                        break;
+                }
+            }
+        }
+
+        #endregion
 
         private void DoWork()
         {
@@ -49,6 +131,8 @@ namespace LocalVideoPlayer
                 ConnectToServer();
             }
         }
+
+        #region Timer functions
 
         private void StartTimer()
         {
@@ -72,117 +156,106 @@ namespace LocalVideoPlayer
             Start();
         }
 
+        #endregion
+
+        #region TCP functions 
+
         private void ConnectToServer()
         {
             Log("Initializing TCP connection");
-
             try
             {
+                client = new TcpClient();
+                bool success = false;
+                IAsyncResult result = null;
+
+                result = client.BeginConnect(serverIp, serverPort, null, null);
+                success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(1));
+
+                while (!success)
+                {
+                    Log("Cannot connect to server. Trying again");
+                    return;
+                }
+
+                Byte[] data = System.Text.Encoding.ASCII.GetBytes("zzzz");
+                NetworkStream stream = null;
+
                 try
                 {
-                    client = new TcpClient();
-                    bool success = false;
-                    IAsyncResult result = null;
+                    stream = client.GetStream();
+                    Log("Connected.");
+                    Thread.Sleep(1000);
+                }
+                catch (System.InvalidOperationException)
+                {
+                    Log("Server not ready. Trying again");
+                    return;
+                }
 
-                    result = client.BeginConnect(serverIp, serverPort, null, null);
-                    success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(1));
+                stream.Write(data, 0, data.Length);
+                Log("Sent init");
+                StartTimer();
 
-                    while (!success)
+                while (true)
+                {
+                    int i;
+                    Byte[] bytes = new Byte[256];
+                    String buffer = null;
+
+                    while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
                     {
-                        Log("Cannot connect to server. Trying again");
-                        return;
-                    }
+                        buffer = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
+                        Log("Received: " + buffer.Replace("\r\n", ""));
 
-                    Byte[] data = System.Text.Encoding.ASCII.GetBytes("zzzz");
-                    NetworkStream stream = null;
-
-                    try
-                    {
-                        stream = client.GetStream();
-                        Log("Connected.");
-                        Thread.Sleep(1000);
-                    }
-                    catch (System.InvalidOperationException)
-                    {
-                        Log("Server not ready. Trying again");
-                        return;
-                    }
-
-                    stream.Write(data, 0, data.Length);
-                    Log("Sent init");
-                    StartTimer();
-
-                    while (true)
-                    {
-                        int i;
-                        Byte[] bytes = new Byte[256];
-                        String buffer = null;
-
-                        while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+                        if (buffer.Contains("initack"))
                         {
-                            buffer = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
-                            Log("Received: " + buffer.Replace("\r\n", ""));
-
-                            if (buffer.Contains("initack"))
-                            {
-                                Log("initack received");
-                                StopTimer();
-                                StartTimer();
-                            }
-
-                            if (buffer.Contains("ka"))
-                            {
-                                StopTimer();
-                                Log("Sending ack");
-                                data = System.Text.Encoding.ASCII.GetBytes("ack");
-                                stream = client.GetStream();
-                                stream.Write(data, 0, data.Length);
-                                StartTimer();
-                            }
-
-                            if (!buffer.Contains("ok") && !buffer.Contains("ka") && !buffer.Contains("initack"))
-                            {
-                                ParseTcpDataIn(buffer);
-                            }
+                            Log("initack received");
+                            Cursor.Show();
+                            StopTimer();
+                            StartTimer();
                         }
 
-                        Log("Stream end. Press any key");
-                        stream.Close();
-                        client.EndConnect(result);
-                        client.Close();
+                        if (buffer.Contains("ka"))
+                        {
+                            StopTimer();
+                            Log("Sending ack");
+                            data = System.Text.Encoding.ASCII.GetBytes("ack");
+                            stream = client.GetStream();
+                            stream.Write(data, 0, data.Length);
+                            StartTimer();
+                        }
+
+                        if (!buffer.Contains("ok") && !buffer.Contains("ka") && !buffer.Contains("initack"))
+                        {
+                            ParseTcpDataIn(buffer);
+                        }
                     }
+
+                    Log("Stream end. Press any key");
+                    stream.Close();
+                    client.EndConnect(result);
+                    client.Close();
                 }
-                catch (ArgumentNullException e)
-                {
-                    Log("ArgumentNullException: " + e);
-                }
-                catch (SocketException e)
-                {
-                    Log("SocketException: " + e);
-                }
-                finally
-                {
-                    if (client != null)
-                    {
-                        client.Close();
-                        client.Dispose();
-                    }
-                }
-            }
-            catch (ThreadAbortException)
-            {
-                throw;
             }
             catch (Exception e)
             {
-                Log(e.Message);
+                Log("MouseWorker_ConnectToServerException: " + e.Message);
+            }
+            finally
+            {
+                if (client != null)
+                {
+                    client.Close();
+                    client.Dispose();
+                }
             }
         }
 
         private void CheckForServer()
         {
             Log("Pinging server...");
-            serverOffline = true;
+            serverIsNotConnected = true;
 
             Ping pingSender = new Ping();
             PingOptions options = new PingOptions();
@@ -191,25 +264,32 @@ namespace LocalVideoPlayer
             byte[] buffer = Encoding.ASCII.GetBytes(data);
             int timeout = 120;
 
-            while (serverOffline)
+            while (serverIsNotConnected)
             {
                 PingReply reply = null;
                 try
                 {
                     reply = pingSender.Send(serverIp, timeout, buffer, options);
                 }
-                catch { }
+                catch
+                { }
+
                 if (reply != null && reply.Status == IPStatus.Success)
                 {
                     Log("Ping success");
-                    serverOffline = false;
+                    serverIsNotConnected = false;
                 }
                 else
                 {
                     Log("Destination host unreachable");
                 }
 
-                Thread.Sleep(1000);
+                try
+                {
+                    Thread.Sleep(3000);
+                }
+                catch
+                { }
             }
         }
 
@@ -221,8 +301,8 @@ namespace LocalVideoPlayer
                 Log("Error. Message incorrect format: " + data);
                 return;
             }
-            jX = Int32.Parse(dataSplit[0]);
-            jY = Int32.Parse(dataSplit[1]);
+            joystickX = Int32.Parse(dataSplit[0]);
+            joystickY = Int32.Parse(dataSplit[1]);
             int buttonState = Int32.Parse(dataSplit[2]);
             int scrollState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
@@ -234,32 +314,36 @@ namespace LocalVideoPlayer
 
             if (scrollState == 0)
             {
-                jY = jY * 2;
-                mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)jY, 0);
+                joystickY = joystickY * 2;
+                mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)joystickY, 0);
             }
             else
             {
                 DoMouseMove();
             }
         }
-        
+
+        #endregion
+
+        #region Mouse functions 
+
         void DoMouseMove()
         {
-            jX = -jX;
-            jY = -jY;
+            joystickX = -joystickX;
+            joystickY = -joystickY;
             int divisor = 20;
-            if ((jX > 0 && jX < 150) || (jX < 0 && jX > -150))
+            if ((joystickX > 0 && joystickX < 150) || (joystickX < 0 && joystickX > -150))
             {
                 divisor = 60;
             }
-            else if ((jX > 150 && jX < 400) || (jX < -150 && jX > -400))
+            else if ((joystickX > 150 && joystickX < 400) || (joystickX < -150 && joystickX > -400))
             {
                 divisor = 40;
             }
 
             for (int i = 0; i < 15; i++)
             {
-                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + jX / divisor, Cursor.Position.Y + jY / divisor);
+                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + joystickX / divisor, Cursor.Position.Y + joystickY / divisor);
                 Thread.Sleep(1);
             }
 
@@ -279,6 +363,10 @@ namespace LocalVideoPlayer
             mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP, X, Y, 0, 0);
         }
 
+        #endregion
+
+        #region Thread functions
+
         public void Start()
         {
             try
@@ -286,7 +374,6 @@ namespace LocalVideoPlayer
                 if (workerThread == null)
                 {
                     workerThread = new Thread(new ThreadStart(this.DoWork));
-                    //workerThread.Priority = ThreadPriority.Normal;
                     workerThread.IsBackground = true;
                     workerThread.Name = "LocalVideoPlayer mouse thread";
                     workerThreadRunning = true;
@@ -301,11 +388,18 @@ namespace LocalVideoPlayer
 
         public void Stop()
         {
-            Stop(stopTimeout);
+            Stop(timelineShowTimeout);
         }
 
         public void Stop(int stopTimeout)
         {
+
+            if (serialPort != null)
+            {
+                serialPort.Close();
+                serialPort.Dispose();
+            }
+
             if (pollingTimer != null)
             {
                 pollingTimer.Stop();
@@ -354,7 +448,7 @@ namespace LocalVideoPlayer
             }
         }
 
-        //check if current thread needs to sleep
+        // Check if current thread needs to sleep
         public void Join(int timeoutMs, Thread workerToWatch)
         {
             DateTime endDateTimeOut = DateTime.UtcNow.AddMilliseconds(timeoutMs);
@@ -365,9 +459,25 @@ namespace LocalVideoPlayer
             }
         }
 
+        #endregion
+
+        private Form GetForm(string name)
+        {
+            FormCollection formCollection = Application.OpenForms;
+            foreach (Form f_ in formCollection)
+            {
+                if (f_.Name.Equals(name))
+                {
+                    return f_;
+                }
+            }
+            MainForm.Log("GetForm null");
+            throw new ArgumentNullException();
+        }
+
         public void Log(string message)
         {
-            System.Diagnostics.Debug.WriteLine("{0}: {1}", DateTime.Now.ToString("0:HH:mm:ss.fff"), message);
+            System.Diagnostics.Debug.WriteLine("{0}: {1}", DateTime.Now.ToString("HH:mm:ss.fff"), message);
         }
     }
 
