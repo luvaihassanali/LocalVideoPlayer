@@ -92,6 +92,8 @@ namespace LocalVideoPlayer
                 switch (msg)
                 {
                     case "power":
+                        // Send cursor to centre of screen
+                        Cursor.Position = new System.Drawing.Point(960, 540);
                         DoMouseClick();
                         break;
                     case "stop": case "pause": case "play":
@@ -314,6 +316,17 @@ namespace LocalVideoPlayer
 
         private void ParseTcpDataIn(string data)
         {
+            if (cursorCount != 0)
+            {
+                mainForm.Invoke(new MethodInvoker(delegate {
+                    for (int j = 0; j < cursorCount; j++)
+                    {
+                        Cursor.Show();
+                    }
+                    cursorCount = 0;
+                }));
+            }
+
             string[] dataSplit = data.Split(',');
             if (dataSplit.Length > 5)
             {
