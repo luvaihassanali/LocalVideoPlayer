@@ -386,7 +386,7 @@ namespace LocalVideoPlayer
             debugLogPath = ConfigurationManager.AppSettings["debugLogPath"] + "lvp-debug.log";
             debugLog = bool.Parse(ConfigurationManager.AppSettings["debugLog"]);
 
-            worker = new MouseWorker();
+            worker = new MouseWorker(this);
             worker.Start();
         }
 

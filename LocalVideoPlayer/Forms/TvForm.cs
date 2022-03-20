@@ -736,7 +736,15 @@ namespace LocalVideoPlayer
 
                 if (currSeason.Id == -1)
                     seasonBox.Name = "-1";
-
+                seasonBox.MouseEnter += (s, ev) =>
+                {
+                    MainForm.layout.ClearSeasonBoxBorder();
+                    seasonBox.BorderStyle = BorderStyle.Fixed3D;
+                };
+                seasonBox.MouseLeave += (s, ev) =>
+                {
+                    seasonBox.BorderStyle = BorderStyle.None;
+                };
                 seasonBox.Click += (s, ev) =>
                 {
                     seasonNum = Int32.Parse(seasonBox.Name);

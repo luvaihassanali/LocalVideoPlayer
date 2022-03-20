@@ -25,10 +25,10 @@ namespace LocalVideoPlayer
 
         #endregion
 
-        private bool hideCursor = true;
         private string serverIp = "192.168.0.181";
         private int serverPort = 3000;
-
+        private bool hideCursor = true;
+        private int cursorCount = 0;
         private bool serverIsNotConnected = true;
         private bool workerThreadRunning = false;
         private int joystickX;
@@ -39,9 +39,16 @@ namespace LocalVideoPlayer
         private System.Timers.Timer pollingTimer;
         private TcpClient client;
         private Thread workerThread = null;
+        private MainForm mainForm;
 
-        public MouseWorker()
+        public MouseWorker(MainForm m)
         {
+            mainForm = m;
+            if (hideCursor)
+            {
+                Cursor.Hide();
+                cursorCount++;
+            }
         }
 
         #region Serial port
@@ -58,7 +65,6 @@ namespace LocalVideoPlayer
             serialPort.StopBits = StopBits.One;
             serialPort.Handshake = Handshake.None;
             serialPort.DataReceived += SerialPort_DataReceived;
-            if (hideCursor) Cursor.Hide();
 
             try
             {
@@ -78,7 +84,11 @@ namespace LocalVideoPlayer
             {
                 string msg = serialPort.ReadLine();
                 msg = msg.Replace("\r", "");
-                if (hideCursor) Cursor.Hide();
+                if (hideCursor)
+                {
+                    Cursor.Hide();
+                    cursorCount++;
+                }
                 switch (msg)
                 {
                     case "stop": case "pause": case "play":
@@ -211,7 +221,13 @@ namespace LocalVideoPlayer
                         if (buffer.Contains("initack"))
                         {
                             Log("initack received");
-                            Cursor.Show();
+                            mainForm.Invoke(new MethodInvoker(delegate {
+                                for (int j = 0; j < cursorCount; j++)
+                                {
+                                    Cursor.Show();
+                                }
+                                cursorCount = 0;
+                            }));
                             StopTimer();
                             StartTimer();
                         }

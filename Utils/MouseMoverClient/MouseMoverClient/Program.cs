@@ -49,7 +49,7 @@ namespace MouseMoverClient
             #region Initialize
 
             Console.Title = "Mouse Mover";
-            Console.SetWindowSize(60, 20);
+            Console.SetWindowSize(90, 20);
             Console.ForegroundColor = ConsoleColor.Green;
             SetWindowPos(MyConsole, 0, 650, 10, 0, 0, SWP_NOSIZE);
 
@@ -60,7 +60,7 @@ namespace MouseMoverClient
             #endregion
 
             Log("Starting using ip address: " + serverIp);
-
+            InitializeSerialPort();
             while (!Console.KeyAvailable)
             {
                 CheckForServer();
@@ -91,7 +91,7 @@ namespace MouseMoverClient
 
         #region Serial port
 
-        public void InitializeSerialPort()
+        static public void InitializeSerialPort()
         {
             serialPort = new SerialPort();
             string portNumber = ConfigurationManager.AppSettings["comPort"];
@@ -114,7 +114,7 @@ namespace MouseMoverClient
             }
         }
 
-        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        static private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             SerialPort serialPort = (SerialPort)sender;
             if (e.EventType == SerialData.Chars)
@@ -124,6 +124,17 @@ namespace MouseMoverClient
                 switch (msg)
                 {
                     case "power":
+                        string launchMsg = @"
+                        
+    ██╗      █████╗ ██╗   ██╗███╗   ██╗ ██████╗██╗  ██╗██╗███╗   ██╗ ██████╗          
+    ██║     ██╔══██╗██║   ██║████╗  ██║██╔════╝██║  ██║██║████╗  ██║██╔════╝          
+    ██║     ███████║██║   ██║██╔██╗ ██║██║     ███████║██║██╔██╗ ██║██║  ███╗         
+    ██║     ██╔══██║██║   ██║██║╚██╗██║██║     ██╔══██║██║██║╚██╗██║██║   ██║         
+    ███████╗██║  ██║╚██████╔╝██║ ╚████║╚██████╗██║  ██║██║██║ ╚████║╚██████╔╝██╗██╗██╗
+    ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝ ╚═════╝╚═╝  ╚═╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝╚═╝╚═╝
+                                                                                  
+";
+                        Console.WriteLine(launchMsg);
                         var script = "Enable-ScheduledTask -TaskName \"LocalVideoPlayer\";Start-ScheduledTask -TaskName \"LocalVideoPlayer\";Disable-ScheduledTask -TaskName \"LocalVideoPlayer\"";
                         var powerShell = PowerShell.Create().AddScript(script);
                         powerShell.Invoke();

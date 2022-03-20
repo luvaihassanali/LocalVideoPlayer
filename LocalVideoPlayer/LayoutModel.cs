@@ -276,6 +276,11 @@ namespace LocalVideoPlayer
             }
         }
 
+        public void ClearSeasonBoxBorder()
+        {
+            foreach (PictureBox p in seasonFormControlList) { p.BorderStyle = BorderStyle.None; }
+        }
+
         public void ClearTvBoxBorder()
         {
             foreach(PictureBox p in tvBoxes) { p.BorderStyle = BorderStyle.None; }
