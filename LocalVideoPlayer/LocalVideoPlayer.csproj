@@ -172,7 +172,6 @@
     <None Include="Resources\blue_cursors_xl\blue_working_xl_clean.ani">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Resources\pause.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\play.png" />
