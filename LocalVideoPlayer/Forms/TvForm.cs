@@ -31,8 +31,8 @@ namespace LocalVideoPlayer
             imageList1 = new ImageList();
             imageList1.Images.Add(Properties.Resources.folder_icon);
             imageList1.Images.Add(Properties.Resources.media_icon);
-
         }
+
         public static TvShow GetTvShow(string name)
         {
             for (int i = 0; i < MainForm.media.TvShows.Length; i++)
@@ -197,7 +197,7 @@ namespace LocalVideoPlayer
             };
 
             Panel mainPanel = new Panel();
-            mainPanel.BackColor = SystemColors.Desktop;
+            mainPanel.BackColor = Color.Black;
             mainPanel.Dock = DockStyle.Top;
             mainPanel.AutoSize = true;
             mainPanel.Padding = new Padding(20);
@@ -233,12 +233,11 @@ namespace LocalVideoPlayer
             episodeHeaderLabel.Name = "episodeHeaderLabel";
 
             episodePanelList = CreateEpisodePanels(tvShow);
-            MainForm.layout.tvFormControlList.AddRange(episodePanelList);
             episodePanelList.Reverse();
             mainPanel.Controls.AddRange(episodePanelList.ToArray());
+
             tvFormMainPanel.Controls.Add(mainPanel);
             mainPanel.Controls.Add(episodeHeaderLabel);
-
             tvFormMainPanel.Controls.Add(overviewLabel);
             tvFormMainPanel.Controls.Add(headerLabel);
             tvFormMainPanel.Controls.Add(tvShowBackdropBox);
@@ -251,6 +250,8 @@ namespace LocalVideoPlayer
                 }
                 tvForm.Close();
                 Fader.FadeOut(MainForm.dimmerForm, Fader.FadeSpeed.Normal);
+                MainForm.layout.DeactivateTvForm();
+                System.Threading.Tasks.Task.Run(() => MainForm.SaveMedia());
             };
 
             MainForm.dimmerForm.Size = MainForm.mainFormSize;
@@ -306,12 +307,11 @@ namespace LocalVideoPlayer
                     }
                 }
                 customScrollbar.Value = newVal;
-                customScrollbar.Invalidate();
-                Application.DoEvents();
             };
 
             tvForm.Controls.Add(customScrollbar);
             customScrollbar.BringToFront();
+            MainForm.layout.tvScrollbar = customScrollbar;
 
             foreach (Control c in tvForm.Controls)
             {
@@ -334,7 +334,8 @@ namespace LocalVideoPlayer
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
             seasonButton.Size = new Size(episodePanelList[0].Width - 18, seasonButton.Height);
             seasonButton.Cursor = MainForm.blueHandCursor;
-            MainForm.layout.tvFormControlList.Insert(1, seasonButton);
+            MainForm.layout.tvFormControlList.Insert(1, overviewLabel);
+            MainForm.layout.tvFormControlList.Insert(2, seasonButton);
             tvForm.Show();
             MainForm.layout.Select(tvShow.Name);
         }
@@ -418,6 +419,7 @@ namespace LocalVideoPlayer
                 mainPanel.Controls.Remove(c);
                 c.Dispose();
             }
+            MainForm.layout.tvFormControlList.RemoveRange(3, MainForm.layout.tvFormControlList.Count - 3);
 
             List<Control> episodePanelList = null;
             if (tvShow.CurrSeason == -1)
@@ -435,6 +437,7 @@ namespace LocalVideoPlayer
             else
             {
                 episodePanelList = CreateEpisodePanels(tvShow);
+                //MainForm.layout.tvFormControlList.AddRange(episodePanelList);
             }
 
             if (episodePanelList != null)
@@ -460,8 +463,8 @@ namespace LocalVideoPlayer
             }
 
             CustomDialog.UpdateScrollBar(customScrollbar, masterPanel);
+            MainForm.layout.tvScrollbar = customScrollbar;
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
-
             mainPanel.Refresh();
         }
 
@@ -508,7 +511,7 @@ namespace LocalVideoPlayer
                     episodeBox.BackgroundImage = Properties.Resources.noprev;
                     episodeBox.BackgroundImageLayout = ImageLayout.Stretch;
                 }
-                episodeBox.BackColor = SystemColors.Desktop;
+                episodeBox.BackColor = Color.Black;
                 episodeBox.Cursor = MainForm.blueHandCursor;
                 episodeBox.SizeMode = PictureBoxSizeMode.CenterImage;
                 episodeBox.Click += TvShowEpisodeBox_Click;
@@ -557,6 +560,7 @@ namespace LocalVideoPlayer
                 episodePanel.Controls.Add(episodeBox);
                 episodePanel.Controls.Add(episodeOverviewLabel);
                 episodePanel.Controls.Add(episodeNameLabel);
+                MainForm.layout.tvFormControlList.Add(episodeBox);
             }
 
             return episodePanelList;
@@ -654,7 +658,7 @@ namespace LocalVideoPlayer
 
             Button b = sender as Button;
             string showName = b.Name.Replace("seasonButton_", "");
-            TvShow tvShow = TvForm.GetTvShow(showName);
+            TvShow tvShow = GetTvShow(showName);
 
             int seasonNum;
             seasonNum = b.Text.Contains("Season") ? Int32.Parse(b.Text.Replace("Season ", "")) : seasonNum = tvShow.Seasons.Length - 1;
@@ -664,7 +668,7 @@ namespace LocalVideoPlayer
             seasonForm.Height = (int)(MainForm.mainFormSize.Height / 1.1);
             seasonForm.AutoScroll = false;
             seasonForm.StartPosition = FormStartPosition.CenterScreen;
-            seasonForm.BackColor = SystemColors.Desktop;
+            seasonForm.BackColor = Color.Black;
             seasonForm.ForeColor = SystemColors.Control;
             seasonForm.FormBorderStyle = FormBorderStyle.None;
             typeof(Form).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, seasonForm, new object[] { true });
@@ -681,8 +685,7 @@ namespace LocalVideoPlayer
             int numSeasons = tvShow.Seasons.Length;
             int currSeasonIndex = tvShow.CurrSeason - 1;
 
-            if (tvShow.CurrSeason == -1)
-                currSeasonIndex = tvShow.Seasons.Length - 1;
+            if (tvShow.CurrSeason == -1) currSeasonIndex = tvShow.Seasons.Length - 1;
 
             for (int i = 0; i < numSeasons; i++)
             {
@@ -690,7 +693,7 @@ namespace LocalVideoPlayer
                 if (count == 0)
                 {
                     currentPanel = new Panel();
-                    currentPanel.BackColor = SystemColors.Desktop;
+                    currentPanel.BackColor = Color.Black;
                     currentPanel.Dock = DockStyle.Top;
                     currentPanel.AutoSize = true;
                     panelCount++;
@@ -724,7 +727,7 @@ namespace LocalVideoPlayer
                     seasonBox.Image = Properties.Resources.noprevSeason;
                 }
 
-                seasonBox.BackColor = SystemColors.Desktop;
+                seasonBox.BackColor = Color.Black;
                 seasonBox.Left = seasonBox.Width * currentPanel.Controls.Count;
                 seasonBox.Cursor = MainForm.blueHandCursor;
                 seasonBox.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -763,9 +766,12 @@ namespace LocalVideoPlayer
                 };
 
                 if (i == currSeasonIndex)
+                {
                     seasonBox.BorderStyle = BorderStyle.Fixed3D;
+                }
 
                 currentPanel.Controls.Add(seasonBox);
+                MainForm.layout.seasonFormControlList.Add(seasonBox);
                 count++;
             }
 
@@ -794,20 +800,24 @@ namespace LocalVideoPlayer
                 {
                     int newVal = -seasonFormMainPanel.AutoScrollPosition.Y;
                     customScrollbar.Value = newVal;
-                    customScrollbar.Invalidate();
-                    Application.DoEvents();
                 };
                 seasonForm.Controls.Add(customScrollbar);
                 customScrollbar.BringToFront();
+                MainForm.layout.seasonScrollbar = customScrollbar;
             }
 
+            seasonForm.Shown += (s, e_) =>
+            {
+                MainForm.layout.seasonFormMainPanel = seasonFormMainPanel;
+                MainForm.layout.seasonFormIndex = currSeasonIndex;
+                MainForm.layout.Select("seasonButton");
+            }; 
             seasonForm.ShowDialog();
             seasonForm.Dispose();
             seasonFormOpen = false;
             Fader.FadeOut(MainForm.seasonDimmerForm, Fader.FadeSpeed.Normal);
 
-            if (indexChange)
-                UpdateTvForm(tvShow);
+            if (indexChange) UpdateTvForm(tvShow);
         }
 
         #endregion
@@ -848,9 +858,9 @@ namespace LocalVideoPlayer
             fileView.UseCompatibleStateImageBehavior = false;
             fileView.View = View.Details;
 
-            dirView.BackColor = SystemColors.Desktop;
+            dirView.BackColor = Color.Black;
             dirView.ForeColor = SystemColors.Control;
-            fileView.BackColor = SystemColors.Desktop;
+            fileView.BackColor = Color.Black;
             fileView.ForeColor = SystemColors.Control;
             Font extrasFont = new Font("Arial", 12F, FontStyle.Regular);
             dirView.Font = extrasFont;
@@ -1048,7 +1058,7 @@ namespace LocalVideoPlayer
             movieForm.AutoScroll = true;
             movieForm.FormBorderStyle = FormBorderStyle.None;
             movieForm.StartPosition = FormStartPosition.CenterScreen;
-            movieForm.BackColor = SystemColors.Desktop;
+            movieForm.BackColor = Color.Black;
             movieForm.ForeColor = SystemColors.Control;
             movieForm.Name = "movieForm";
             typeof(Form).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, movieForm, new object[] { true });
@@ -1082,7 +1092,7 @@ namespace LocalVideoPlayer
                 movieBackdropBox.BackgroundImage = Properties.Resources.noprevSeason;
             }
             movieBackdropBox.BackgroundImageLayout = ImageLayout.Stretch;
-            movieBackdropBox.BackColor = SystemColors.Desktop;
+            movieBackdropBox.BackColor = Color.Black;
             movieBackdropBox.Dock = DockStyle.Top;
             movieBackdropBox.Cursor = MainForm.blueHandCursor;
             movieBackdropBox.Height = (int)(movieForm.Height / 1.777777777777778);
@@ -1136,41 +1146,5 @@ namespace LocalVideoPlayer
         }
 
         #endregion
-
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-        {
-            if (keyData == Keys.Up)
-            {
-                MainForm.layout.MovePointPosition(MainForm.layout.up);
-                return true;
-            }
-            if (keyData == Keys.Down)
-            {
-                MainForm.layout.MovePointPosition(MainForm.layout.down);
-                return true;
-            }
-            if (keyData == Keys.Left)
-            {
-                MainForm.layout.MovePointPosition(MainForm.layout.left);
-                return true;
-            }
-            if (keyData == Keys.Right)
-            {
-                MainForm.layout.MovePointPosition(MainForm.layout.right);
-                return true;
-            }
-            if (keyData == Keys.Enter)
-            {
-                MouseWorker.DoMouseClick();
-                MainForm.layout.Select(String.Empty);
-                return true;
-            }
-            if (keyData == Keys.Escape)
-            {
-                MainForm.layout.CloseCurrentForm();
-                return true;
-            }
-            return base.ProcessCmdKey(ref msg, keyData);
-        }
     }
 }

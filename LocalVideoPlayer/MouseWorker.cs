@@ -12,40 +12,43 @@ namespace LocalVideoPlayer
 {
     class MouseWorker
     {
+        #region Dll Import
+
         [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, CallingConvention = System.Runtime.InteropServices.CallingConvention.StdCall)]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
 
-        // Mouse actions
         private const int MOUSEEVENTF_LEFTDOWN = 0x02;
         private const int MOUSEEVENTF_LEFTUP = 0x04;
         private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
         private const int MOUSEEVENTF_RIGHTUP = 0x10;
         private const int MOUSEEVENTF_WHEEL = 0x0800;
 
+        #endregion
+
+        private bool hideCursor = true;
+        private string serverIp = "192.168.0.181";
+        private int serverPort = 3000;
+
         private bool serverIsNotConnected = true;
         private bool workerThreadRunning = false;
         private int joystickX;
         private int joystickY;
         private int timelineShowTimeout = 10000;
-        private MainForm mainForm;
+        private LayoutModel layout;
         private SerialPort serialPort;
         private System.Timers.Timer pollingTimer;
         private TcpClient client;
         private Thread workerThread = null;
 
-        private string serverIp = "192.168.0.181";
-        private int serverPort = 3000;
-
-        public MouseWorker(MainForm m)
+        public MouseWorker()
         {
-            mainForm = m;
-            InitializeSerialPort();
         }
 
         #region Serial port
 
-        private void InitializeSerialPort()
+        public void InitializeSerialPort(LayoutModel layoutModel)
         {
+            layout = layoutModel;
             serialPort = new SerialPort();
             string portNumber = ConfigurationManager.AppSettings["comPort"];
             serialPort.PortName = "COM" + portNumber;
@@ -55,6 +58,7 @@ namespace LocalVideoPlayer
             serialPort.StopBits = StopBits.One;
             serialPort.Handshake = Handshake.None;
             serialPort.DataReceived += SerialPort_DataReceived;
+            if (hideCursor) Cursor.Hide();
 
             try
             {
@@ -73,27 +77,44 @@ namespace LocalVideoPlayer
             if (e.EventType == SerialData.Chars)
             {
                 string msg = serialPort.ReadLine();
-                MainForm.Log("Serial port received: " + msg);
-                if (msg.Contains("stop"))
+                msg = msg.Replace("\r", "");
+                if (hideCursor) Cursor.Hide();
+                switch (msg)
                 {
-                    PlayerForm pf = (PlayerForm)GetForm("PlayerForm");
-                    pf.InitiatePause();
+                    case "stop": case "pause": case "play":
+                        PlayerForm pf = (PlayerForm)GetForm("PlayerForm");
+                        pf.InitiatePause();
+                        break;
+                    case "up":
+                        layout.MovePointPosition(layout.up);
+                        break;
+                    case "down":
+                        layout.MovePointPosition(layout.down);
+                        break;
+                    case "right":
+                        layout.MovePointPosition(layout.right);
+                        break;
+                    case "left":
+                        layout.MovePointPosition(layout.left);
+                        break;
+                    case "enter":
+                        if (layout.onMainForm)
+                        {
+                            DoMouseClick();
+                        } else
+                        {
+                            DoMouseClick();
+                            layout.Select(String.Empty);
+                        }
+                        break;
+                    case "back":
+                        layout.CloseCurrentForm();
+                        break;
+                    default:
+                        MainForm.Log("Unknown msg received: " + msg);
+                        break;
                 }
             }
-        }
-
-        private Form GetForm(string name)
-        {
-            FormCollection formCollection = Application.OpenForms;
-            foreach (Form f_ in formCollection)
-            {
-                if (f_.Name.Equals(name))
-                {
-                    return f_;
-                }
-            }
-            MainForm.Log("GetForm null (Mouse Worker)");
-            throw new ArgumentNullException();
         }
 
         #endregion
@@ -190,6 +211,7 @@ namespace LocalVideoPlayer
                         if (buffer.Contains("initack"))
                         {
                             Log("initack received");
+                            Cursor.Show();
                             StopTimer();
                             StartTimer();
                         }
@@ -438,6 +460,20 @@ namespace LocalVideoPlayer
         }
 
         #endregion
+
+        private Form GetForm(string name)
+        {
+            FormCollection formCollection = Application.OpenForms;
+            foreach (Form f_ in formCollection)
+            {
+                if (f_.Name.Equals(name))
+                {
+                    return f_;
+                }
+            }
+            MainForm.Log("GetForm null");
+            throw new ArgumentNullException();
+        }
 
         public void Log(string message)
         {

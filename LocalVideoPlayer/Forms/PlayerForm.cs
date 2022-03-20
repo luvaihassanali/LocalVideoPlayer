@@ -98,6 +98,8 @@ namespace LocalVideoPlayer
             timeline.Location = new Point(playButton.Width + 15, this.Height - (int)(playButton.Height * 1.025));
             timeLbl.Location = new Point(timeline.Location.X + timeline.Width, timeline.Location.Y + 1);
             timeLbl.BringToFront();
+            MainForm.layout.playerFormClose = closeButton;
+            MainForm.layout.playButton = playButton;
 
             this.Cursor = new Cursor(Cursor.Current.Handle);
             Cursor.Position = new Point(500, this.Height * 4);
@@ -259,7 +261,7 @@ namespace LocalVideoPlayer
                     return f_;
                 }
             }
-            MainForm.Log("GetForm null (PlayerForm)");
+            MainForm.Log("GetForm null");
             throw new ArgumentNullException();
         }
 
@@ -417,7 +419,8 @@ namespace LocalVideoPlayer
                 runningTime = currMovie.RunningTime;
             }
 
-            Form playerForm = new PlayerForm(path, savedTime, runningTime, currTvShow, currEpisode, tvForm); 
+            Form playerForm = new PlayerForm(path, savedTime, runningTime, currTvShow, currEpisode, tvForm);
+            MainForm.layout.Select("playerForm");
             playerForm.ShowDialog();
             playerForm.Dispose();
 

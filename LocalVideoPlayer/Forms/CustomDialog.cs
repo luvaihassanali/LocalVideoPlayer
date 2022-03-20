@@ -26,7 +26,7 @@ namespace LocalVideoPlayer.Forms
             resetForm.Height = (int)(height / 1.5);
             resetForm.MaximumSize = new Size(width, height - 100);
             resetForm.StartPosition = FormStartPosition.CenterScreen;
-            resetForm.BackColor = SystemColors.Desktop;
+            resetForm.BackColor = Color.Black;
             resetForm.ForeColor = SystemColors.Control;
             resetForm.ShowInTaskbar = false;
             resetForm.FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -183,8 +183,6 @@ namespace LocalVideoPlayer.Forms
                 {
                     int newVal = -resetFormMainPanel.AutoScrollPosition.Y;
                     customScrollbar.Value = newVal;
-                    customScrollbar.Invalidate();
-                    Application.DoEvents();
                 };
 
                 resetForm.Controls.Add(customScrollbar);
@@ -220,7 +218,7 @@ namespace LocalVideoPlayer.Forms
             optionsForm.Height = (int)(height / 1.5);
             optionsForm.MaximumSize = new Size(width, height - 100);
             optionsForm.StartPosition = FormStartPosition.CenterScreen;
-            optionsForm.BackColor = SystemColors.Desktop;
+            optionsForm.BackColor = Color.Black;
             optionsForm.ForeColor = SystemColors.Control;
             optionsForm.ShowInTaskbar = false;
             optionsForm.FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -343,8 +341,6 @@ namespace LocalVideoPlayer.Forms
                 {
                     int newVal = -optionsFormMainPanel.AutoScrollPosition.Y;
                     customScrollbar.Value = newVal;
-                    customScrollbar.Invalidate();
-                    Application.DoEvents();
                 };
 
                 optionsForm.Controls.Add(customScrollbar);
@@ -389,7 +385,7 @@ namespace LocalVideoPlayer.Forms
             customMessageForm.AutoScroll = true;
             customMessageForm.AutoSize = true;
             customMessageForm.StartPosition = FormStartPosition.CenterScreen;
-            customMessageForm.BackColor = SystemColors.Desktop;
+            customMessageForm.BackColor = Color.Black;
             customMessageForm.ForeColor = SystemColors.Control;
             customMessageForm.FormBorderStyle = FormBorderStyle.FixedSingle;
             customMessageForm.ControlBox = false;

@@ -89,9 +89,7 @@ namespace LocalVideoPlayer
             loadingCircle1.Location = new Point(this.Width / 2 - loadingCircle1.Width / 2, this.Height / 2 - loadingCircle1.Height / 2);
             loadingLabel.Location = new Point(0, this.Height / 2 - loadingLabel.Height / 2 + 2);
             loadingLabel.Size = new Size(this.Width, loadingLabel.Height);
-            debugLogPath = ConfigurationManager.AppSettings["debugLogPath"] + "lvp-debug.log";
-            debugLog = bool.Parse(ConfigurationManager.AppSettings["debugLog"]);
-            Log(" <----------- Application Start ------------> ");
+            Log("Application start");
         }
 
         private void MainForm_Shown(object sender, EventArgs e)
@@ -106,8 +104,7 @@ namespace LocalVideoPlayer
             {
                 if (media != null)
                 {
-                    string jsonString = JsonConvert.SerializeObject(media);
-                    File.WriteAllText(jsonFile, jsonString);
+                    SaveMedia();
                 }
 
                 RestoreSystemCursor();
@@ -128,7 +125,15 @@ namespace LocalVideoPlayer
             {
                 Log("Application exit " + ex.Message);
             }
-            Log(" <----------- Application End ------------> ");
+            Log("Application end");
+            for (int i = 0; i < 2; i++) Log(Environment.NewLine);
+        }
+
+        static public void SaveMedia()
+        {
+            Log("Save media");
+            string jsonString = JsonConvert.SerializeObject(media);
+            File.WriteAllText(jsonFile, jsonString);
         }
 
         static public void CloseButton_Click(object sender, EventArgs e)
@@ -155,8 +160,6 @@ namespace LocalVideoPlayer
             int newVal = -mainFormMainPanel.AutoScrollPosition.Y;
             closeButton.Visible = newVal == 0 ? true : false;
             customScrollbar.Value = newVal;
-            customScrollbar.Invalidate();
-            Application.DoEvents();
         }
 
         private void HeaderLabel_Paint(object sender, PaintEventArgs e)
@@ -204,7 +207,7 @@ namespace LocalVideoPlayer
                 if (count == 0)
                 {
                     currentPanel = new Panel();
-                    currentPanel.BackColor = SystemColors.Desktop;
+                    currentPanel.BackColor = Color.Black;
                     currentPanel.Dock = DockStyle.Top;
                     currentPanel.AutoSize = true;
                     currentPanel.Name = "movie" + panelCount;
@@ -225,15 +228,25 @@ namespace LocalVideoPlayer
                 {
                     movieBox.Image = Properties.Resources.noprev;
                 }
-                movieBox.BackColor = SystemColors.Desktop;
+                movieBox.BackColor = Color.Black;
                 movieBox.Left = movieBox.Width * currentPanel.Controls.Count;
                 movieBox.Cursor = blueHandCursor;
                 movieBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 movieBox.Padding = new Padding(20);
                 movieBox.Name = media.Movies[i].Name;
                 movieBox.Click += TvForm.MovieBox_Click;
+                movieBox.MouseEnter += (s, e) =>
+                {
+                    layout.ClearMovieBoxBorder();
+                    movieBox.BorderStyle = BorderStyle.Fixed3D;
+                };
+                movieBox.MouseLeave += (s, e) =>
+                {
+                    movieBox.BorderStyle = BorderStyle.None;
+                };
                 currentPanel.Controls.Add(movieBox);
                 layout.mainFormControlList.Add(movieBox);
+                layout.movieBoxes.Add(movieBox);
                 count++;
             }
 
@@ -255,7 +268,7 @@ namespace LocalVideoPlayer
                 if (count == 0)
                 {
                     currentPanel = new Panel();
-                    currentPanel.BackColor = SystemColors.Desktop;
+                    currentPanel.BackColor = Color.Black;
                     currentPanel.Dock = DockStyle.Top;
                     currentPanel.AutoSize = true;
                     currentPanel.Name = "tv" + panelCount;
@@ -277,15 +290,25 @@ namespace LocalVideoPlayer
                 {
                     tvShowBox.Image = Properties.Resources.noprev;
                 }
-                tvShowBox.BackColor = SystemColors.Desktop;
+                tvShowBox.BackColor = Color.Black;
                 tvShowBox.Left = tvShowBox.Width * currentPanel.Controls.Count;
                 tvShowBox.Cursor = blueHandCursor;
                 tvShowBox.SizeMode = PictureBoxSizeMode.StretchImage;
                 tvShowBox.Padding = new Padding(20);
                 tvShowBox.Name = media.TvShows[i].Name;
                 tvShowBox.Click += TvForm.TvShowBox_Click;
+                tvShowBox.MouseEnter += (s, e) =>
+                {
+                    layout.ClearTvBoxBorder();
+                    tvShowBox.BorderStyle = BorderStyle.Fixed3D;
+                };
+                tvShowBox.MouseLeave += (s, e) =>
+                {
+                    tvShowBox.BorderStyle = BorderStyle.None;
+                };
                 currentPanel.Controls.Add(tvShowBox);
                 layout.mainFormControlList.Add(tvShowBox);
+                layout.tvBoxes.Add(tvShowBox);
                 count++;
             }
 
@@ -302,6 +325,7 @@ namespace LocalVideoPlayer
             customScrollbar.Scroll += CustomScrollbar_Scroll;
             this.Controls.Add(customScrollbar);
             customScrollbar.BringToFront();
+            layout.mainScrollbar = customScrollbar;
         }
 
         private bool CheckForUpdates()
@@ -358,7 +382,11 @@ namespace LocalVideoPlayer
                 Process.GetProcessesByName("MouseMoverClient")[0].Kill();
                 mouseMoverClientKill = true;
             }
-            worker = new MouseWorker(this);
+
+            debugLogPath = ConfigurationManager.AppSettings["debugLogPath"] + "lvp-debug.log";
+            debugLog = bool.Parse(ConfigurationManager.AppSettings["debugLog"]);
+
+            worker = new MouseWorker();
             worker.Start();
         }
 
@@ -975,6 +1003,7 @@ namespace LocalVideoPlayer
             layout = new LayoutModel(media.Count);
             InitializetGui();
             layout.Initialize();
+            worker.InitializeSerialPort(layout);
             loadingCircle1.Dispose();
         }
 
@@ -1010,49 +1039,24 @@ namespace LocalVideoPlayer
 
         #endregion
 
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-        {
-            if (keyData == Keys.Up)
-            {
-                layout.MovePointPosition(layout.up);
-                return true;
-            }
-            if (keyData == Keys.Down)
-            {
-                layout.MovePointPosition(layout.down);
-                return true;
-            }
-            if (keyData == Keys.Left)
-            {
-                layout.MovePointPosition(layout.left);
-                return true;
-            }
-            if (keyData == Keys.Right)
-            {
-                layout.MovePointPosition(layout.right);
-                return true;
-            }
-            if (keyData == Keys.Enter)
-            {
-                MouseWorker.DoMouseClick();
-                return true;
-            }
-            if (keyData == Keys.Escape)
-            {
-                layout.CloseCurrentForm();
-                return true;
-            }
-            return base.ProcessCmdKey(ref msg, keyData);
-        }
-
         static public void Log(string message)
         {
+            bool newLine = false;
+            if (message == Environment.NewLine)
+            {
+                newLine = true; 
+            }
             if (debugLog)
             {
                 using (StreamWriter sw = File.AppendText(debugLogPath))
                 {
-                    sw.WriteLine("{0}:{1} - {2}", DateTime.Now.ToString("HH:mm:ss.fff"), (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod().Name, message);
-                    Debug.WriteLine("{0}:{1} - {2}", DateTime.Now.ToString("HH:mm:ss.fff"), (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod().Name, message);
+                    if (newLine)
+                    {
+                        sw.WriteLine();
+                        return;
+                    }
+                    sw.WriteLine("{0} - {1}: {2}", DateTime.Now.ToString("dd-MM-yy HH:mm:ss.fff"), (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod().Name, message);
+                    Debug.WriteLine("{0} - {1}: {2}", DateTime.Now.ToString("dd-MM-yy HH:mm:ss.fff"), (new System.Diagnostics.StackTrace()).GetFrame(1).GetMethod().Name, message);
                 }
             }
         }

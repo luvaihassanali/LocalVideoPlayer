@@ -32,9 +32,9 @@ namespace LocalVideoPlayer
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PlayerForm));
             this.videoView1 = new LibVLCSharp.WinForms.VideoView();
             this.timeline = new XComponent.SliderBar.MACTrackBar();
+            this.timeLbl = new System.Windows.Forms.Label();
             this.playButton = new LocalVideoPlayer.RoundButton();
             this.closeButton = new LocalVideoPlayer.RoundButton();
-            this.timeLbl = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.videoView1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -81,6 +81,20 @@ namespace LocalVideoPlayer
             this.timeline.MouseLeave += new System.EventHandler(this.Control_MouseLeave);
             this.timeline.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Timeline_MouseUp);
             // 
+            // timeLbl
+            // 
+            this.timeLbl.AutoSize = true;
+            this.timeLbl.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.timeLbl.ForeColor = System.Drawing.SystemColors.Control;
+            this.timeLbl.Location = new System.Drawing.Point(696, 416);
+            this.timeLbl.Name = "timeLbl";
+            this.timeLbl.Padding = new System.Windows.Forms.Padding(2, 10, 5, 9);
+            this.timeLbl.Size = new System.Drawing.Size(104, 38);
+            this.timeLbl.TabIndex = 11;
+            this.timeLbl.Tag = "";
+            this.timeLbl.Text = "00:00/00:00";
+            this.timeLbl.Visible = false;
+            // 
             // playButton
             // 
             this.playButton.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("playButton.BackgroundImage")));
@@ -115,20 +129,6 @@ namespace LocalVideoPlayer
             this.closeButton.MouseEnter += new System.EventHandler(this.Control_MouseEnter);
             this.closeButton.MouseLeave += new System.EventHandler(this.Control_MouseLeave);
             // 
-            // timeLbl
-            // 
-            this.timeLbl.AutoSize = true;
-            this.timeLbl.Font = new System.Drawing.Font("Arial", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.timeLbl.ForeColor = System.Drawing.SystemColors.Control;
-            this.timeLbl.Location = new System.Drawing.Point(696, 416);
-            this.timeLbl.Name = "timeLbl";
-            this.timeLbl.Padding = new System.Windows.Forms.Padding(2, 10, 5, 9);
-            this.timeLbl.Size = new System.Drawing.Size(104, 38);
-            this.timeLbl.TabIndex = 11;
-            this.timeLbl.Tag = "";
-            this.timeLbl.Text = "00:00/00:00";
-            this.timeLbl.Visible = false;
-            // 
             // PlayerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -160,8 +160,8 @@ namespace LocalVideoPlayer
 
         private LibVLCSharp.WinForms.VideoView videoView1;
         private XComponent.SliderBar.MACTrackBar timeline;
-        private RoundButton closeButton;
-        private RoundButton playButton;
+        public RoundButton closeButton;
+        public RoundButton playButton;
         private System.Windows.Forms.Label timeLbl;
     }
 }

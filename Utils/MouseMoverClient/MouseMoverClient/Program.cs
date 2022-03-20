@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Configuration;
 using System.IO.Ports;
+using System.Management.Automation;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
@@ -36,10 +38,11 @@ namespace MouseMoverClient
         static string serverIp = "192.168.0.181";
         static int serverPort = 3000;
         static bool serverIsNotConnected = true;
-        static int jX;
-        static int jY;
+        static int joystickX;
+        static int joystickY;
         static TcpClient client;
         static System.Timers.Timer pollingTimer;
+        static SerialPort serialPort;
 
         static void Main(string[] args)
         {
@@ -85,6 +88,54 @@ namespace MouseMoverClient
 
             Thread.Sleep(3000);
         }
+
+        #region Serial port
+
+        public void InitializeSerialPort()
+        {
+            serialPort = new SerialPort();
+            string portNumber = ConfigurationManager.AppSettings["comPort"];
+            serialPort.PortName = "COM" + portNumber;
+            serialPort.BaudRate = 9600;
+            serialPort.DataBits = 8;
+            serialPort.Parity = Parity.None;
+            serialPort.StopBits = StopBits.One;
+            serialPort.Handshake = Handshake.None;
+            serialPort.DataReceived += SerialPort_DataReceived;
+
+            try
+            {
+                serialPort.Open();
+                Log("Connected to serial port");
+            }
+            catch
+            {
+                Log("No device connected to serial port");
+            }
+        }
+
+        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort serialPort = (SerialPort)sender;
+            if (e.EventType == SerialData.Chars)
+            {
+                string msg = serialPort.ReadLine();
+                msg = msg.Replace("\r", "");
+                switch (msg)
+                {
+                    case "power":
+                        var script = "Enable-ScheduledTask -TaskName \"LocalVideoPlayer\";Start-ScheduledTask -TaskName \"LocalVideoPlayer\";Disable-ScheduledTask -TaskName \"LocalVideoPlayer\"";
+                        var powerShell = PowerShell.Create().AddScript(script);
+                        powerShell.Invoke();
+                        break;
+                    default:
+                        Log("Unknown msg received: " + msg);
+                        break;
+                }
+            }
+        }
+
+        #endregion
 
         #region Timer 
 
@@ -256,8 +307,8 @@ namespace MouseMoverClient
                 Log("Error. Message incorrect format: " + data);
                 return;
             }
-            jX = Int32.Parse(dataSplit[0]);
-            jY = Int32.Parse(dataSplit[1]);
+            joystickX = Int32.Parse(dataSplit[0]);
+            joystickY = Int32.Parse(dataSplit[1]);
             int buttonState = Int32.Parse(dataSplit[2]);
             int buttonTwoState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
@@ -282,21 +333,21 @@ namespace MouseMoverClient
 
         static void DoMouseMove()
         {
-            jX = -jX;
-            jY = -jY;
+            joystickX = -joystickX;
+            joystickY = -joystickY;
             int divisor = 20;
-            if ((jX > 0 && jX < 150) || (jX < 0 && jX > -150))
+            if ((joystickX > 0 && joystickX < 150) || (joystickX < 0 && joystickX > -150))
             {
                 divisor = 60;
             }
-            else if ((jX > 150 && jX < 400) || (jX < -150 && jX > -400))
+            else if ((joystickX > 150 && joystickX < 400) || (joystickX < -150 && joystickX > -400))
             {
                 divisor = 40;
             }
 
             for (int i = 0; i < 15; i++)
             {
-                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + jX / divisor, Cursor.Position.Y + jY / divisor);
+                Cursor.Position = new System.Drawing.Point(Cursor.Position.X + joystickX / divisor, Cursor.Position.Y + joystickY / divisor);
                 Thread.Sleep(1);
             }
         }

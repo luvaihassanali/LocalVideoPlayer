@@ -3,8 +3,11 @@
 // Defines must appear before IRremote include
 #define DECODE_NEC
 #define DECODE_SAMSUNG
+#define DECODE_SONY
 #define MARK_EXCESS_MICROS 10
 #include <IRremote.hpp>
+
+const bool DEBUG = false;
 
 const uint32_t SAMSUNG_POWER = 0x19E60707;
 const uint32_t SAMSUNG_A = 0x936C0707;
@@ -12,8 +15,23 @@ const uint32_t SAMSUNG_B = 0xEB140707;
 const uint32_t SAMSUNG_C = 0xEA150707;
 const uint32_t SAMSUNG_D = 0xE9160707;
 const uint32_t SAMSUNG_STOP = 0xB9460707;
+const uint16_t SONY_POWER = 0x815;
+const uint16_t SONY_VOL_UP = 0x812;
+const uint16_t SONY_VOL_DOWN = 0x813;
+const uint32_t SONY_UP = 0x39D78;
+const uint32_t SONY_DOWN = 0x39D79;
+const uint32_t SONY_LEFT = 0x39D7A;
+const uint32_t SONY_RIGHT = 0x39D7B;
+const uint32_t SONY_ENTER = 0x39D7C;
+const uint32_t SONY_BACK = 0x39D7D;
+const uint32_t SONY_PLAY = 0x39D32;
+const uint32_t SONY_PAUSE = 0x39D39;
+const uint32_t SONY_NEXT = 0x39D31;
+const uint32_t SONY_PREV = 0x39D30;
+const uint32_t SONY_FORWARD = 0x39D34;
+const uint32_t SONY_REWIND = 0x39D33;
+//const uint32_t SONY_STOP = 0x39D38;
 
-const bool DEBUG = false;
 
 // Sent address and command placeholder for checkReceive
 uint16_t sAddress = 0xFFF1;
@@ -109,6 +127,63 @@ void ParseIrValue(uint32_t rawData) {
       // Wait for the transmission of outgoing serial data to complete
       Serial.flush();
       Led13Blink();
+      break;
+    case SONY_POWER:
+      Serial.println("power");
+      Serial.flush();
+      Led13Blink();
+      break;
+    case SONY_UP:
+      Serial.println("up");
+      Serial.flush();
+      Led13Blink();
+      break;
+    case SONY_DOWN:
+      Serial.println("down");
+      Serial.flush();
+      Led13Blink();
+      break;
+    case SONY_RIGHT:
+      Serial.println("right");
+      Serial.flush();
+      Led13Blink();
+      break;
+    case SONY_LEFT:
+      Serial.println("left");
+      Serial.flush();
+      Led13Blink();
+      break;
+    case SONY_ENTER:
+      Serial.println("enter");
+      Serial.flush();
+      Led13Blink();
+      break;
+    case SONY_BACK:
+      Serial.println("back");
+      Serial.flush();
+      Led13Blink();
+      break;
+    case SONY_PLAY:
+      Serial.println("play");
+      Serial.flush();
+      Led13Blink();
+      break;
+    case SONY_PAUSE:
+      Serial.println("pause");
+      Serial.flush();
+      Led13Blink();
+      break;
+    case SONY_VOL_UP:
+      if (DEBUG) {
+        Serial.println("B");
+      }
+      sendRaw(intro_up_arrow, 68U, repeat_up_arrow, 4U, 38400U, 1);
+      break;
+    case SONY_VOL_DOWN:
+      if (DEBUG) {
+        Serial.println("C");
+      }
+      sendRaw(intro_down_arrow, 68U, repeat_down_arrow, 4U, 38400U, 1);
       break;
   }
   delay(200);
