@@ -235,8 +235,8 @@ void PowerSoundBarLong() {
       Serial.println("Power off");
     }
     sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
-    //delay(100);
-    //sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
+    delay(100);
+    sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
     powerPressed = false;
     return;
   } else {
@@ -244,8 +244,8 @@ void PowerSoundBarLong() {
       Serial.println("Power on");
     }
     sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
-    //delay(100);
-    //sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
+    delay(100);
+    sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
     powerPressed = true;
   }
 }

@@ -86,8 +86,11 @@ namespace LocalVideoPlayer
                 msg = msg.Replace("\r", "");
                 if (hideCursor)
                 {
-                    Cursor.Hide();
-                    cursorCount++;
+                    mainForm.Invoke(new MethodInvoker(delegate
+                    {
+                        Cursor.Hide();
+                        cursorCount++;
+                    }));
                 }
                 switch (msg)
                 {
@@ -226,13 +229,16 @@ namespace LocalVideoPlayer
                         if (buffer.Contains("initack"))
                         {
                             Log("initack received");
-                            mainForm.Invoke(new MethodInvoker(delegate {
-                                for (int j = 0; j < cursorCount; j++)
-                                {
-                                    Cursor.Show();
-                                }
-                                cursorCount = 0;
-                            }));
+                            if (hideCursor)
+                            {
+                                mainForm.Invoke(new MethodInvoker(delegate {
+                                    for (int j = 0; j < cursorCount; j++)
+                                    {
+                                        Cursor.Show();
+                                    }
+                                    cursorCount = 0;
+                                }));
+                            }
                             StopTimer();
                             StartTimer();
                         }
