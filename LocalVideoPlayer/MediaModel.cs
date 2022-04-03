@@ -365,6 +365,7 @@ namespace LocalVideoPlayer
 
     public class Episode
     {
+        private bool multiEpisode = false;
         private int id;
         private string name;
         private string backdrop;
@@ -374,12 +375,13 @@ namespace LocalVideoPlayer
         private long savedTime;
         private long length;
 
-        public Episode(int i, string n, string p)
+        public Episode(int i, string n, string p, bool me = false)
         {
             id = i;
             name = n;
             path = p;
             savedTime = 0;
+            multiEpisode = me;
         }
 
         public int Id
@@ -387,6 +389,7 @@ namespace LocalVideoPlayer
             get => id;
             set => id = value;
         }
+
         public string Name
         {
             get => name;

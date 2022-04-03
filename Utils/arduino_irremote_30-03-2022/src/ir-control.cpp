@@ -1,0 +1,166 @@
+#include <ir-control.h>
+
+bool soundBarPowerSwitch = false;
+bool opticalBluetoothSwitch = false;
+
+// https://github.com/Arduino-IRremote/Arduino-IRremote/tree/master/examples/SendRawDemo
+void sendRaw(const MICROSECONDS_T intro[], size_t lengthIntro, const MICROSECONDS_T repeat[], size_t lengthRepeat, FREQUENCY_T frequency, unsigned times)
+{
+    if (lengthIntro > 0U)
+    {
+        IrSender.sendRaw_P(intro, lengthIntro, HZ_2_KHZ(frequency));
+    }
+    if (lengthRepeat > 0U)
+    {
+        for (unsigned i = 0U; i < times - (lengthIntro > 0U); i++)
+        {
+            IrSender.sendRaw_P(repeat, lengthRepeat, HZ_2_KHZ(frequency));
+        }
+    }
+}
+
+void PowerSoundBar()
+{
+    if (soundBarPowerSwitch)
+    {
+        Log("Power off sound bar");
+        sendRaw(I_POWER, 68U, R_POWER, 4U, 38400U, 12);
+        soundBarPowerSwitch = false;
+    }
+    else
+    {
+        Log("Power on sound bar");
+        sendRaw(I_POWER, 68U, R_POWER, 4U, 38400U, 1);
+        soundBarPowerSwitch = true;
+    }
+}
+
+void SoundBarControl()
+{
+    if (button1State == LOW || joystickButtonState == LOW)
+    {
+        PowerSoundBar();
+    }
+    else if (button2State == LOW)
+    {
+        SoundBarInput();
+    }
+    else if (button3State == LOW) {
+        Log("Mute");
+        sendRaw(I_MUTE, 68U, R_MUTE, 4U, 38400U, 1);
+    }
+    else if (joystickMapY > JS_THRESHOLD)
+    {
+        Log("Soundbar vol up");
+        sendRaw(I_UP, 68U, R_UP, 4U, 38400U, 1);
+    }
+    else if (joystickMapY < -JS_THRESHOLD)
+    {
+        Log("Soundbar vol down");
+        sendRaw(I_DOWN, 68U, R_DOWN, 4U, 38400U, 1);
+    }
+    FlashGreenLed();
+}
+
+void SoundBarInput()
+{
+    if (opticalBluetoothSwitch)
+    {
+        Log("Bluetooth");
+        sendRaw(I_BT, 68U, R_BT, 4U, 38400U, 1);
+        opticalBluetoothSwitch = false;
+    }
+    else
+    {
+        Log("Optical");
+        sendRaw(I_OPTICAL, 68U, R_OPTICAL, 4U, 38400U, 1);
+        opticalBluetoothSwitch = true;
+    }
+}
+
+// send remote signal pattern to navigate and click on sound input settings option
+void TvSoundInput()
+{
+    IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_HOME, 0, false);
+    FlashRedLed();
+    Log("home");
+    for (int i = 0; i < 20; i++)
+    {
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_LEFT, 0, false);
+        FlashRedLed();
+        Log(String(i) + " left");
+    }
+    IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_RIGHT, 0, false);
+    FlashRedLed();
+    Log("right");
+    IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_UP, 0, false);
+    FlashRedLed();
+    Log("up");
+    for (int i = 0; i < 3; i++)
+    {
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_RIGHT, 0, false);
+        FlashRedLed();
+        Log(String(i) + " right");
+    }
+    IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_ENTER, 0, false);
+    FlashRedLed();
+    Log("enter");
+    IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_HOME, 0, false);
+    FlashRedLed();
+    Log("home");
+}
+
+void TvControl()
+{
+    if (button1State == LOW)
+    {
+        Log("Power tv");
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_POWER, 0, false);
+    }
+    else if (button2State == LOW)
+    {
+        Log("tv back");
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_HOME, 0, false);
+    }
+    else if (button3State == LOW && joystickMapY > JS_THRESHOLD)
+    {
+        Log("tv vol up");
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_VOL_UP, 0, false);
+    }
+    else if (button3State == LOW && joystickMapY < -JS_THRESHOLD)
+    {
+        Log("tv vol down");
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_VOL_DOWN, 0, false);
+    }
+    else if (button3State == LOW && joystickButtonState == LOW)
+    {
+        Log("tv sound input script");
+        TvSoundInput();
+    }
+    else if (joystickButtonState == LOW)
+    {
+        Log("tv enter");
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_ENTER, 0, false);
+    }
+    else if (joystickMapX > JS_THRESHOLD && button3State == HIGH)
+    {
+        Log("tv left");
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_LEFT, 0, false);
+    }
+    else if (joystickMapX < -JS_THRESHOLD && button3State == HIGH)
+    {
+        Log("tv right");
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_RIGHT, 0, false);
+    }
+    else if (joystickMapY > JS_THRESHOLD)
+    {
+        Log("tv up");
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_UP, 0, false);
+    }
+    else if (joystickMapY < -JS_THRESHOLD)
+    {
+        Log("tv down");
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_DOWN, 0, false);
+    }
+    FlashRedLed();
+}

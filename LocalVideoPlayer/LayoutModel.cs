@@ -60,8 +60,11 @@ namespace LocalVideoPlayer
         public void Initialize()
         {
             BuildMainControlGrid();
-            currentControl = mainFormControlGrid[0][0];
-            CenterMouseOverControl(currentControl);
+            if (currentControl != null)
+            {
+                currentControl = mainFormControlGrid[0][0];
+                CenterMouseOverControl(currentControl);
+            }
         }
 
         public void CenterMouseOverControl(Control ctl)

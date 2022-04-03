@@ -35,7 +35,7 @@ namespace MouseMoverClient
 
         #endregion
 
-        static string serverIp = "192.168.0.181";
+        static string serverIp = "192.168.0.174";
         static int serverPort = 3000;
         static bool serverIsNotConnected = true;
         static int joystickX;

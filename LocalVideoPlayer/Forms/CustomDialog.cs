@@ -347,6 +347,7 @@ namespace LocalVideoPlayer.Forms
                 customScrollbar.BringToFront();
             }
 
+            optionsForm.BringToFront();
             optionsForm.ShowDialog();
             optionsForm.Dispose();
 

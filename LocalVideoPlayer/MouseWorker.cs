@@ -25,9 +25,9 @@ namespace LocalVideoPlayer
 
         #endregion
 
-        private string serverIp = "192.168.0.181";
+        private string serverIp = "192.168.0.174";
         private int serverPort = 3000;
-        private bool hideCursor = true;
+        private bool hideCursor = false;
         private int cursorCount = 0;
         private bool serverIsNotConnected = true;
         private bool workerThreadRunning = false;
@@ -129,7 +129,6 @@ namespace LocalVideoPlayer
                         layout.CloseCurrentForm();
                         break;
                     default:
-                        MainForm.Log("Unknown msg received: " + msg);
                         break;
                 }
             }

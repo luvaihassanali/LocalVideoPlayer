@@ -64,7 +64,7 @@ namespace LocalVideoPlayer
         private Label tvLabel;
         private MouseWorker worker = null;
         private Panel mainFormMainPanel = null;
-        
+
         public MainForm()
         {
             InitializeComponent();
@@ -414,8 +414,6 @@ namespace LocalVideoPlayer
 
         private async Task BuildCacheAsync()
         {
-            //To-do: Hover over button change this function fucks up blue-link
-            this.UseWaitCursor = true;
             CancellationTokenSource source = new CancellationTokenSource();
             CancellationToken token = source.Token;
 
@@ -540,7 +538,7 @@ namespace LocalVideoPlayer
                 {
                     TvShow tvShow = media.TvShows[i];
 
-                    //if id is not 0 expected to be init
+                    // If id is not 0 then general show data initialized
                     if (tvShow.Id == 0)
                     {
                         string tvResourceString = client.DownloadString(tvSearch + tvShow.Name);
@@ -604,6 +602,7 @@ namespace LocalVideoPlayer
                         }
                     }
 
+                    // Always check season data for new content
                     int seasonIndex = 0;
                     for (int j = 0; j < tvShow.Seasons.Length; j++)
                     {
@@ -640,13 +639,58 @@ namespace LocalVideoPlayer
 
                         JArray jEpisodes = (JArray)seasonObject["episodes"];
                         Episode[] episodes = season.Episodes;
-
+                        int jEpIndex = 0;
                         for (int k = 0; k < episodes.Length; k++)
                         {
-                            if (episodes[k].Id != 0) continue;
-                            if (k > jEpisodes.Count - 1) continue;
-                            JObject jEpisode = (JObject)jEpisodes[k];
+                            if (episodes[k].Id != 0)
+                            {
+                                jEpIndex++;
+                                continue;
+                            }
+                            if (k > jEpisodes.Count - 1)
+                            {
+                                throw new Exception("What");
+                                continue;
+                            }
                             Episode episode = episodes[k];
+
+                            if (episode.Name.Contains('#'))
+                            {
+                                string[] multiEpNames = episode.Name.Split('#');
+                                JObject[] jEpisodesMulti = new JObject[multiEpNames.Length];
+                                int numEps = multiEpNames.Length;
+                                String multiEpisodeOverview = "";
+                                for (int l = 0; l < numEps; l++)
+                                {
+                                    jEpisodesMulti[l] = (JObject)jEpisodes[jEpIndex + l];
+                                    String jCurrMultiEpisodeName = (string)jEpisodesMulti[l]["name"];
+                                    String jCurrMultiEpisodeOverview = (string)jEpisodesMulti[l]["overview"];
+                                    String currMultiEpisodeName = multiEpNames[l];
+                                    if (String.Compare(currMultiEpisodeName, jCurrMultiEpisodeName.fixBrokenQuotes(), System.Globalization.CultureInfo.CurrentCulture, 
+                                        System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) != 0)
+                                    {
+                                        string message = "Multi episode name does not match retrieved data: Episode name: '" + currMultiEpisodeName + "' (Season " + season.Id + ").";
+                                        CustomDialog.ShowMessage("Warning: " + tvShow.Name, message, this.Width, this.Height);
+                                    }
+                                    multiEpisodeOverview += (jCurrMultiEpisodeOverview + Environment.NewLine + Environment.NewLine);
+                                }
+
+                                episode.Id = (int)jEpisodesMulti[numEps - 1]["episode_number"];
+                                episode.Backdrop = (string)jEpisodesMulti[numEps - 1]["still_path"];
+                                episode.Overview = multiEpisodeOverview;
+                                DateTime tempDate;
+                                episode.Date = DateTime.TryParse((string)jEpisodesMulti[numEps - 1]["air_date"], out tempDate) ? tempDate : DateTime.MinValue.AddHours(9);
+
+                                if (episode.Backdrop != null)
+                                {
+                                    await DownloadImage(episode.Backdrop, tvShow.Name, false, token);
+                                    episode.Backdrop = bufferString;
+                                }
+                                jEpIndex += (numEps);
+                                continue;
+                            }
+
+                            JObject jEpisode = (JObject)jEpisodes[jEpIndex];
                             String jEpisodeName = (string)jEpisode["name"];
                             if (String.Compare(episode.Name, jEpisodeName.fixBrokenQuotes(),
                                 System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0)
@@ -705,6 +749,7 @@ namespace LocalVideoPlayer
                                     episode.Backdrop = bufferString;
                                 }
                             }
+                            jEpIndex++;
                         }
                         seasonIndex++;
                     }
@@ -716,7 +761,6 @@ namespace LocalVideoPlayer
 
             string jsonString = JsonConvert.SerializeObject(media);
             File.WriteAllText(jsonFile, jsonString);
-            this.UseWaitCursor = false;
         }
 
         private string ReplaceFirst(string text, string search, string replace)
@@ -797,6 +841,7 @@ namespace LocalVideoPlayer
             }
             catch
             {
+                Log("Missing sub directories");
                 throw new ArgumentNullException();
             }
 
@@ -831,14 +876,16 @@ namespace LocalVideoPlayer
                 }
             }
 
-            if (moviesDir == null || tvDir == null) throw new ArgumentNullException();
+            if (moviesDir == null || tvDir == null)
+            {
+                Log("Missing sub directories");
+                throw new ArgumentNullException();
+            }
 
             int moviesCount = subdirectoryBExists ? Directory.GetDirectories(moviesDir[0]).Length + Directory.GetDirectories(moviesDir[1]).Length : Directory.GetDirectories(moviesDir[0]).Length;
             int tvCount = subdirectoryBExists ? Directory.GetDirectories(tvDir[0]).Length + Directory.GetDirectories(tvDir[1]).Length : Directory.GetDirectories(tvDir[0]).Length;
 
-
             media = new MediaModel(moviesCount, tvCount);
-
             string[] movieEntries = Directory.GetDirectories(moviesDir[0]);
             for (int i = 0; i < movieEntries.Length; i++)
             {
@@ -914,12 +961,16 @@ namespace LocalVideoPlayer
                 for (int j = 0; j < episodeEntries.Length; j++)
                 {
                     string[] namePath = episodeEntries[j].Split('\\');
+                    if (!episodeEntries[j].Contains('%'))
+                    {
+                        Log("Missing separator: " + namePath);
+                        throw new ArgumentNullException();
+                    }
                     string[] episodeNameNumber = namePath[namePath.Length - 1].Split('%');
                     int fileSuffixIndex = episodeNameNumber[1].LastIndexOf('.');
                     string episodeName = episodeNameNumber[1].Substring(0, fileSuffixIndex).Trim();
                     Episode episode = new Episode(0, episodeName, episodeEntries[j]);
                     season.Episodes[j] = episode;
-                    //To-do: catch error when no number % name
                 }
                 show.Seasons[i] = season;
             }
@@ -985,7 +1036,11 @@ namespace LocalVideoPlayer
             string mediaPathB = ConfigurationManager.AppSettings["mediaPathB"];
             ProcessDirectory(mediaPath, mediaPathB);
 
-            if (media == null) throw new ArgumentNullException();
+            if (media == null)
+            {
+                Log("Media is null");
+                throw new ArgumentNullException();
+            }
 
             bool update = CheckForUpdates();
             if (update)
@@ -1044,7 +1099,7 @@ namespace LocalVideoPlayer
             bool newLine = false;
             if (message == Environment.NewLine)
             {
-                newLine = true; 
+                newLine = true;
             }
             if (debugLog)
             {

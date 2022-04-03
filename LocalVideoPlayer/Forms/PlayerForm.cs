@@ -1,5 +1,6 @@
 ﻿using LibVLCSharp.Shared;
 using System;
+using System.Configuration;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -433,7 +434,12 @@ namespace LocalVideoPlayer
             // Add application and vlc .exe to Graphics Settings with High Performance NVIDIA GPU preference
             Media media = new Media(libVlc, path, FromType.FromPath);
             media.AddOption(":avcodec-hw=auto");
-            media.AddOption(":no-sub-autodetect-file");
+            bool showSubtitles = bool.Parse(ConfigurationManager.AppSettings["showSubtitles"]);
+            if (!showSubtitles)
+            {
+                string subtitleTrackOption = String.Format(":sub-track-id={0}", Int32.MaxValue);
+                media.AddOption(subtitleTrackOption);
+            }
             media.AddOption(":no-mkv-preload-local-dir");
             return media;
         }
@@ -673,6 +679,5 @@ namespace LocalVideoPlayer
         }
 
         #endregion
-
     }
 }
