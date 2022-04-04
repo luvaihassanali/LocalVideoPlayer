@@ -56,7 +56,7 @@ void BlinkRedLed()
   for (int i = 0; i < 5; i++)
   {
     TurnLedOff();
-    delay(50);
+    delay(150);
     RedLedOn();
   }
 }
@@ -66,7 +66,7 @@ void BlinkGreenLed()
   for (int i = 0; i < 5; i++)
   {
     TurnLedOff();
-    delay(50);
+    delay(150);
     GreenLedOn();
   }
 }
@@ -76,7 +76,7 @@ void BlinkBlueLed()
   for (int i = 0; i < 5; i++)
   {
     TurnLedOff();
-    delay(50);
+    delay(150);
     BlueLedOn();
   }
 }

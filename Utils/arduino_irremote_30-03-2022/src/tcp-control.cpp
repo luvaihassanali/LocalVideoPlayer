@@ -2,7 +2,7 @@
 
 // Replace values for TCP server
 const String WIFI_SSID = "SSID";
-const String WIFI_PASS = "SSIDPassword";
+const String WIFI_PASS = "Password";
 const String WIFI_PORT = "3000";
 const String CONNECTION_STRING = "AT+CWJAP=\"" + WIFI_SSID + "\",\"" + WIFI_PASS + "\"\r\n";
 const String SERVER_STRING = "AT+CIPSERVER=1," + WIFI_PORT + "\r\n";
@@ -27,8 +27,8 @@ void InitializeEsp8266()
     if (!esp8266Init)
     {
         esp8266.begin(9600);
-        Log("Starting esp8266...");                // reset module
-        TcpDataOut("AT+CWMODE=1\r\n", 201);              // wifi mode: 1 station 2 soft access point 3 both
+        Log("Starting esp8266..."); // reset module
+        TcpDataOut("AT+CWMODE=1\r\n", 201); // wifi mode: 1 station 2 soft access point 3 both
         dataOutResult = TcpDataOut("AT+CIFSR\r\n", 201); // get assigned IP address
         if (dataOutResult.indexOf("0.0") > 0)
         {
@@ -48,7 +48,7 @@ void InitializeEsp8266()
         }
 
         TcpDataOut("AT+CIPMUX=1\r\n", 201); // enable multiple connections
-        TcpDataOut(SERVER_STRING, 201);      // 1 for create (at port 3000), 0 for delete
+        TcpDataOut(SERVER_STRING, 201); // 1 for create (at port 3000), 0 for delete
         esp8266Init = true;
         Log("Esp8266 ready");
     }

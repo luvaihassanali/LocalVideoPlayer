@@ -54,9 +54,7 @@ void setup()
     pinMode(GREEN_LED_PIN, OUTPUT);
     pinMode(BLUE_LED_PIN, OUTPUT);
     BlueLedOn();
-    delay(100);
     GreenLedOn();
-    delay(100);
     RedLedOn();
     Log("Ready");
 }
