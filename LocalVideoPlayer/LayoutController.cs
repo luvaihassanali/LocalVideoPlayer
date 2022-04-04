@@ -6,7 +6,7 @@ using CustomControls;
 
 namespace LocalVideoPlayer
 {
-    public class LayoutModel
+    public class LayoutController
     {
         public bool onMainForm = true;
         private bool onTvForm = false;
@@ -49,7 +49,7 @@ namespace LocalVideoPlayer
         public (int x, int y) left = (0, -1);
         public (int x, int y) right = (0, 1);
 
-        public LayoutModel((int m, int t) mediaCount)
+        public LayoutController((int m, int t) mediaCount)
         {
             movieCount = mediaCount.m;
             tvShowCount = mediaCount.t;

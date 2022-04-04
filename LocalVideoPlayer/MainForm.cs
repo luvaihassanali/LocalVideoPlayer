@@ -51,7 +51,7 @@ namespace LocalVideoPlayer
         static public Cursor blueHandCursor = new Cursor(Properties.Resources.blue_link.Handle);
         static public Form dimmerForm;
         static public Form seasonDimmerForm;
-        static public LayoutModel layout;
+        static public LayoutController layoutController;
         static public MediaModel media;
         static public Point mainFormLoc;
         static public Size mainFormSize;
@@ -188,12 +188,12 @@ namespace LocalVideoPlayer
             mainFormMainPanel.AutoScroll = true;
             mainFormMainPanel.Name = "mainFormMainPanel";
             mainFormMainPanel.MouseWheel += MainFormMainPanel_MouseWheel;
-            layout.mainFormMainPanel = mainFormMainPanel;
+            layoutController.mainFormMainPanel = mainFormMainPanel;
 
             closeButton.Visible = true;
             closeButton.Location = new Point(mainFormMainPanel.Width - (int)(closeButton.Width * 1.75), (closeButton.Width / 6));
             closeButton.Cursor = blueHandCursor;
-            layout.mainFormClose = closeButton;
+            layoutController.mainFormClose = closeButton;
 
             Panel currentPanel = null;
             int count = 0;
@@ -237,7 +237,7 @@ namespace LocalVideoPlayer
                 movieBox.Click += TvForm.MovieBox_Click;
                 movieBox.MouseEnter += (s, e) =>
                 {
-                    layout.ClearMovieBoxBorder();
+                    layoutController.ClearMovieBoxBorder();
                     movieBox.BorderStyle = BorderStyle.Fixed3D;
                 };
                 movieBox.MouseLeave += (s, e) =>
@@ -245,8 +245,8 @@ namespace LocalVideoPlayer
                     movieBox.BorderStyle = BorderStyle.None;
                 };
                 currentPanel.Controls.Add(movieBox);
-                layout.mainFormControlList.Add(movieBox);
-                layout.movieBoxes.Add(movieBox);
+                layoutController.mainFormControlList.Add(movieBox);
+                layoutController.movieBoxes.Add(movieBox);
                 count++;
             }
 
@@ -299,7 +299,7 @@ namespace LocalVideoPlayer
                 tvShowBox.Click += TvForm.TvShowBox_Click;
                 tvShowBox.MouseEnter += (s, e) =>
                 {
-                    layout.ClearTvBoxBorder();
+                    layoutController.ClearTvBoxBorder();
                     tvShowBox.BorderStyle = BorderStyle.Fixed3D;
                 };
                 tvShowBox.MouseLeave += (s, e) =>
@@ -307,8 +307,8 @@ namespace LocalVideoPlayer
                     tvShowBox.BorderStyle = BorderStyle.None;
                 };
                 currentPanel.Controls.Add(tvShowBox);
-                layout.mainFormControlList.Add(tvShowBox);
-                layout.tvBoxes.Add(tvShowBox);
+                layoutController.mainFormControlList.Add(tvShowBox);
+                layoutController.tvBoxes.Add(tvShowBox);
                 count++;
             }
 
@@ -325,7 +325,7 @@ namespace LocalVideoPlayer
             customScrollbar.Scroll += CustomScrollbar_Scroll;
             this.Controls.Add(customScrollbar);
             customScrollbar.BringToFront();
-            layout.mainScrollbar = customScrollbar;
+            layoutController.mainScrollbar = customScrollbar;
         }
 
         private bool CheckForUpdates()
@@ -649,7 +649,6 @@ namespace LocalVideoPlayer
                             }
                             if (k > jEpisodes.Count - 1)
                             {
-                                throw new Exception("What");
                                 continue;
                             }
                             Episode episode = episodes[k];
@@ -1055,10 +1054,10 @@ namespace LocalVideoPlayer
         {
             loadingLabel.Dispose();
             this.Padding = new Padding(5, 20, 20, 20);
-            layout = new LayoutModel(media.Count);
+            layoutController = new LayoutController(media.Count);
             InitializetGui();
-            layout.Initialize();
-            worker.InitializeSerialPort(layout);
+            layoutController.Initialize();
+            worker.InitializeSerialPort(layoutController);
             loadingCircle1.Dispose();
         }
 

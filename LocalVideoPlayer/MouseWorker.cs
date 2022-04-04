@@ -34,7 +34,7 @@ namespace LocalVideoPlayer
         private int joystickX;
         private int joystickY;
         private int timelineShowTimeout = 10000;
-        private LayoutModel layout;
+        private LayoutController layoutController;
         private SerialPort serialPort;
         private System.Timers.Timer pollingTimer;
         private TcpClient client;
@@ -53,9 +53,9 @@ namespace LocalVideoPlayer
 
         #region Serial port
 
-        public void InitializeSerialPort(LayoutModel layoutModel)
+        public void InitializeSerialPort(LayoutController lc)
         {
-            layout = layoutModel;
+            this.layoutController = lc;
             serialPort = new SerialPort();
             string portNumber = ConfigurationManager.AppSettings["comPort"];
             serialPort.PortName = "COM" + portNumber;
@@ -100,33 +100,47 @@ namespace LocalVideoPlayer
                         DoMouseClick();
                         break;
                     case "stop": case "pause": case "play":
-                        PlayerForm pf = (PlayerForm)GetForm("PlayerForm");
-                        pf.InitiatePause();
+                        try
+                        {
+                            PlayerForm pf = (PlayerForm)GetForm("PlayerForm");
+                            pf.InitiatePause();
+                        }
+                        catch (Exception ex)
+                        {
+                            MainForm.Log("Serial port case 2: " + ex.ToString());
+                        }
                         break;
                     case "up":
-                        layout.MovePointPosition(layout.up);
+                        layoutController.MovePointPosition(layoutController.up);
                         break;
                     case "down":
-                        layout.MovePointPosition(layout.down);
+                        layoutController.MovePointPosition(layoutController.down);
                         break;
                     case "right":
-                        layout.MovePointPosition(layout.right);
+                        layoutController.MovePointPosition(layoutController.right);
                         break;
                     case "left":
-                        layout.MovePointPosition(layout.left);
+                        layoutController.MovePointPosition(layoutController.left);
                         break;
                     case "enter":
-                        if (layout.onMainForm)
+                        if (layoutController.onMainForm)
                         {
                             DoMouseClick();
                         } else
                         {
                             DoMouseClick();
-                            layout.Select(String.Empty);
+                            layoutController.Select(String.Empty);
                         }
                         break;
                     case "back":
-                        layout.CloseCurrentForm();
+                        try
+                        {
+                            layoutController.CloseCurrentForm();
+                        } 
+                        catch (Exception ex)
+                        {
+                            MainForm.Log("Serial port back: " + ex.ToString());
+                        }
                         break;
                     default:
                         break;

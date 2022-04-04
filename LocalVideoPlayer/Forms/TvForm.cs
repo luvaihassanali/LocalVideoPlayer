@@ -112,7 +112,7 @@ namespace LocalVideoPlayer
             tvFormMainPanel.AutoScroll = true;
             tvFormMainPanel.Name = "tvFormMainPanel";
             tvForm.Controls.Add(tvFormMainPanel);
-            MainForm.layout.tvFormMainPanel = tvFormMainPanel;
+            MainForm.layoutController.tvFormMainPanel = tvFormMainPanel;
 
             List<Control> episodePanelList = null;
             Button seasonButton = null;
@@ -125,7 +125,7 @@ namespace LocalVideoPlayer
             }
             closeButton.Click += MainForm.CloseButton_Click;
             closeButton.Location = new Point(tvForm.Width - (int)(closeButton.Width * 1.65), closeButton.Width / 8);
-            MainForm.layout.tvFormClose = closeButton;
+            MainForm.layoutController.tvFormClose = closeButton;
 
             Font mainHeaderFont = new Font("Arial", 26, FontStyle.Bold);
             Font episodeHeaderFont = new Font("Arial", 16, FontStyle.Bold);
@@ -155,7 +155,7 @@ namespace LocalVideoPlayer
             {
                 tvShowBackdropBox.Image = null;
             };
-            MainForm.layout.tvFormControlList.Add(tvShowBackdropBox);
+            MainForm.layoutController.tvFormControlList.Add(tvShowBackdropBox);
 
             Button resetButton = null;
             foreach (Control c in tvForm.Controls)
@@ -250,7 +250,7 @@ namespace LocalVideoPlayer
                 }
                 tvForm.Close();
                 Fader.FadeOut(MainForm.dimmerForm, Fader.FadeSpeed.Normal);
-                MainForm.layout.DeactivateTvForm();
+                MainForm.layoutController.DeactivateTvForm();
                 System.Threading.Tasks.Task.Run(() => MainForm.SaveMedia());
             };
 
@@ -311,7 +311,7 @@ namespace LocalVideoPlayer
 
             tvForm.Controls.Add(customScrollbar);
             customScrollbar.BringToFront();
-            MainForm.layout.tvScrollbar = customScrollbar;
+            MainForm.layoutController.tvScrollbar = customScrollbar;
 
             foreach (Control c in tvForm.Controls)
             {
@@ -334,10 +334,10 @@ namespace LocalVideoPlayer
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
             seasonButton.Size = new Size(episodePanelList[0].Width - 18, seasonButton.Height);
             seasonButton.Cursor = MainForm.blueHandCursor;
-            MainForm.layout.tvFormControlList.Insert(1, overviewLabel);
-            MainForm.layout.tvFormControlList.Insert(2, seasonButton);
+            MainForm.layoutController.tvFormControlList.Insert(1, overviewLabel);
+            MainForm.layoutController.tvFormControlList.Insert(2, seasonButton);
             tvForm.Show();
-            MainForm.layout.Select(tvShow.Name);
+            MainForm.layoutController.Select(tvShow.Name);
         }
 
         #endregion
@@ -419,7 +419,7 @@ namespace LocalVideoPlayer
                 mainPanel.Controls.Remove(c);
                 c.Dispose();
             }
-            MainForm.layout.tvFormControlList.RemoveRange(3, MainForm.layout.tvFormControlList.Count - 3);
+            MainForm.layoutController.tvFormControlList.RemoveRange(3, MainForm.layoutController.tvFormControlList.Count - 3);
 
             List<Control> episodePanelList = null;
             if (tvShow.CurrSeason == -1)
@@ -463,7 +463,7 @@ namespace LocalVideoPlayer
             }
 
             CustomDialog.UpdateScrollBar(customScrollbar, masterPanel);
-            MainForm.layout.tvScrollbar = customScrollbar;
+            MainForm.layoutController.tvScrollbar = customScrollbar;
             seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
             mainPanel.Refresh();
         }
@@ -565,7 +565,7 @@ namespace LocalVideoPlayer
                 episodePanel.Controls.Add(episodeBox);
                 episodePanel.Controls.Add(episodeOverviewLabel);
                 episodePanel.Controls.Add(episodeNameLabel);
-                MainForm.layout.tvFormControlList.Add(episodeBox);
+                MainForm.layoutController.tvFormControlList.Add(episodeBox);
             }
 
             return episodePanelList;
@@ -743,7 +743,7 @@ namespace LocalVideoPlayer
                     seasonBox.Name = "-1";
                 seasonBox.MouseEnter += (s, ev) =>
                 {
-                    MainForm.layout.ClearSeasonBoxBorder();
+                    MainForm.layoutController.ClearSeasonBoxBorder();
                     seasonBox.BorderStyle = BorderStyle.Fixed3D;
                 };
                 seasonBox.MouseLeave += (s, ev) =>
@@ -784,7 +784,7 @@ namespace LocalVideoPlayer
                 }
 
                 currentPanel.Controls.Add(seasonBox);
-                MainForm.layout.seasonFormControlList.Add(seasonBox);
+                MainForm.layoutController.seasonFormControlList.Add(seasonBox);
                 count++;
             }
 
@@ -816,14 +816,14 @@ namespace LocalVideoPlayer
                 };
                 seasonForm.Controls.Add(customScrollbar);
                 customScrollbar.BringToFront();
-                MainForm.layout.seasonScrollbar = customScrollbar;
+                MainForm.layoutController.seasonScrollbar = customScrollbar;
             }
 
             seasonForm.Shown += (s, e_) =>
             {
-                MainForm.layout.seasonFormMainPanel = seasonFormMainPanel;
-                MainForm.layout.seasonFormIndex = currSeasonIndex;
-                MainForm.layout.Select("seasonButton");
+                MainForm.layoutController.seasonFormMainPanel = seasonFormMainPanel;
+                MainForm.layoutController.seasonFormIndex = currSeasonIndex;
+                MainForm.layoutController.Select("seasonButton");
             }; 
             seasonForm.ShowDialog();
             seasonForm.Dispose();
@@ -1089,7 +1089,7 @@ namespace LocalVideoPlayer
 
             movieForm.Controls.Add(closeButton);
             closeButton.Location = new Point(movieForm.Width - (int)(closeButton.Width * 1.165), (closeButton.Width / 8));
-            MainForm.layout.movieFormClose = closeButton;
+            MainForm.layoutController.movieFormClose = closeButton;
 
             Font headerFont = new Font("Arial", 24, FontStyle.Bold);
             Font overviewFont = new Font("Arial", 12, FontStyle.Regular);
@@ -1122,7 +1122,7 @@ namespace LocalVideoPlayer
             {
                 movieBackdropBox.Image = null;
             };
-            MainForm.layout.movieBackropBox = movieBackdropBox;
+            MainForm.layoutController.movieBackropBox = movieBackdropBox;
 
             Label headerLabel = new Label() { Text = movie.Name + " (" + movie.Date.GetValueOrDefault().Year + ")" };
             headerLabel.Dock = DockStyle.Top;
@@ -1155,7 +1155,7 @@ namespace LocalVideoPlayer
             Fader.FadeInCustom(MainForm.dimmerForm, Fader.FadeSpeed.Normal, 0.8);
             MainForm.dimmerForm.Location = MainForm.mainFormLoc;
             movieForm.Show();
-            MainForm.layout.Select(movie.Name);
+            MainForm.layoutController.Select(movie.Name);
         }
 
         #endregion
