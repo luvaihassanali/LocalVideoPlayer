@@ -74,6 +74,7 @@ namespace LocalVideoPlayer
                         this.movies[j].Backdrop = prevMedia.movies[i].Backdrop;
                         this.movies[i].RunningTime = prevMedia.movies[i].RunningTime;
                         this.movies[i].Subtitles = prevMedia.movies[i].Subtitles;
+                        this.movies[i].SubtitleTrack = prevMedia.movies[i].SubtitleTrack;
                     }
                 }
             }
@@ -134,12 +135,13 @@ namespace LocalVideoPlayer
         DateTime? date;
         private int runningTime;
         private bool subtitles;
-
+        private int subtitleTrack;
         public Movie(string n, string p)
         {
             name = n;
             path = p;
             subtitles = false;
+            subtitleTrack = 0;
         }
 
         public int Id
@@ -192,6 +194,12 @@ namespace LocalVideoPlayer
         {
             get => subtitles;
             set => subtitles = value;
+        }
+
+        public int SubtitleTrack
+        {
+            get => subtitleTrack;
+            set => subtitleTrack = value;
         }
 
         internal bool Compare(Movie localMovie)

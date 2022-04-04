@@ -10,6 +10,7 @@ namespace LocalVideoPlayer
     {
         static public bool isPlaying = false;
         static private bool subtitles;
+        static private int subTrack;
         private bool mouseDown = false;
         private bool controlsVisible = false;
         private bool shrinkTimeLine = false;
@@ -25,7 +26,7 @@ namespace LocalVideoPlayer
         private TvShow currTvShow;
         private Timer pollingTimer;
 
-        public PlayerForm(string p, long s, int r, bool subs, TvShow t, Episode ep, Form tf)
+        public PlayerForm(string p, long s, int r, bool subs, int st, TvShow t, Episode ep, Form tf)
         {
             if (!DesignMode) Core.Initialize();
             InitializeComponent();
@@ -38,6 +39,7 @@ namespace LocalVideoPlayer
             runningTime = r;
             seekTime = s;
             subtitles = subs;
+            subTrack = st;
             tvForm = tf;
             
             long max = runningTime * 60000;
@@ -420,9 +422,10 @@ namespace LocalVideoPlayer
             {
                 runningTime = currMovie.RunningTime;
                 subtitles = currMovie.Subtitles;
+                subTrack = currMovie.SubtitleTrack;
             }
 
-            Form playerForm = new PlayerForm(path, savedTime, runningTime, subtitles, currTvShow, currEpisode, tvForm);
+            Form playerForm = new PlayerForm(path, savedTime, runningTime, subtitles, subTrack, currTvShow, currEpisode, tvForm);
             MainForm.layoutController.Select("playerForm");
             playerForm.ShowDialog();
             playerForm.Dispose();
@@ -436,12 +439,16 @@ namespace LocalVideoPlayer
             // Add application and vlc .exe to Graphics Settings with High Performance NVIDIA GPU preference
             Media media = new Media(libVlc, path, FromType.FromPath);
             media.AddOption(":avcodec-hw=auto");
-
+            string subtitleTrackOption;
             if (!subtitles)
             {
-                string subtitleTrackOption = String.Format(":sub-track-id={0}", Int32.MaxValue);
-                media.AddOption(subtitleTrackOption);
+                subtitleTrackOption = String.Format(":sub-track-id={0}", Int32.MaxValue);
+            } 
+            else
+            {
+                subtitleTrackOption = String.Format(":sub-track-id={0}", subTrack);
             }
+            media.AddOption(subtitleTrackOption);
             media.AddOption(":no-mkv-preload-local-dir");
             return media;
         }
