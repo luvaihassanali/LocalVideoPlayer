@@ -27,13 +27,16 @@ void InitializeEsp8266()
     if (!esp8266Init)
     {
         esp8266.begin(9600);
-        Log("Starting esp8266..."); // reset module
+        Log("Starting esp8266...");         // reset module
         TcpDataOut("AT+CWMODE=1\r\n", 201); // wifi mode: 1 station 2 soft access point 3 both
+        TurnLedOff();
         dataOutResult = TcpDataOut("AT+CIFSR\r\n", 201); // get assigned IP address
+        BlueLedOn();
         if (dataOutResult.indexOf("0.0") > 0)
         {
             Log("Invalid IP");
             dataOutResult = TcpDataOut(CONNECTION_STRING, 2100); // join access point
+            TurnLedOff();
             while (!esp8266.find("OK"))
             {
             }
@@ -45,10 +48,13 @@ void InitializeEsp8266()
             }
             Log("Connected to wifi");
             TcpDataOut("AT+CIFSR\r\n", 201);
+            BlueLedOn();
         }
 
         TcpDataOut("AT+CIPMUX=1\r\n", 201); // enable multiple connections
+        TurnLedOff();
         TcpDataOut(SERVER_STRING, 201); // 1 for create (at port 3000), 0 for delete
+        BlueLedOn();
         esp8266Init = true;
         Log("Esp8266 ready");
     }
@@ -58,7 +64,7 @@ void ResetEsp8266()
 {
     BlinkBlueLed();
     esp8266Init = false;
-    TcpDataOut("AT+RST\r\n", 2100);  
+    TcpDataOut("AT+RST\r\n", 2100);
     InitializeEsp8266();
     clientConnected = false;
 }
@@ -86,7 +92,7 @@ void TcpDataIn(const int timeout)
     }
 
     Log("Received: " + dataInResponse);
-    // Full string may get cut off due to low delay
+
     if (dataInResponse.indexOf("zzzz") > 0 || dataInResponse.indexOf("zzz") > 0 || dataInResponse.indexOf("zz") > 0 || dataInResponse.indexOf("z") > 0)
     {
         clientConnected = true;
@@ -99,7 +105,7 @@ void TcpDataIn(const int timeout)
         return;
     }
 
-    if (dataInResponse.indexOf("nlink") > 0)
+    if (dataInResponse.indexOf("CONNECT FAIL") > 0 || dataInResponse.indexOf("FAIL") > 0 || dataInResponse.indexOf("CLOSED")) 
     {
         Log("Unlink detected");
         clientConnected = false;
@@ -109,7 +115,6 @@ void TcpDataIn(const int timeout)
 
 String TcpDataOut(String command, const int timeout)
 {
-    Log("Command: " + command);
     dataOutResponse = "";
     esp8266.print(command);
     long int time = millis();
