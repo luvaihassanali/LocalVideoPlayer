@@ -67,7 +67,7 @@ namespace LocalVideoPlayer
 
         public MainForm()
         {
-            InitializeComponent();
+            InitializeMainFormComponents();
             InitializeCustomCursor();
             InitializeDimmers();
             InitializeMouseWorker();
@@ -181,7 +181,7 @@ namespace LocalVideoPlayer
 
         #region Startup
 
-        private void InitializetGui()
+        private void InitializeGui()
         {
             mainFormMainPanel = new Panel();
             mainFormMainPanel.Size = this.Size;
@@ -668,7 +668,7 @@ namespace LocalVideoPlayer
                                     if (String.Compare(currMultiEpisodeName, jCurrMultiEpisodeName.fixBrokenQuotes(), System.Globalization.CultureInfo.CurrentCulture, 
                                         System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) != 0)
                                     {
-                                        string message = "Multi episode name does not match retrieved data: Episode name: '" + currMultiEpisodeName + "' (Season " + season.Id + ").";
+                                        string message = "Multi episode name does not match retrieved data: Episode name: '" + currMultiEpisodeName + ", retrieved: " + jCurrMultiEpisodeName.fixBrokenQuotes() + " (Season " + season.Id + ").";
                                         CustomDialog.ShowMessage("Warning: " + tvShow.Name, message, this.Width, this.Height);
                                     }
                                     multiEpisodeOverview += (jCurrMultiEpisodeOverview + Environment.NewLine + Environment.NewLine);
@@ -1055,10 +1055,19 @@ namespace LocalVideoPlayer
             loadingLabel.Dispose();
             this.Padding = new Padding(5, 20, 20, 20);
             layoutController = new LayoutController(media.Count);
-            InitializetGui();
+            InitializeGui();
             layoutController.Initialize();
             worker.InitializeSerialPort(layoutController);
             loadingCircle1.Dispose();
+            bool getLastEpisodeList = false;
+            if (getLastEpisodeList)
+            {
+                for (int i = 0; i < media.TvShows.Length; i++)
+                {
+                    string lastEpisodeString = media.TvShows[i].LastEpisode == null ? "null" : media.TvShows[i].LastEpisode.Name + " (Season " + media.TvShows[i].CurrSeason + ")" + Environment.NewLine + media.TvShows[i].LastEpisode.Path;
+                    MainForm.Log(media.TvShows[i].Name + " Last episode: " + lastEpisodeString);
+                }
+            }
         }
 
         #endregion

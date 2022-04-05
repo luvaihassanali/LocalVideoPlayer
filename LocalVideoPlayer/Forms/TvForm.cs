@@ -544,7 +544,7 @@ namespace LocalVideoPlayer
                 Label episodeNameLabel = new Label() { Text = currEpisode.Name };
                 if (episodeNameLabel.Text.Contains("#"))
                 {
-                    episodeNameLabel.Text = episodeNameLabel.Text.Replace("#", " && ");
+                    episodeNameLabel.Text = episodeNameLabel.Text.Replace("#", " && " + Environment.NewLine);
                 }
 
                 episodeNameLabel.Dock = DockStyle.Top;

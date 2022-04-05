@@ -79,6 +79,9 @@
     <OutputPath>bin\Debug\</OutputPath>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Resources\movie.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="LibVLCSharp, Version=3.6.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\LibVLCSharp.3.6.1\lib\net471\LibVLCSharp.dll</HintPath>
@@ -283,6 +286,7 @@
     <Content Include="Resources\blue_cursors_xl\blue_up_xl.cur">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <None Include="Resources\movie.ico" />
     <None Include="Resources\media-icon.png" />
     <None Include="Resources\folder-icon.png" />
     <None Include="Resources\noprev_wide.png" />
