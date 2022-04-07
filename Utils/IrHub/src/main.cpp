@@ -29,8 +29,6 @@ const uint32_t SONY_PLAY = 0x39D32;
 const uint32_t SONY_PAUSE = 0x39D39;
 const uint32_t SONY_NEXT = 0x39D31;
 const uint32_t SONY_PREV = 0x39D30;
-const uint32_t SONY_FORWARD = 0x39D34;
-const uint32_t SONY_REWIND = 0x39D33;
 
 const uint32_t SOUNDBAR_POWER = 0xFE015343;
 const uint32_t TV_POWER = 0xFD020707;
@@ -46,8 +44,6 @@ const uint32_t PLAY = 0xFC035343;
 const uint32_t PAUSE = 0x827D5343;
 const uint32_t NEXT = 0xEC135343;
 const uint32_t PREV = 0xE41B5343;
-const uint32_t FORWARD = 0x8A755343;
-const uint32_t REWIND = 0x8B745343;
 const uint32_t SOUNDBAR_INPUT = 0xF9065343; // AUDIO
 const uint32_t APP_POWER = 0xD7285343;      // TV/VIDEO
 
@@ -80,6 +76,8 @@ void ChangeInputSoundBar();
 void PowerSoundBar();
 void PowerSoundBarLong();
 void Led13Blink();
+void Log(String m);
+void SendSerialData(String d);
 
 // Sent address and command placeholder for checkReceive
 uint16_t sAddress = 0xFFF1;
@@ -151,69 +149,63 @@ void ParseIrValue(uint32_t rawData)
         ChangeInputSoundBar();
         break;
     case SAMSUNG_STOP:
-        // Transfer string to serial USB connection
-        Serial.println("stop");
-        // Wait for the transmission of outgoing serial data to complete
-        Serial.flush();
+        SendSerialData("stop");
         break;
     case SONY_POWER:
     case APP_POWER:
-        Serial.println("power");
-        Serial.flush();
+        SendSerialData("power");
         break;
     case SONY_UP:
     case UP:
-        Serial.println("up");
-        Serial.flush();
+        SendSerialData("up");
         break;
     case SONY_DOWN:
     case DOWN:
-        Serial.println("down");
-        Serial.flush();
+        SendSerialData("down");
         break;
     case SONY_RIGHT:
     case RIGHT:
-        Serial.println("right");
-        Serial.flush();
+        SendSerialData("right");
         break;
     case SONY_LEFT:
     case LEFT:
-        Serial.println("left");
-        Serial.flush();
+        SendSerialData("left");
         break;
     case SONY_ENTER:
     case ENTER:
-        Serial.println("enter");
-        Serial.flush();
+        SendSerialData("enter");
         break;
     case SONY_BACK:
     case BACK:
-        Serial.println("back");
-        Serial.flush();
+        SendSerialData("back");
         break;
     case SONY_PLAY:
     case PLAY:
-        Serial.println("play");
-        Serial.flush();
+        SendSerialData("play");
         break;
     case SONY_PAUSE:
     case PAUSE:
-        Serial.println("pause");
-        Serial.flush();
+        SendSerialData("pause");
         break;
     case SONY_NEXT:
     case NEXT:
-        Serial.println("next");
-        Serial.flush();
+        SendSerialData("next");
         break;
     case SONY_PREV:
     case PREV:
-        Serial.println("prev");
-        Serial.flush();
+        SendSerialData("prev");
         break;
     default:
         break;
     }
+}
+
+void SendSerialData(String msg)
+{
+    // Transfer string to serial USB connection
+    Serial.println(msg);
+    // Wait for the transmission of outgoing serial data to complete
+    Serial.flush();
     Led13Blink();
 }
 
@@ -288,7 +280,7 @@ void PowerSoundBarLong()
 void Led13Blink()
 {
     digitalWrite(LED_BUILTIN, HIGH);
-    delay(100);
+    delay(50);
     digitalWrite(LED_BUILTIN, LOW);
 }
 
@@ -297,13 +289,5 @@ void Log(String msg)
     if (DEBUG)
     {
         Serial.println(msg);
-    }
-}
-
-void Log(int msg)
-{
-    if (DEBUG)
-    {
-        Serial.println(String(msg));
     }
 }
