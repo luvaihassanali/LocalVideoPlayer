@@ -7,7 +7,7 @@
 #define MARK_EXCESS_MICROS 10
 #include <IRremote.hpp>
 
-const bool DEBUG = true;
+const bool DEBUG = false;
 
 const uint32_t SAMSUNG_POWER = 0x19E60707;
 const uint32_t SAMSUNG_A = 0x936C0707;
@@ -97,7 +97,7 @@ void setup()
 void loop()
 {
     checkReceive(sAddress & 0xFF, sCommand);
-    delay(100);
+    delay(50);
 }
 
 // https://github.com/Arduino-IRremote/Arduino-IRremote/tree/master/examples/UnitTest
@@ -136,12 +136,14 @@ void ParseIrValue(uint32_t rawData)
     case VOL_UP:
         Log("B");
         sendRaw(intro_up_arrow, 68U, repeat_up_arrow, 4U, 38400U, 1);
+        delay(50);
         break;
     case SAMSUNG_C:
     case SONY_VOL_DOWN:
     case VOL_DOWN:
         Log("C");
         sendRaw(intro_down_arrow, 68U, repeat_down_arrow, 4U, 38400U, 1);
+        delay(50);
         break;
     case SAMSUNG_D:
     case SOUNDBAR_INPUT:
@@ -239,42 +241,45 @@ void ChangeInputSoundBar()
         sendRaw(intro_Optical, 68U, repeat_Optical, 4U, 38400U, 1);
         opticalBluetoothSwitch = true;
     }
+    delay(50);
 }
 
 void PowerSoundBar()
 {
     if (powerPressed)
     {
-        Log("Power on");
+        Log("Power off");
         sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
         powerPressed = false;
     }
     else
     {
-        Log("Power off");
+        Log("Power on");
         sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
         powerPressed = true;
     }
+    delay(50);
 }
 
 void PowerSoundBarLong()
 {
     if (powerPressed)
     {
-        Log("Power off long");
+        Log("Power off");
         sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
-        delay(100);
+        delay(50);
         sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
         powerPressed = false;
     }
     else
     {
-        Log("Power on long");
+        Log("Power on");
         sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
-        delay(100);
+        delay(50);
         sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
         powerPressed = true;
     }
+    delay(50);
 }
 
 void Led13Blink()
