@@ -1,0 +1,3 @@
+[submodule "Utils/IrHub/.pio/libdeps/uno/IR-remote-submodule"]
+	path = Utils/IrHub/.pio/libdeps/uno/IR-remote-submodule
+	url = https://github.com/luvaihassanali/Arduino-IRremote.git
