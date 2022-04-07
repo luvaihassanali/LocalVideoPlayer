@@ -9,19 +9,19 @@ void RGB_color(int redLightValue, int greenLightValue, int blueLightValue)
 
 void RedLedOn()
 {
-  delay(150);
+  delay(100);
   RGB_color(255, 0, 0);
 }
 
 void GreenLedOn()
 {
-  delay(150);
+  delay(100);
   RGB_color(0, 255, 0);
 }
 
 void BlueLedOn()
 {
-  delay(150);
+  delay(100);
   RGB_color(0, 0, 255);
 }
 
@@ -33,21 +33,21 @@ void TurnLedOff()
 void FlashRedLed()
 {
   TurnLedOff();
-  delay(150);
+  delay(100);
   RedLedOn();
 }
 
 void FlashGreenLed()
 {
   TurnLedOff();
-  delay(150);
+  delay(100);
   GreenLedOn();
 }
 
 void FlashBlueLed()
 {
   TurnLedOff();
-  delay(150);
+  delay(100);
   BlueLedOn();
 }
 

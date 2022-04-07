@@ -155,90 +155,66 @@ void ParseIrValue(uint32_t rawData)
         Serial.println("stop");
         // Wait for the transmission of outgoing serial data to complete
         Serial.flush();
-        Led13Blink();
         break;
     case SONY_POWER:
     case APP_POWER:
         Serial.println("power");
         Serial.flush();
-        Led13Blink();
         break;
     case SONY_UP:
     case UP:
         Serial.println("up");
         Serial.flush();
-        Led13Blink();
         break;
     case SONY_DOWN:
     case DOWN:
         Serial.println("down");
         Serial.flush();
-        Led13Blink();
         break;
     case SONY_RIGHT:
     case RIGHT:
         Serial.println("right");
         Serial.flush();
-        Led13Blink();
         break;
     case SONY_LEFT:
     case LEFT:
         Serial.println("left");
         Serial.flush();
-        Led13Blink();
         break;
     case SONY_ENTER:
     case ENTER:
         Serial.println("enter");
         Serial.flush();
-        Led13Blink();
         break;
     case SONY_BACK:
     case BACK:
         Serial.println("back");
         Serial.flush();
-        Led13Blink();
         break;
     case SONY_PLAY:
     case PLAY:
         Serial.println("play");
         Serial.flush();
-        Led13Blink();
         break;
     case SONY_PAUSE:
     case PAUSE:
         Serial.println("pause");
         Serial.flush();
-        Led13Blink();
         break;
     case SONY_NEXT:
     case NEXT:
         Serial.println("next");
         Serial.flush();
-        Led13Blink();
         break;
     case SONY_PREV:
     case PREV:
         Serial.println("prev");
         Serial.flush();
-        Led13Blink();
-        break;
-    case SONY_FORWARD:
-    case FORWARD:
-        Serial.println("next");
-        Serial.flush();
-        Led13Blink();
-        break;
-    case SONY_REWIND:
-    case REWIND:
-        Serial.println("next");
-        Serial.flush();
-        Led13Blink();
         break;
     default:
         break;
     }
-    delay(200);
+    Led13Blink();
 }
 
 // https://github.com/Arduino-IRremote/Arduino-IRremote/tree/master/examples/SendRawDemo
@@ -264,7 +240,6 @@ void ChangeInputSoundBar()
         Log("Optical");
         sendRaw(intro_BT, 68U, repeat_BT, 4U, 38400U, 1);
         opticalBluetoothSwitch = false;
-        return;
     }
     else
     {
@@ -281,7 +256,6 @@ void PowerSoundBar()
         Log("Power on");
         sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
         powerPressed = false;
-        return;
     }
     else
     {
@@ -300,7 +274,6 @@ void PowerSoundBarLong()
         delay(100);
         sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 12);
         powerPressed = false;
-        return;
     }
     else
     {
@@ -315,18 +288,22 @@ void PowerSoundBarLong()
 void Led13Blink()
 {
     digitalWrite(LED_BUILTIN, HIGH);
-    delay(50);
+    delay(100);
     digitalWrite(LED_BUILTIN, LOW);
 }
 
-void Log(String msg) {
-    if (DEBUG) {
+void Log(String msg)
+{
+    if (DEBUG)
+    {
         Serial.println(msg);
     }
 }
 
-void Log(int msg) {
-    if (DEBUG) {
+void Log(int msg)
+{
+    if (DEBUG)
+    {
         Serial.println(String(msg));
     }
 }

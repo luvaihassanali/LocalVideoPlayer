@@ -7,6 +7,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -22,14 +23,26 @@ namespace LocalVideoPlayer
     {
         #region Dll import
 
-        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "SystemParametersInfo")]
+        [DllImport("user32.dll", EntryPoint = "SystemParametersInfo")]
         public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, uint pvParam, uint fWinIni);
         private const int SPI_SETCURSORS = 0x0057;
         private const int SPIF_UPDATEINIFILE = 0x01;
         private const int SPIF_SENDCHANGE = 0x02;
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        [DllImport("user32.dll")]
 
         static public extern bool ShowScrollBar(System.IntPtr hWnd, int wBar, bool bShow);
+
+        [DllImport("user32.dll")]
+        public static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct LASTINPUTINFO
+        {
+            public static readonly int SizeOf = Marshal.SizeOf(typeof(LASTINPUTINFO));
+
+            [MarshalAs(UnmanagedType.U4)] public UInt32 cbSize;
+            [MarshalAs(UnmanagedType.U4)] public UInt32 dwTime;
+        }
 
         #endregion
 
@@ -64,6 +77,7 @@ namespace LocalVideoPlayer
         private Label tvLabel;
         private MouseWorker worker = null;
         private Panel mainFormMainPanel = null;
+        private System.Threading.Timer idleTimer;
 
         public MainForm()
         {
@@ -123,7 +137,7 @@ namespace LocalVideoPlayer
             }
             catch (Exception ex)
             {
-                Log("Application exit " + ex.Message);
+                Log("Application end exception: " + ex.Message);
             }
             Log("Application end");
             for (int i = 0; i < 2; i++) Log(Environment.NewLine);
@@ -131,9 +145,10 @@ namespace LocalVideoPlayer
 
         static public void SaveMedia()
         {
-            Log("Save media");
+            Log("Saving media...");
             string jsonString = JsonConvert.SerializeObject(media);
             File.WriteAllText(jsonFile, jsonString);
+            Log("Media saved");
         }
 
         static public void CloseButton_Click(object sender, EventArgs e)
@@ -1068,6 +1083,24 @@ namespace LocalVideoPlayer
                     MainForm.Log(media.TvShows[i].Name + " Last episode: " + lastEpisodeString);
                 }
             }
+            idleTimer = new System.Threading.Timer(_ => {
+                if (PlayerForm.isPlaying)
+                {
+                    return;
+                }
+                LASTINPUTINFO last = new LASTINPUTINFO();
+                last.cbSize = (uint)LASTINPUTINFO.SizeOf;
+                last.dwTime = 0u;
+                if (GetLastInputInfo(ref last))
+                {
+                    TimeSpan idleTime = TimeSpan.FromMilliseconds(Environment.TickCount - last.dwTime);
+                    if (idleTime > TimeSpan.FromMinutes(20))
+                    {
+                        Log("Reached 20 minutes of idle time");
+                        Application.Exit();
+                    }
+                }
+            }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
         }
 
         #endregion

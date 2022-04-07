@@ -52,7 +52,7 @@ namespace LocalVideoPlayer
 
             pollingTimer = new Timer();
             pollingTimer.Tick += new EventHandler(Polling_Tick);
-            pollingTimer.Interval = 2000;
+            pollingTimer.Interval = 3000;
 
             #region Media player initialize 
 
