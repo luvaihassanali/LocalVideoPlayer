@@ -76,8 +76,9 @@ namespace LocalVideoPlayer
         private Label movieLabel;
         private Label tvLabel;
         private MouseWorker worker = null;
+        private System.Threading.Timer idleMainFormTimer = null;
+        private System.Threading.Timer idlePauseFormTimer = null;
         private Panel mainFormMainPanel = null;
-        private System.Threading.Timer idleTimer;
 
         public MainForm()
         {
@@ -133,6 +134,16 @@ namespace LocalVideoPlayer
                 {
                     string mouseMoverPath = ConfigurationManager.AppSettings["mouseMoverPath"];
                     Process.Start(mouseMoverPath);
+                }
+
+                if (idlePauseFormTimer != null)
+                {
+                    idlePauseFormTimer.Dispose();
+                }
+
+                if (idleMainFormTimer != null)
+                {
+                    idleMainFormTimer.Dispose();
                 }
             }
             catch (Exception ex)
@@ -486,7 +497,6 @@ namespace LocalVideoPlayer
                         movie.Poster = (string)movieObject["poster_path"];
                         movie.Overview = (string)movieObject["overview"];
                         movie.Overview = movie.Overview.fixBrokenQuotes();
-                        //To-do: Add to gui
                         movie.RunningTime = (int)movieObject["runtime"];
 
                         DateTime tempDate;
@@ -680,7 +690,7 @@ namespace LocalVideoPlayer
                                     String jCurrMultiEpisodeName = (string)jEpisodesMulti[l]["name"];
                                     String jCurrMultiEpisodeOverview = (string)jEpisodesMulti[l]["overview"];
                                     String currMultiEpisodeName = multiEpNames[l];
-                                    if (String.Compare(currMultiEpisodeName, jCurrMultiEpisodeName.fixBrokenQuotes(), System.Globalization.CultureInfo.CurrentCulture, 
+                                    if (String.Compare(currMultiEpisodeName, jCurrMultiEpisodeName.fixBrokenQuotes(), System.Globalization.CultureInfo.CurrentCulture,
                                         System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) != 0)
                                     {
                                         string message = "Multi episode name does not match retrieved data: Episode name: '" + currMultiEpisodeName + ", retrieved: " + jCurrMultiEpisodeName.fixBrokenQuotes() + " (Season " + season.Id + ").";
@@ -1074,20 +1084,55 @@ namespace LocalVideoPlayer
             layoutController.Initialize();
             worker.InitializeSerialPort(layoutController);
             loadingCircle1.Dispose();
+
             bool getLastEpisodeList = false;
             if (getLastEpisodeList)
             {
                 for (int i = 0; i < media.TvShows.Length; i++)
                 {
                     string lastEpisodeString = media.TvShows[i].LastEpisode == null ? "null" : media.TvShows[i].LastEpisode.Name + " (Season " + media.TvShows[i].CurrSeason + ")" + Environment.NewLine + media.TvShows[i].LastEpisode.Path;
-                    MainForm.Log(media.TvShows[i].Name + " Last episode: " + lastEpisodeString);
+                    Log(media.TvShows[i].Name + " Last episode: " + lastEpisodeString);
                 }
             }
-            idleTimer = new System.Threading.Timer(_ => {
+
+            idleMainFormTimer = new System.Threading.Timer(mt_ =>
+            {
                 if (PlayerForm.isPlaying)
                 {
+                    if (PlayerForm.IsPaused())
+                    {
+                        if (idlePauseFormTimer == null)
+                        {
+                            idlePauseFormTimer = new System.Threading.Timer(pt_ =>
+                            {
+                                if (PlayerForm.IsPaused())
+                                {
+                                    Log("Reached 2 hours of idle PAUSE time");
+                                    Application.Exit();
+                                }
+                                else
+                                {
+                                    if (idlePauseFormTimer != null)
+                                    {
+                                        Log("dispose idlePauseFormTimer");
+                                        idlePauseFormTimer.Dispose();
+                                    }
+                                }
+                            }, null, TimeSpan.FromHours(2), TimeSpan.FromHours(2));
+                        }
+                    }
+
                     return;
                 }
+                else
+                {
+                    if (idlePauseFormTimer != null)
+                    {
+                        Log("dispose idlePauseFormTimer 2");
+                        idlePauseFormTimer.Dispose();
+                    }
+                }
+
                 LASTINPUTINFO last = new LASTINPUTINFO();
                 last.cbSize = (uint)LASTINPUTINFO.SizeOf;
                 last.dwTime = 0u;

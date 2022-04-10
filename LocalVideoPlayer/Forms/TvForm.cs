@@ -490,7 +490,6 @@ namespace LocalVideoPlayer
 
                 PictureBox episodeBox = new PictureBox();
                 episodeBox.Width = 300;
-                //To-do: make const
                 episodeBox.Height = (int)(episodeBox.Width / 1.777777777777778);
 
                 if (currEpisode.Backdrop != null)

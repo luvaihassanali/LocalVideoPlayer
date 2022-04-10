@@ -22,7 +22,7 @@ namespace LocalVideoPlayer
         private Episode currEpisode;
         private Form tvForm;
         public LibVLC libVlc;
-        public MediaPlayer mediaPlayer;
+        static public MediaPlayer mediaPlayer;
         private TvShow currTvShow;
         private Timer pollingTimer;
 
@@ -390,6 +390,21 @@ namespace LocalVideoPlayer
 
         #region Media player 
 
+        static public bool IsPaused()
+        {
+            if (mediaPlayer != null)
+            {
+                if (mediaPlayer.IsPlaying)
+                {
+                    return false;
+                } else
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         static public void LaunchVlc(string mediaName, string episodeName, string path, Form tvForm)
         {
             TvShow currTvShow = null;
@@ -482,7 +497,6 @@ namespace LocalVideoPlayer
                         {
                             if (j == currSeason.Episodes.Length - 1)
                             {
-                                //To-do: reset progress bars
                                 if ((i == currTvShow.Seasons.Length - 2 && currTvShow.Seasons[currTvShow.Seasons.Length - 1].Id == -1) ||
                                     i == currTvShow.Seasons.Length - 1)
                                 {
