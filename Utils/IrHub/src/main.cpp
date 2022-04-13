@@ -27,8 +27,6 @@ const uint32_t SONY_ENTER = 0x39D7C;
 const uint32_t SONY_BACK = 0x39D7D;
 const uint32_t SONY_PLAY = 0x39D32;
 const uint32_t SONY_PAUSE = 0x39D39;
-const uint32_t SONY_NEXT = 0x39D31;
-const uint32_t SONY_PREV = 0x39D30;
 
 const uint32_t SOUNDBAR_POWER = 0xFE015343;
 const uint32_t TV_POWER = 0xFD020707;
@@ -42,8 +40,6 @@ const uint32_t ENTER = 0xFA055343;
 const uint32_t BACK = 0xE31C5343;
 const uint32_t PLAY = 0xFC035343;
 const uint32_t PAUSE = 0x827D5343;
-const uint32_t NEXT = 0xEC135343;
-const uint32_t PREV = 0xE41B5343;
 const uint32_t SOUNDBAR_INPUT = 0xF9065343; // AUDIO
 const uint32_t APP_POWER = 0xD7285343;      // TV/VIDEO
 
@@ -188,14 +184,6 @@ void ParseIrValue(uint32_t rawData)
     case SONY_PAUSE:
     case PAUSE:
         SendSerialData("pause");
-        break;
-    case SONY_NEXT:
-    case NEXT:
-        SendSerialData("next");
-        break;
-    case SONY_PREV:
-    case PREV:
-        SendSerialData("prev");
         break;
     default:
         break;

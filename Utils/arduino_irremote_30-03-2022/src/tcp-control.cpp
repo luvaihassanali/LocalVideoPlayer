@@ -1,8 +1,8 @@
 #include <tcp-control.h>
 
 // Replace values for TCP server
-const String WIFI_SSID = "SSID";
-const String WIFI_PASS = "Password";
+const String WIFI_SSID = "ssid";
+const String WIFI_PASS = "password";
 const String WIFI_PORT = "3000";
 const String CONNECTION_STRING = "AT+CWJAP=\"" + WIFI_SSID + "\",\"" + WIFI_PASS + "\"\r\n";
 const String SERVER_STRING = "AT+CIPSERVER=1," + WIFI_PORT + "\r\n";
