@@ -63,6 +63,8 @@ namespace LocalVideoPlayer
             Cursor.Position = new Point(10, 10);
             MouseWorker.DoMouseClick();
             currentControl = mainFormControlGrid[0][0];
+            ClearTvBoxBorder();
+            ClearMovieBoxBorder();
             CenterMouseOverControl(currentControl);
         }
 
