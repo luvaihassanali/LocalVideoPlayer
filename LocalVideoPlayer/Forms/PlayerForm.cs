@@ -195,7 +195,8 @@ namespace LocalVideoPlayer
                 {
                     currEpisode.SavedTime = currEpisode.Length;
                 }
-                UpdateProgressBar();
+                try { UpdateProgressBar(); }
+                catch(Exception ex) { MainForm.Log(ex.ToString()); };
             }
 
             mediaPlayer.Dispose();
@@ -473,7 +474,9 @@ namespace LocalVideoPlayer
             if (currTvShow != null)
             {
                 currEpisode.SavedTime = currEpisode.Length;
-                UpdateProgressBar();
+
+                try { UpdateProgressBar(); }
+                catch (Exception ex) { MainForm.Log(ex.ToString()); };
 
                 if (currEpisode.Id == -1)
                 {

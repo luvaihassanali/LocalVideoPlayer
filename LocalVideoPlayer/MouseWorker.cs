@@ -27,7 +27,7 @@ namespace LocalVideoPlayer
 
         private string serverIp = "192.168.0.174";
         private int serverPort = 3000;
-        private bool hideCursor = false;
+        private bool hideCursor = true;
         private int cursorCount = 0;
         private bool serverIsNotConnected = true;
         private bool workerThreadRunning = false;

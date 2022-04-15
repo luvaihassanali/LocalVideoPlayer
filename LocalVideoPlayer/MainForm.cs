@@ -111,6 +111,8 @@ namespace LocalVideoPlayer
         {
             mainFormSize = this.Size;
             mainFormLoc = this.Location;
+            this.Focus();
+            this.Activate();
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
