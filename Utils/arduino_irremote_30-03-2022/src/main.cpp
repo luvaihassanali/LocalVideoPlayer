@@ -1,17 +1,19 @@
 #include <utils.h>
 
 /*
-  Red Button: Input (TV <-> Audio)
-  Blue Button: Input (LVP <-> Audio)
+  + Red Button: Input (TV <-> Audio)
+  + Blue Button: Input (LVP <-> Audio)
   +-----------+----------------------------------+---------------+----------------------------------------+
   |  Control  |        1 - TV                    |    2 - LVP    |     3 - Audio                          |
   +-----------+----------------------------------+---------------+----------------------------------------+
   | Button 1  | TV Power                         | Reset         | Audio Power                            |
   | Button 2  | TV Back                          |               | Audio Input                            |
-  | Button 3  | TV Sound script (+J. Button)     | Scroll        | Mute                                   |
+  | Button 3  | TV Home                          | Scroll        | Mute                                   |
   | J. Button | TV Enter                         | LVP Enter     | Audio Power                            |
   | J. Stick  | TV Direction (TV Vol [+Button3]) | LVP Direction | Up(+)/down(-) vol                      |
   +-----------+----------------------------------+---------------+----------------------------------------+
+  + Button 3 + J.Button = TV Sound Script
+  + Button 3 + J.Stick = TV Volume +/-
 */
 
 void ControlHandler();
@@ -149,7 +151,7 @@ void RemoteState()
 void ControlHandler()
 {
     // If esp8266 not initialized joystick control sends infared tv remote signals
-    if (currentState == 0 && (button1State == LOW || button2State == LOW || joystickButtonState == LOW ||
+    if (currentState == 0 && (button1State == LOW || button2State == LOW || button3State == LOW  || joystickButtonState == LOW ||
                               (button3State == HIGH && joystickMapX > JS_THRESHOLD) || (button3State == HIGH && joystickMapX < -JS_THRESHOLD) || joystickMapY > JS_THRESHOLD || joystickMapY < -JS_THRESHOLD))
     {
         TvControl();
