@@ -22,7 +22,7 @@ namespace LocalVideoPlayer
         private Episode currEpisode;
         private Form tvForm;
         public LibVLC libVlc;
-        static public MediaPlayer mediaPlayer;
+        public MediaPlayer mediaPlayer;
         private TvShow currTvShow;
         private Timer pollingTimer;
 
@@ -390,21 +390,6 @@ namespace LocalVideoPlayer
         #endregion
 
         #region Media player 
-
-        static public bool IsPaused()
-        {
-            if (mediaPlayer != null)
-            {
-                if (mediaPlayer.IsPlaying)
-                {
-                    return false;
-                } else
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
 
         static public void LaunchVlc(string mediaName, string episodeName, string path, Form tvForm)
         {

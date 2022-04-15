@@ -1101,13 +1101,13 @@ namespace LocalVideoPlayer
             {
                 if (PlayerForm.isPlaying)
                 {
-                    if (PlayerForm.IsPaused())
+                    if (IsPaused())
                     {
                         if (idlePauseFormTimer == null)
                         {
                             idlePauseFormTimer = new System.Threading.Timer(pt_ =>
                             {
-                                if (PlayerForm.IsPaused())
+                                if (IsPaused())
                                 {
                                     Log("Reached 2 hours of idle PAUSE time");
                                     Application.Exit();
@@ -1150,6 +1150,25 @@ namespace LocalVideoPlayer
             }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
         }
 
+        private bool IsPaused()
+        {
+            PlayerForm currForm = null;
+            FormCollection formCollection = Application.OpenForms;
+            foreach (Form f_ in formCollection)
+            {
+                if (f_.Name.Equals("PlayerForm"))
+                {
+                    currForm = (PlayerForm)f_;
+                }
+            }
+            if (currForm == null) throw new ArgumentNullException();
+
+            if(currForm.mediaPlayer.IsPlaying)
+            {
+                return false;
+            }
+            return true;
+        }
         #endregion
 
         #region Mouse
