@@ -110,9 +110,7 @@ namespace LocalVideoPlayer
         private void MainForm_Shown(object sender, EventArgs e)
         {
             mainFormSize = this.Size;
-            mainFormLoc = this.Location;
-            this.Focus();
-            this.Activate();
+            mainFormLoc = this.Location;            
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
