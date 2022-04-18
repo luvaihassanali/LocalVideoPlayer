@@ -3,15 +3,15 @@
 /*
   + Red Button: Input (TV <-> Audio)
   + Blue Button: Input (LVP <-> Audio)
-  +-----------+----------------------------------+---------------+----------------------------------------+
-  |  Control  |        1 - TV                    |    2 - LVP    |     3 - Audio                          |
-  +-----------+----------------------------------+---------------+----------------------------------------+
-  | Button 1  | TV Power                         | Reset         | Audio Power                            |
-  | Button 2  | TV Back                          |               | Audio Input                            |
-  | Button 3  | TV Home                          | Scroll        | Mute                                   |
-  | J. Button | TV Enter                         | LVP Enter     | Audio Power                            |
-  | J. Stick  | TV Direction (TV Vol [+Button3]) | LVP Direction | Up(+)/down(-) vol                      |
-  +-----------+----------------------------------+---------------+----------------------------------------+
+  +-----------+--------------+---------------+-------------------+
+  |  Control  |    1 - TV    |    2 - LVP    |  3 - Audio        |
+  +-----------+--------------+---------------+-------------------+
+  | Button 1  | TV Power     | Reset         | Audio Power       |
+  | Button 2  | TV Back      |               | Audio Input       |
+  | Button 3  | TV Home      | Scroll        | Mute              |
+  | J. Button | TV Enter     | LVP Enter     | Audio Power       |
+  | J. Stick  | TV Direction | LVP Direction | Up(+)/down(-) vol |
+  +-----------+--------------+---------------+-------------------+
   + Button 3 + J.Button = TV Sound Script
   + Button 3 + J.Stick = TV Volume +/-
 */
