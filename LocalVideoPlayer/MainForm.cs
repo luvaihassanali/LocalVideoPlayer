@@ -674,6 +674,8 @@ namespace LocalVideoPlayer
                             }
                             if (k > jEpisodes.Count - 1)
                             {
+                                string message = "Episode index out of TMDB episodes range S" + seasonIndex.ToString() + "E" + (k + 1).ToString();
+                                CustomDialog.ShowMessage("Warning: " + tvShow.Name, message, this.Width, this.Height);
                                 continue;
                             }
                             Episode episode = episodes[k];
