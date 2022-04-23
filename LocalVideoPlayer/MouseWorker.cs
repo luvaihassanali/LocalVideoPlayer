@@ -324,7 +324,7 @@ namespace LocalVideoPlayer
                     Log("Destination host unreachable");
                 }
 
-                try
+                try 
                 {
                     Thread.Sleep(3000);
                 }

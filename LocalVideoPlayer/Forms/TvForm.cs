@@ -251,7 +251,7 @@ namespace LocalVideoPlayer
                 tvForm.Close();
                 Fader.FadeOut(MainForm.dimmerForm, Fader.FadeSpeed.Normal);
                 MainForm.layoutController.DeactivateTvForm();
-                System.Threading.Tasks.Task.Run(() => MainForm.SaveMedia());
+                //System.Threading.Tasks.Task.Run(() => MainForm.SaveMedia());
             };
 
             MainForm.dimmerForm.Size = MainForm.mainFormSize;

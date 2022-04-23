@@ -162,39 +162,42 @@ namespace LocalVideoPlayer
                     {
                         if (currTvShow.LastEpisode == null)
                         {
+                            currEpisode.SavedTime = endTime;
                             currTvShow.CurrSeason = currSeason;
                             currTvShow.LastEpisode = currEpisode;
-                            currEpisode.SavedTime = endTime;
+                            MainForm.Log("Last episode null -> " + currTvShow.Name + " " + currTvShow.LastEpisode.Name + ", time: " + currTvShow.LastEpisode.SavedTime + ", season: " + currTvShow.CurrSeason);
                         }
                         else
                         {
-                            currEpisode.SavedTime = endTime;
-
-                            MainForm mainForm = (MainForm)GetForm("MainForm");
                             int lastEpisodeSeason = 0;
                             Episode dummy = TvForm.GetTvEpisode(currTvShow.Name, currTvShow.LastEpisode.Name, out lastEpisodeSeason);
+                            MainForm.Log("Prev Last episode: " + currTvShow.Name + " " + currTvShow.LastEpisode.Name + ", time: " + currTvShow.LastEpisode.SavedTime + ", season: " + currTvShow.CurrSeason);
+
+                            currEpisode.SavedTime = endTime;
                             if (lastEpisodeSeason == currSeason)
                             {
                                 if (currTvShow.LastEpisode.Id <= currEpisode.Id)
                                 {
                                     currTvShow.CurrSeason = currSeason;
-                                    currTvShow.LastEpisode = currEpisode;
                                 }
                             }
                             else if (lastEpisodeSeason < currSeason)
                             {
                                 currTvShow.CurrSeason = currSeason;
-                                currTvShow.LastEpisode = currEpisode;
-
                             }
+                            currTvShow.LastEpisode = currEpisode;
+
+                            MainForm.Log("New Last episode: " + currTvShow.Name + " " + currTvShow.LastEpisode.Name + ", time: " + currTvShow.LastEpisode.SavedTime + ", season: " + currTvShow.CurrSeason);
                         }
                     }
                 }
 
+                // Update TMDB saved time with actual video length
                 if (currEpisode.SavedTime > currEpisode.Length)
                 {
                     currEpisode.SavedTime = currEpisode.Length;
                 }
+
                 try { UpdateProgressBar(); }
                 catch(Exception ex) { MainForm.Log(ex.ToString()); };
             }

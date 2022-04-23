@@ -86,6 +86,7 @@ namespace LocalVideoPlayer
             InitializeCustomCursor();
             InitializeDimmers();
             InitializeMouseWorker();
+            InitializeIdleTimers();
 #if DEBUG
             this.WindowState = FormWindowState.Normal;
 #endif
@@ -95,6 +96,8 @@ namespace LocalVideoPlayer
             backgroundWorker1.DoWork += new DoWorkEventHandler(BackgroundWorker1_DoWork);
             backgroundWorker1.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BackgroundWorker1_RunWorkerCompleted);
             backgroundWorker1.RunWorkerAsync();
+
+
         }
 
         #region General form functions
@@ -110,7 +113,7 @@ namespace LocalVideoPlayer
         private void MainForm_Shown(object sender, EventArgs e)
         {
             mainFormSize = this.Size;
-            mainFormLoc = this.Location;            
+            mainFormLoc = this.Location;
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -384,6 +387,11 @@ namespace LocalVideoPlayer
             return result;
         }
 
+
+        #endregion
+
+        #region Initializers
+
         private void InitializeDimmers()
         {
             dimmerForm = new Form();
@@ -414,6 +422,95 @@ namespace LocalVideoPlayer
 
             worker = new MouseWorker(this);
             worker.Start();
+        }
+
+        private void InitializeIdleTimers()
+        {
+            Log("Initialize idleMainFormTimer");
+            idleMainFormTimer = new System.Threading.Timer(mt_ =>
+            {
+                if (PlayerForm.isPlaying)
+                {
+                    if (IsPaused())
+                    {
+                        if (idlePauseFormTimer == null)
+                        {
+                            Log("Initialize idlePauseFormTimer");
+                            idlePauseFormTimer = new System.Threading.Timer(pt_ =>
+                            {
+                                if (IsPaused())
+                                {
+                                    Log("Reached 1.5 hours of idle PAUSE time");
+                                    ClosePlayerForm();
+                                }
+                            }, null, TimeSpan.FromHours(1.5), TimeSpan.FromHours(1.5));
+                        }
+                    }
+                }
+                else
+                {
+                    if (idlePauseFormTimer != null)
+                    {
+                        Log("Dispose idlePauseFormTimer");
+                        idlePauseFormTimer.Dispose();
+                        idlePauseFormTimer = null;
+                    }
+                }
+
+                LASTINPUTINFO last = new LASTINPUTINFO();
+                last.cbSize = (uint)LASTINPUTINFO.SizeOf;
+                last.dwTime = 0u;
+                if (GetLastInputInfo(ref last))
+                {
+                    TimeSpan idleTime = TimeSpan.FromMilliseconds(Environment.TickCount - last.dwTime);
+                    if (idleTime > TimeSpan.FromMinutes(20))
+                    {
+                        Log("Reached 20 minutes of idle time");
+                        this.Invoke(new MethodInvoker(delegate
+                        {
+                            this.Close();
+                        }));
+                    }
+                }
+            }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
+        }
+
+        private bool IsPaused()
+        {
+            PlayerForm currForm = null;
+            FormCollection formCollection = Application.OpenForms;
+            foreach (Form f_ in formCollection)
+            {
+                if (f_.Name.Equals("PlayerForm"))
+                {
+                    currForm = (PlayerForm)f_;
+                }
+            }
+            if (currForm == null) return false;
+            if (currForm.mediaPlayer.IsPlaying)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private void ClosePlayerForm()
+        {
+            PlayerForm currForm = null;
+            FormCollection formCollection = Application.OpenForms;
+            foreach (Form f_ in formCollection)
+            {
+                if (f_.Name.Equals("PlayerForm"))
+                {
+                    currForm = (PlayerForm)f_;
+                    break;
+                }
+            }
+            if (currForm == null) throw new ArgumentNullException();
+            currForm.Invoke(new MethodInvoker(delegate
+            {
+                currForm.Close();
+            }));
         }
 
         #endregion
@@ -1096,79 +1193,8 @@ namespace LocalVideoPlayer
                     Log(media.TvShows[i].Name + " Last episode: " + lastEpisodeString);
                 }
             }
-
-            idleMainFormTimer = new System.Threading.Timer(mt_ =>
-            {
-                if (PlayerForm.isPlaying)
-                {
-                    if (IsPaused())
-                    {
-                        if (idlePauseFormTimer == null)
-                        {
-                            idlePauseFormTimer = new System.Threading.Timer(pt_ =>
-                            {
-                                if (IsPaused())
-                                {
-                                    Log("Reached 2 hours of idle PAUSE time");
-                                    Application.Exit();
-                                }
-                                else
-                                {
-                                    if (idlePauseFormTimer != null)
-                                    {
-                                        Log("dispose idlePauseFormTimer");
-                                        idlePauseFormTimer.Dispose();
-                                    }
-                                }
-                            }, null, TimeSpan.FromHours(2), TimeSpan.FromHours(2));
-                        }
-                    }
-
-                    return;
-                }
-                else
-                {
-                    if (idlePauseFormTimer != null)
-                    {
-                        Log("dispose idlePauseFormTimer 2");
-                        idlePauseFormTimer.Dispose();
-                    }
-                }
-
-                LASTINPUTINFO last = new LASTINPUTINFO();
-                last.cbSize = (uint)LASTINPUTINFO.SizeOf;
-                last.dwTime = 0u;
-                if (GetLastInputInfo(ref last))
-                {
-                    TimeSpan idleTime = TimeSpan.FromMilliseconds(Environment.TickCount - last.dwTime);
-                    if (idleTime > TimeSpan.FromMinutes(20))
-                    {
-                        Log("Reached 20 minutes of idle time");
-                        Application.Exit();
-                    }
-                }
-            }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
         }
 
-        private bool IsPaused()
-        {
-            PlayerForm currForm = null;
-            FormCollection formCollection = Application.OpenForms;
-            foreach (Form f_ in formCollection)
-            {
-                if (f_.Name.Equals("PlayerForm"))
-                {
-                    currForm = (PlayerForm)f_;
-                }
-            }
-            if (currForm == null) throw new ArgumentNullException();
-
-            if(currForm.mediaPlayer.IsPlaying)
-            {
-                return false;
-            }
-            return true;
-        }
         #endregion
 
         #region Mouse
