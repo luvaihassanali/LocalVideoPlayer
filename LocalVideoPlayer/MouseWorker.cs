@@ -28,9 +28,11 @@ namespace LocalVideoPlayer
         private string serverIp = "192.168.0.174";
         private int serverPort = 3000;
         private bool hideCursor = true;
+
         private int cursorCount = 0;
         private bool serverIsNotConnected = true;
         private bool workerThreadRunning = false;
+        private bool serialInit = false;
         private int joystickX;
         private int joystickY;
         private int timelineShowTimeout = 10000;
@@ -75,6 +77,8 @@ namespace LocalVideoPlayer
             {
                 MainForm.Log("No device connected to serial port");
             }
+
+            serialInit = true;
         }
 
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -146,6 +150,32 @@ namespace LocalVideoPlayer
                         break;
                 }
             }
+        }
+
+        private void CheckSerialConnection()
+        {
+            if (serialInit)
+            {
+                string[] ports = SerialPort.GetPortNames();
+                if (ports.Length == 0)
+                {
+                    Log("Serial port disconnected");
+                    try
+                    {
+                        serialPort.Open();
+                        Log("Reconnected to serial port");
+                    }
+                    catch
+                    {
+                        Log("No device connected to serial port (reconnect)");
+                    }
+                }
+                else
+                {
+                    Log("Serial connected at " + ports[0]);
+                }
+            }
+
         }
 
         #endregion
@@ -322,6 +352,7 @@ namespace LocalVideoPlayer
                 else
                 {
                     Log("Destination host unreachable");
+                    CheckSerialConnection();
                 }
 
                 try 

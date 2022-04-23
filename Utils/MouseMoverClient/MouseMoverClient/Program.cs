@@ -38,6 +38,7 @@ namespace MouseMoverClient
         static string serverIp = "192.168.0.174";
         static int serverPort = 3000;
         static bool serverIsNotConnected = true;
+        static bool serialInit = false;
         static int joystickX;
         static int joystickY;
         static TcpClient client;
@@ -109,6 +110,7 @@ namespace MouseMoverClient
             {
                 serialPort.Open();
                 Log("Connected to serial port");
+                serialInit = true;
             }
             catch
             {
@@ -149,6 +151,30 @@ namespace MouseMoverClient
             }
         }
 
+        static private void CheckSerialConnection()
+        {
+            if (serialInit)
+            {
+                string[] ports = SerialPort.GetPortNames();
+                if (ports.Length == 0)
+                {
+                    Log("Serial port disconnected");
+                    try
+                    {
+                        serialPort.Open();
+                        Log("Reconnected to serial port");
+                    }
+                    catch
+                    {
+                        Log("No device connected to serial port (reconnect)");
+                    }
+                } else
+                {
+                    Log("Serial connected at " + ports[0]);
+                }
+            }
+
+        }
         #endregion
 
         #region Timer 
@@ -302,6 +328,7 @@ namespace MouseMoverClient
                 else
                 {
                     Log("Destination host unreachable");
+                    CheckSerialConnection();
                 }
 
                 try

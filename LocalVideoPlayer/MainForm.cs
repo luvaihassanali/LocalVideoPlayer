@@ -77,7 +77,6 @@ namespace LocalVideoPlayer
         private Label tvLabel;
         private MouseWorker worker = null;
         private System.Threading.Timer idleMainFormTimer = null;
-        private System.Threading.Timer idlePauseFormTimer = null;
         private Panel mainFormMainPanel = null;
 
         public MainForm()
@@ -86,7 +85,7 @@ namespace LocalVideoPlayer
             InitializeCustomCursor();
             InitializeDimmers();
             InitializeMouseWorker();
-            InitializeIdleTimers();
+            InitializeIdleTimer();
 #if DEBUG
             this.WindowState = FormWindowState.Normal;
 #endif
@@ -137,11 +136,6 @@ namespace LocalVideoPlayer
                 {
                     string mouseMoverPath = ConfigurationManager.AppSettings["mouseMoverPath"];
                     Process.Start(mouseMoverPath);
-                }
-
-                if (idlePauseFormTimer != null)
-                {
-                    idlePauseFormTimer.Dispose();
                 }
 
                 if (idleMainFormTimer != null)
@@ -424,37 +418,13 @@ namespace LocalVideoPlayer
             worker.Start();
         }
 
-        private void InitializeIdleTimers()
+        private void InitializeIdleTimer()
         {
-            Log("Initialize idleMainFormTimer");
             idleMainFormTimer = new System.Threading.Timer(mt_ =>
             {
                 if (PlayerForm.isPlaying)
                 {
-                    if (IsPaused())
-                    {
-                        if (idlePauseFormTimer == null)
-                        {
-                            Log("Initialize idlePauseFormTimer");
-                            idlePauseFormTimer = new System.Threading.Timer(pt_ =>
-                            {
-                                if (IsPaused())
-                                {
-                                    Log("Reached 1.5 hours of idle PAUSE time");
-                                    ClosePlayerForm();
-                                }
-                            }, null, TimeSpan.FromHours(1.5), TimeSpan.FromHours(1.5));
-                        }
-                    }
-                }
-                else
-                {
-                    if (idlePauseFormTimer != null)
-                    {
-                        Log("Dispose idlePauseFormTimer");
-                        idlePauseFormTimer.Dispose();
-                        idlePauseFormTimer = null;
-                    }
+                    return;
                 }
 
                 LASTINPUTINFO last = new LASTINPUTINFO();
@@ -463,7 +433,7 @@ namespace LocalVideoPlayer
                 if (GetLastInputInfo(ref last))
                 {
                     TimeSpan idleTime = TimeSpan.FromMilliseconds(Environment.TickCount - last.dwTime);
-                    if (idleTime > TimeSpan.FromMinutes(20))
+                    if (idleTime > TimeSpan.FromSeconds(10))
                     {
                         Log("Reached 20 minutes of idle time");
                         this.Invoke(new MethodInvoker(delegate
@@ -472,7 +442,7 @@ namespace LocalVideoPlayer
                         }));
                     }
                 }
-            }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
+            }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
         }
 
         private bool IsPaused()

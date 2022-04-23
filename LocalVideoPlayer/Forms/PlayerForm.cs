@@ -25,11 +25,13 @@ namespace LocalVideoPlayer
         public MediaPlayer mediaPlayer;
         private TvShow currTvShow;
         private Timer pollingTimer;
+        private System.Threading.Timer idleTimer = null;
 
         public PlayerForm(string p, long s, int r, bool subs, int st, TvShow t, Episode ep, Form tf)
         {
             if (!DesignMode) Core.Initialize();
             InitializeComponent();
+            InitializeIdleTimer();
 #if DEBUG
             this.WindowState = FormWindowState.Normal;
 #endif
@@ -134,6 +136,11 @@ namespace LocalVideoPlayer
                 pollingTimer.Dispose();
             }
 
+            if (idleTimer != null)
+            {
+                idleTimer.Dispose();
+            }
+
             if (currTvShow != null)
             {
                 int currSeason = 0;
@@ -171,7 +178,7 @@ namespace LocalVideoPlayer
                         {
                             int lastEpisodeSeason = 0;
                             Episode dummy = TvForm.GetTvEpisode(currTvShow.Name, currTvShow.LastEpisode.Name, out lastEpisodeSeason);
-                            MainForm.Log("Prev Last episode: " + currTvShow.Name + " " + currTvShow.LastEpisode.Name + ", time: " + currTvShow.LastEpisode.SavedTime + ", season: " + currTvShow.CurrSeason);
+                            MainForm.Log("Prev Last episode: " + currTvShow.Name + " " + currTvShow.LastEpisode.Id + " " + currTvShow.LastEpisode.Name + ", time: " + currTvShow.LastEpisode.SavedTime + ", season: " + currTvShow.CurrSeason);
 
                             currEpisode.SavedTime = endTime;
                             if (lastEpisodeSeason == currSeason)
@@ -187,7 +194,7 @@ namespace LocalVideoPlayer
                             }
                             currTvShow.LastEpisode = currEpisode;
 
-                            MainForm.Log("New Last episode: " + currTvShow.Name + " " + currTvShow.LastEpisode.Name + ", time: " + currTvShow.LastEpisode.SavedTime + ", season: " + currTvShow.CurrSeason);
+                            MainForm.Log("New Last episode: " + currTvShow.Name + " " + currTvShow.LastEpisode.Id + " " + currTvShow.LastEpisode.Name + ", time: " + currTvShow.LastEpisode.SavedTime + ", season: " + currTvShow.CurrSeason);
                         }
                     }
                 }
@@ -630,6 +637,7 @@ namespace LocalVideoPlayer
         #endregion
 
         #region Timeline
+
         private void Timeline_ValueChanged(object sender, long value)
         {
             string timeString;
@@ -693,5 +701,33 @@ namespace LocalVideoPlayer
         }
 
         #endregion
+
+        private void InitializeIdleTimer()
+        {
+            idleTimer = new System.Threading.Timer(mt_ =>
+            {
+                if (mediaPlayer.IsPlaying)
+                {
+                    MainForm.Log("mediaPlayer.IsPlaying");
+                    return;
+                }
+
+                MainForm.LASTINPUTINFO last = new MainForm.LASTINPUTINFO();
+                last.cbSize = (uint)MainForm.LASTINPUTINFO.SizeOf;
+                last.dwTime = 0u;
+                if (MainForm.GetLastInputInfo(ref last))
+                {
+                    TimeSpan idleTime = TimeSpan.FromMilliseconds(Environment.TickCount - last.dwTime);
+                    if (idleTime > TimeSpan.FromSeconds(10))
+                    {
+                        MainForm.Log("Reached 2 hours of idle player time");
+                        this.Invoke(new MethodInvoker(delegate
+                        {
+                            this.Close();
+                        }));
+                    }
+                }
+            }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+        }
     }
 }
