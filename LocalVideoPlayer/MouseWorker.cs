@@ -32,7 +32,6 @@ namespace LocalVideoPlayer
         private int cursorCount = 0;
         private bool serverIsNotConnected = true;
         private bool workerThreadRunning = false;
-        private bool serialInit = false;
         private int joystickX;
         private int joystickY;
         private int timelineShowTimeout = 10000;
@@ -77,8 +76,6 @@ namespace LocalVideoPlayer
             {
                 MainForm.Log("No device connected to serial port");
             }
-
-            serialInit = true;
         }
 
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -103,7 +100,9 @@ namespace LocalVideoPlayer
                         Cursor.Position = new System.Drawing.Point(960, 540);
                         DoMouseClick();
                         break;
-                    case "stop": case "pause": case "play":
+                    case "stop":
+                    case "pause":
+                    case "play":
                         try
                         {
                             PlayerForm pf = (PlayerForm)GetForm("PlayerForm");
@@ -130,7 +129,8 @@ namespace LocalVideoPlayer
                         if (layoutController.onMainForm)
                         {
                             DoMouseClick();
-                        } else
+                        }
+                        else
                         {
                             DoMouseClick();
                             layoutController.Select(String.Empty);
@@ -140,10 +140,10 @@ namespace LocalVideoPlayer
                         try
                         {
                             layoutController.CloseCurrentForm();
-                        } 
+                        }
                         catch (Exception ex)
                         {
-                            MainForm.Log("Serial port back: " + ex.ToString());
+                            MainForm.Log("Serial port back (layoutController.CloseCurrentForm()): " + ex.ToString());
                         }
                         break;
                     default:
@@ -154,28 +154,21 @@ namespace LocalVideoPlayer
 
         private void CheckSerialConnection()
         {
-            if (serialInit)
+            if (serialPort != null)
             {
-                string[] ports = SerialPort.GetPortNames();
-                if (ports.Length == 0)
+                if (!serialPort.IsOpen)
                 {
-                    Log("Serial port disconnected");
                     try
                     {
                         serialPort.Open();
-                        Log("Reconnected to serial port");
+                        MainForm.Log("Reconnected to serial port");
                     }
                     catch
                     {
-                        Log("No device connected to serial port (reconnect)");
+                        Log("Serial port disconnected");
                     }
                 }
-                else
-                {
-                    Log("Serial connected at " + ports[0]);
-                }
             }
-
         }
 
         #endregion
@@ -274,7 +267,8 @@ namespace LocalVideoPlayer
                             Log("initack received");
                             if (hideCursor)
                             {
-                                mainForm.Invoke(new MethodInvoker(delegate {
+                                mainForm.Invoke(new MethodInvoker(delegate
+                                {
                                     for (int j = 0; j < cursorCount; j++)
                                     {
                                         Cursor.Show();
@@ -355,7 +349,7 @@ namespace LocalVideoPlayer
                     CheckSerialConnection();
                 }
 
-                try 
+                try
                 {
                     Thread.Sleep(3000);
                 }
@@ -368,7 +362,8 @@ namespace LocalVideoPlayer
         {
             if (cursorCount != 0)
             {
-                mainForm.Invoke(new MethodInvoker(delegate {
+                mainForm.Invoke(new MethodInvoker(delegate
+                {
                     for (int j = 0; j < cursorCount; j++)
                     {
                         Cursor.Show();
