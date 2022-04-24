@@ -708,7 +708,6 @@ namespace LocalVideoPlayer
             {
                 if (mediaPlayer.IsPlaying)
                 {
-                    MainForm.Log("mediaPlayer.IsPlaying");
                     return;
                 }
 
@@ -718,7 +717,7 @@ namespace LocalVideoPlayer
                 if (MainForm.GetLastInputInfo(ref last))
                 {
                     TimeSpan idleTime = TimeSpan.FromMilliseconds(Environment.TickCount - last.dwTime);
-                    if (idleTime > TimeSpan.FromSeconds(10))
+                    if (idleTime > TimeSpan.FromHours(2))
                     {
                         MainForm.Log("Reached 2 hours of idle player time");
                         this.Invoke(new MethodInvoker(delegate
@@ -727,7 +726,7 @@ namespace LocalVideoPlayer
                         }));
                     }
                 }
-            }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+            }, null, TimeSpan.FromHours(1), TimeSpan.FromHours(1));
         }
     }
 }

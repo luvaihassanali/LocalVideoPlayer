@@ -433,7 +433,7 @@ namespace LocalVideoPlayer
                 if (GetLastInputInfo(ref last))
                 {
                     TimeSpan idleTime = TimeSpan.FromMilliseconds(Environment.TickCount - last.dwTime);
-                    if (idleTime > TimeSpan.FromSeconds(10))
+                    if (idleTime > TimeSpan.FromMinutes(20))
                     {
                         Log("Reached 20 minutes of idle time");
                         this.Invoke(new MethodInvoker(delegate
@@ -442,45 +442,7 @@ namespace LocalVideoPlayer
                         }));
                     }
                 }
-            }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
-        }
-
-        private bool IsPaused()
-        {
-            PlayerForm currForm = null;
-            FormCollection formCollection = Application.OpenForms;
-            foreach (Form f_ in formCollection)
-            {
-                if (f_.Name.Equals("PlayerForm"))
-                {
-                    currForm = (PlayerForm)f_;
-                }
-            }
-            if (currForm == null) return false;
-            if (currForm.mediaPlayer.IsPlaying)
-            {
-                return false;
-            }
-            return true;
-        }
-
-        private void ClosePlayerForm()
-        {
-            PlayerForm currForm = null;
-            FormCollection formCollection = Application.OpenForms;
-            foreach (Form f_ in formCollection)
-            {
-                if (f_.Name.Equals("PlayerForm"))
-                {
-                    currForm = (PlayerForm)f_;
-                    break;
-                }
-            }
-            if (currForm == null) throw new ArgumentNullException();
-            currForm.Invoke(new MethodInvoker(delegate
-            {
-                currForm.Close();
-            }));
+            }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
         }
 
         #endregion
