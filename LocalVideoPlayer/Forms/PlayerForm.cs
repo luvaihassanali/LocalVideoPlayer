@@ -194,7 +194,7 @@ namespace LocalVideoPlayer
                             }
                             currTvShow.LastEpisode = currEpisode;
 
-                            MainForm.Log("New Last episode: " + currTvShow.Name + " " + currTvShow.LastEpisode.Id + " " + currTvShow.LastEpisode.Name + ", time: " + currTvShow.LastEpisode.SavedTime + ", season: " + currTvShow.CurrSeason);
+                            MainForm.Log("New Last episode: " + currTvShow.Name + " " + currTvShow.LastEpisode.Id + " " + currTvShow.LastEpisode.Name + ", time: " + currTvShow.LastEpisode.SavedTime);
                         }
                     }
                 }
@@ -211,6 +211,7 @@ namespace LocalVideoPlayer
 
             mediaPlayer.Dispose();
             libVlc.Dispose();
+            MainForm.Log("Player form objects dispsed");
         }
 
         private void CloseButton_Click(object sender, EventArgs e)
@@ -258,7 +259,6 @@ namespace LocalVideoPlayer
         private void Control_MouseEnter(object sender, EventArgs e)
         {
             pollingTimer.Stop();
-
         }
 
         private void Control_MouseLeave(object sender, EventArgs e)

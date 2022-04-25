@@ -187,6 +187,7 @@ namespace LocalVideoPlayer
                 onPlayerForm = false;
                 CenterMouseOverControl(playerFormClose);
                 MouseWorker.DoMouseClick();
+                System.Threading.Thread.Sleep(2000);
 
                 if (onMovieForm)
                 {

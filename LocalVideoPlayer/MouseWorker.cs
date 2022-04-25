@@ -85,6 +85,7 @@ namespace LocalVideoPlayer
             {
                 string msg = serialPort.ReadLine();
                 msg = msg.Replace("\r", "");
+                MainForm.Log("Serial port: " + msg);
                 if (hideCursor)
                 {
                     mainForm.Invoke(new MethodInvoker(delegate
@@ -143,7 +144,7 @@ namespace LocalVideoPlayer
                         }
                         catch (Exception ex)
                         {
-                            MainForm.Log("Serial port back (layoutController.CloseCurrentForm()): " + ex.ToString());
+                            MainForm.Log("Serial port back recv (layoutController.CloseCurrentForm()): " + ex.ToString());
                         }
                         break;
                     default:
