@@ -265,6 +265,10 @@ void PowerSoundBarLong()
         sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
         delay(50);
         sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
+        delay(50);
+        sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
+        delay(50);
+        sendRaw(intro_Power, 68U, repeat_Power, 4U, 38400U, 1);
         powerPressed = true;
     }
     delay(50);
