@@ -36,6 +36,7 @@ namespace LocalVideoPlayer
             }
             return false;
         }
+
         internal bool Compare(MediaModel prevMedia)
         {
             Array.Sort(this.Movies, Movie.SortMoviesAlphabetically());
@@ -72,13 +73,16 @@ namespace LocalVideoPlayer
                         this.movies[j].Id = prevMedia.movies[i].Id;
                         this.movies[j].Date = prevMedia.movies[i].Date;
                         this.movies[j].Backdrop = prevMedia.movies[i].Backdrop;
-                        this.movies[i].RunningTime = prevMedia.movies[i].RunningTime;
-                        this.movies[i].Subtitles = prevMedia.movies[i].Subtitles;
-                        this.movies[i].SubtitleTrack = prevMedia.movies[i].SubtitleTrack;
+                        this.movies[j].RunningTime = prevMedia.movies[i].RunningTime;
+                        this.movies[j].Subtitles = prevMedia.movies[i].Subtitles;
+                        this.movies[j].SubtitleTrack = prevMedia.movies[i].SubtitleTrack;
+                    }
+                    else
+                    {
+                        continue;
                     }
                 }
             }
-
             for (int i = 0; i < prevMedia.TvShows.Length; i++)
             {
                 for (int l = 0; l < this.tvShows.Length; l++)
@@ -118,6 +122,10 @@ namespace LocalVideoPlayer
                             }
 
                         }
+                    }
+                    else
+                    {
+                        continue;
                     }
                 }
             }

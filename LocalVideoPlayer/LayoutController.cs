@@ -62,7 +62,13 @@ namespace LocalVideoPlayer
             BuildMainControlGrid();
             Cursor.Position = new Point(10, 10);
             MouseWorker.DoMouseClick();
-            currentControl = mainFormControlGrid[0][0];
+            if (mainFormControlGrid.Count != 0)
+            {
+                currentControl = mainFormControlGrid[0][0];
+            } else
+            {
+                currentControl = mainFormClose;
+            }
             ClearTvBoxBorder();
             ClearMovieBoxBorder();
             CenterMouseOverControl(currentControl);
@@ -441,7 +447,10 @@ namespace LocalVideoPlayer
 
             count = 0;
             controlIndex = 0;
-            rowIndex++;
+            if (tvShowCount != 0)
+            {
+                rowIndex++;
+            }
 
             for (int i = 0; i < movieCount; i++)
             {

@@ -117,6 +117,16 @@ namespace LocalVideoPlayer
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            bool getLastEpisodeList = true;
+            if (getLastEpisodeList)
+            {
+                for (int i = 0; i < media.TvShows.Length; i++)
+                {
+                    string lastEpisodeString = media.TvShows[i].LastEpisode == null ? "null" : media.TvShows[i].LastEpisode.Name + " (Season " + media.TvShows[i].CurrSeason + ")" + Environment.NewLine + media.TvShows[i].LastEpisode.Path;
+                    Log(media.TvShows[i].Name + " Last episode: " + lastEpisodeString);
+                }
+            }
+
             try
             {
                 if (media != null)
@@ -203,7 +213,7 @@ namespace LocalVideoPlayer
         #endregion
 
         #region Startup
-
+        
         private void InitializeGui()
         {
             mainFormMainPanel = new Panel();
@@ -218,6 +228,15 @@ namespace LocalVideoPlayer
             closeButton.Cursor = blueHandCursor;
             layoutController.mainFormClose = closeButton;
 
+            this.Controls.Add(mainFormMainPanel);
+            customScrollbar = CustomDialog.CreateScrollBar(mainFormMainPanel);
+            customScrollbar.Scroll += CustomScrollbar_Scroll;
+            this.Controls.Add(customScrollbar);
+            customScrollbar.BringToFront();
+            layoutController.mainScrollbar = customScrollbar;
+
+            List<Control> moviePanelList = new List<Control>();
+            List<Control> tvPanelList = new List<Control>();
             Panel currentPanel = null;
             int count = 0;
             int panelCount = 0;
@@ -226,7 +245,11 @@ namespace LocalVideoPlayer
 
             for (int i = 0; i < media.Movies.Length; i++)
             {
-                if (count == 6) count = 0;
+                if (count == 6)
+                {
+                    count = 0;
+                }
+
                 if (count == 0)
                 {
                     currentPanel = new Panel();
@@ -235,8 +258,7 @@ namespace LocalVideoPlayer
                     currentPanel.AutoSize = true;
                     currentPanel.Name = "movie" + panelCount;
                     panelCount++;
-                    mainFormMainPanel.Controls.Add(currentPanel);
-                    mainFormMainPanel.Controls.SetChildIndex(currentPanel, 0);
+                    moviePanelList.Add(currentPanel);
                 }
 
                 PictureBox movieBox = new PictureBox();
@@ -273,21 +295,17 @@ namespace LocalVideoPlayer
                 count++;
             }
 
-            movieLabel = new Label();
-            movieLabel.Text = "Movies";
-            movieLabel.Dock = DockStyle.Top;
-            movieLabel.Paint += HeaderLabel_Paint;
-            movieLabel.AutoSize = true;
-            movieLabel.Name = "movieLabel";
-            mainFormMainPanel.Controls.Add(movieLabel);
-
             currentPanel = null;
             count = 0;
             panelCount = 0;
 
             for (int i = 0; i < media.TvShows.Length; i++)
             {
-                if (count == 6) count = 0;
+                if (count == 6)
+                {
+                    count = 0;
+                }
+
                 if (count == 0)
                 {
                     currentPanel = new Panel();
@@ -296,8 +314,7 @@ namespace LocalVideoPlayer
                     currentPanel.AutoSize = true;
                     currentPanel.Name = "tv" + panelCount;
                     panelCount++;
-                    mainFormMainPanel.Controls.Add(currentPanel);
-                    mainFormMainPanel.Controls.SetChildIndex(currentPanel, 3);
+                    tvPanelList.Add(currentPanel);
                 }
 
                 PictureBox tvShowBox = new PictureBox();
@@ -335,6 +352,13 @@ namespace LocalVideoPlayer
                 count++;
             }
 
+            movieLabel = new Label();
+            movieLabel.Text = "Movies";
+            movieLabel.Dock = DockStyle.Top;
+            movieLabel.Paint += HeaderLabel_Paint;
+            movieLabel.AutoSize = true;
+            movieLabel.Name = "movieLabel";
+
             tvLabel = new Label();
             tvLabel.Text = "TV Shows";
             tvLabel.Dock = DockStyle.Top;
@@ -342,13 +366,12 @@ namespace LocalVideoPlayer
             tvLabel.AutoSize = true;
             tvLabel.Name = "tvLabel";
 
+            moviePanelList.Reverse();
+            mainFormMainPanel.Controls.AddRange(moviePanelList.ToArray());
+            mainFormMainPanel.Controls.Add(movieLabel);
+            tvPanelList.Reverse();
+            mainFormMainPanel.Controls.AddRange(tvPanelList.ToArray());
             mainFormMainPanel.Controls.Add(tvLabel);
-            this.Controls.Add(mainFormMainPanel);
-            customScrollbar = CustomDialog.CreateScrollBar(mainFormMainPanel);
-            customScrollbar.Scroll += CustomScrollbar_Scroll;
-            this.Controls.Add(customScrollbar);
-            customScrollbar.BringToFront();
-            layoutController.mainScrollbar = customScrollbar;
         }
 
         private bool CheckForUpdates()
@@ -1097,7 +1120,11 @@ namespace LocalVideoPlayer
                 throw new ArgumentNullException();
             }
 
+            bool ingestLastEpisodeList = false;
+            //To-do
+
             bool update = CheckForUpdates();
+            
             if (update)
             {
                 UpdateLoadingLabel(null);
@@ -1115,16 +1142,6 @@ namespace LocalVideoPlayer
             layoutController.Initialize();
             worker.InitializeSerialPort(layoutController);
             loadingCircle1.Dispose();
-
-            bool getLastEpisodeList = false;
-            if (getLastEpisodeList)
-            {
-                for (int i = 0; i < media.TvShows.Length; i++)
-                {
-                    string lastEpisodeString = media.TvShows[i].LastEpisode == null ? "null" : media.TvShows[i].LastEpisode.Name + " (Season " + media.TvShows[i].CurrSeason + ")" + Environment.NewLine + media.TvShows[i].LastEpisode.Path;
-                    Log(media.TvShows[i].Name + " Last episode: " + lastEpisodeString);
-                }
-            }
         }
 
         #endregion
