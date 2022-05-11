@@ -28,7 +28,7 @@ namespace LocalVideoPlayer
         private string serverIp = "192.168.0.174";
         private int serverPort = 3000;
         private bool hideCursor = bool.Parse(ConfigurationManager.AppSettings["hideCursor"]);
-        private bool enableSerialPort = bool.Parse(ConfigurationManager.AppSettings["serialPort"]);
+        private bool enableSerialPort = bool.Parse(ConfigurationManager.AppSettings["comPortEnabled"]);
         private int cursorCount = 0;
         private bool serverIsNotConnected = true;
         private bool workerThreadRunning = false;

@@ -174,7 +174,7 @@ namespace LocalVideoPlayer
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private RoundButton closeButton;
         private MRG.Controls.UI.LoadingCircle loadingCircle1;
-        private System.Windows.Forms.Label loadingLabel;
+        public System.Windows.Forms.Label loadingLabel;
     }
 }
 
