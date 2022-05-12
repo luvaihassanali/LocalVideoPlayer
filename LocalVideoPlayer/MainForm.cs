@@ -59,8 +59,8 @@ namespace LocalVideoPlayer
         private Label movieLabel;
         private Label tvLabel;
         private MouseWorker worker = null;
-        private System.Threading.Timer idleMainFormTimer = null;
         private Panel mainFormMainPanel = null;
+        private System.Threading.Timer idleMainFormTimer = null;
 
         public MainForm()
         {

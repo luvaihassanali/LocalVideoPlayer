@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -293,10 +294,20 @@ namespace LocalVideoPlayer
                     {
                         movie.Id = (int)movieObject["results"][0]["id"];
                     }
-                    //To-do: 404 not found
-                    string movieString = client.DownloadString(movieGet.Replace("{movie_id}", movie.Id.ToString()));
-                    movieObject = JObject.Parse(movieString);
 
+                    //404 not found
+                    string movieString = "";
+                    try
+                    {
+                        movieString = client.DownloadString(movieGet.Replace("{movie_id}", movie.Id.ToString()));
+                    }
+                    catch
+                    {
+                        CustomDialog.ShowMessage("Error", "No movie found for: " + movie.Name, mainForm.Width, mainForm.Height);
+                        Environment.Exit(1);
+                    }
+
+                    movieObject = JObject.Parse(movieString);
                     if (String.Compare(movie.Name.Replace(":", ""), ((string)movieObject["title"]).Replace(":", "").fixBrokenQuotes(), System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0)
                     {
                         movie.Backdrop = (string)movieObject["backdrop_path"];
@@ -409,7 +420,18 @@ namespace LocalVideoPlayer
                             tvShow.Id = (int)tvObject["results"][0]["id"];
                         }
 
-                        string tvString = client.DownloadString(tvGet.Replace("{tv_id}", tvShow.Id.ToString()));
+                        // 404
+                        string tvString = "";
+                        try
+                        {
+                            tvString = client.DownloadString(tvGet.Replace("{tv_id}", tvShow.Id.ToString()));
+                        }
+                        catch
+                        {
+                            CustomDialog.ShowMessage("Error", "No tv show found for: " + tvShow.Name, mainForm.Width, mainForm.Height);
+                            Environment.Exit(1);
+                        }
+
                         tvObject = JObject.Parse(tvString);
                         tvShow.Overview = (string)tvObject["overview"];
                         tvShow.Overview = tvShow.Overview.fixBrokenQuotes();
@@ -445,9 +467,31 @@ namespace LocalVideoPlayer
                         UpdateLoadingLabel("Processing: " + tvShow.Name + " Season " + seasonLabel);
 
                         string seasonApiCall = tvSeasonGet.Replace("{tv_id}", tvShow.Id.ToString()).Replace("{season_number}", seasonIndex.ToString());
-                        string seasonString = client.DownloadString(seasonApiCall);
-                        JObject seasonObject = JObject.Parse(seasonString);
 
+                        // Some shows first season index = 1
+                        string tvIdExceptionsStr = ConfigurationManager.AppSettings["tvIdExceptions"];
+                        string[] tvIdExceptionsStrArr = tvIdExceptionsStr.Split(';');
+                        int[] tvIdExceptions = new int[tvIdExceptionsStrArr.Length];
+                        for(int idIdx = 0; idIdx < tvIdExceptionsStrArr.Length; idIdx++)
+                        {
+                            tvIdExceptions[idIdx] = int.Parse(tvIdExceptionsStrArr[idIdx]);
+                        }
+                        if (tvIdExceptions.Contains(tvShow.Id))
+                        {
+                            seasonApiCall = seasonApiCall.Replace("0?", "1?");
+                        }
+                        string seasonString = "";
+                        try
+                        {
+                            seasonString = client.DownloadString(seasonApiCall);
+                        }
+                        catch
+                        {
+                            CustomDialog.ShowMessage("Error", "Season first index error: " + tvShow.Name + ", ID = " + tvShow.Id, mainForm.Width, mainForm.Height);
+                            Environment.Exit(1);
+                        }
+
+                        JObject seasonObject = JObject.Parse(seasonString);
                         if (((string)seasonObject["name"]).Contains("Specials"))
                         {
                             seasonIndex++;
