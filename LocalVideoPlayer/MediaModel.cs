@@ -90,6 +90,7 @@ namespace LocalVideoPlayer
                     if (String.Compare(this.tvShows[l].Name, prevMedia.tvShows[i].Name, System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0)
                     {
                         this.tvShows[l].Name = prevMedia.tvShows[i].Name;
+                        this.tvShows[l].Cartoon = prevMedia.tvShows[i].Cartoon;
                         this.tvShows[l].Id = prevMedia.tvShows[i].Id;
                         this.tvShows[l].Overview = prevMedia.tvShows[i].Overview;
                         this.tvShows[l].Poster = prevMedia.tvShows[i].Poster;
@@ -236,6 +237,7 @@ namespace LocalVideoPlayer
 
     public class TvShow
     {
+        private bool cartoon;
         private int id;
         private string name;
         private string overview;
@@ -252,6 +254,13 @@ namespace LocalVideoPlayer
             name = n;
             currSeason = 1;
             lastWatched = null;
+            cartoon = false;
+        }
+
+        public bool Cartoon
+        {
+            get => cartoon;
+            set => cartoon = value;
         }
 
         public int Id

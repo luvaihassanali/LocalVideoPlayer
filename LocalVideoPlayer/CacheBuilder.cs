@@ -438,6 +438,14 @@ namespace LocalVideoPlayer
                         tvShow.Poster = (string)tvObject["poster_path"];
                         tvShow.Backdrop = (string)tvObject["backdrop_path"];
                         tvShow.RunningTime = (int)tvObject["episode_run_time"][0];
+                        var genres = tvObject["genres"];
+                        foreach(var genre in genres)
+                        {
+                            if ((int)genre["id"] == 16)
+                            {
+                                tvShow.Cartoon = true;
+                            }
+                        }
 
                         DateTime tempDate;
                         tvShow.Date = DateTime.TryParse((string)tvObject["first_air_date"], out tempDate) ? tempDate : DateTime.MinValue.AddHours(9);

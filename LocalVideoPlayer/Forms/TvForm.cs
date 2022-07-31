@@ -69,6 +69,41 @@ namespace LocalVideoPlayer
             return null;
         }
 
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Up)
+            {
+                MainForm.layoutController.MovePointPosition(MainForm.layoutController.up);
+                return true;
+            }
+            if (keyData == Keys.Down)
+            {
+                MainForm.layoutController.MovePointPosition(MainForm.layoutController.down);
+                return true;
+            }
+            if (keyData == Keys.Left)
+            {
+                MainForm.layoutController.MovePointPosition(MainForm.layoutController.left);
+                return true;
+            }
+            if (keyData == Keys.Right)
+            {
+                MainForm.layoutController.MovePointPosition(MainForm.layoutController.right);
+                return true;
+            }
+            if (keyData == Keys.Enter)
+            {
+                MouseWorker.DoMouseClick();
+                return true;
+            }
+            if (keyData == Keys.Escape)
+            {
+                MainForm.layoutController.CloseCurrentForm();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
         #region Tv Click Functions
 
         static public void TvShowEpisodeBox_Click(object sender, EventArgs e)
@@ -1141,7 +1176,7 @@ namespace LocalVideoPlayer
             movieForm.Controls.Add(overviewLabel);
             movieForm.Controls.Add(headerLabel);
             movieForm.Controls.Add(movieBackdropBox);
-
+            
             movieForm.Deactivate += (s, ev) =>
             {
                 if (PlayerForm.isPlaying) return;

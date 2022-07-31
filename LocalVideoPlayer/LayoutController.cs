@@ -27,7 +27,7 @@ namespace LocalVideoPlayer
         public Control playButton = null;
         public Panel seasonFormMainPanel = null;
         public int seasonFormIndex = 0;
-
+        public int numCartoons = 0;
         private int movieCount;
         private int tvShowCount;
         private List<int[]> mainFormGrid = new List<int[]>();
@@ -53,12 +53,12 @@ namespace LocalVideoPlayer
         {
             movieCount = mediaCount.m;
             tvShowCount = mediaCount.t;
-            BuildMainGrid(false);
-            BuildMainGrid(true);
         }
 
         public void Initialize()
         {
+            BuildMainGrid(false);
+            BuildMainGrid(true);
             BuildMainControlGrid();
             Cursor.Position = new Point(10, 10);
             MouseWorker.DoMouseClick();
@@ -339,6 +339,7 @@ namespace LocalVideoPlayer
                 AdjustScrollBar();
             }));
             CenterMouseOverControl(currentControl);
+            //PrintGrid(); PrintControlGrid();
         }
 
         #endregion
@@ -348,6 +349,15 @@ namespace LocalVideoPlayer
         public void MoveMainGridPoint((int x, int y) movePoint)
         {
             (int x, int y) newPoint = (currentPoint.x + movePoint.x, currentPoint.y + movePoint.y);
+            if (newPoint.x == -1)
+            {
+                newPoint.x = mainFormGrid.Count - 1;
+            }
+            if (newPoint.x == mainFormGrid.Count)
+            {
+                newPoint.x = 0;
+            }
+
             if (OutOfMainGridRange(newPoint)) return;
 
             if (mainFormControlGrid[newPoint.x][newPoint.y] == null)
@@ -375,6 +385,7 @@ namespace LocalVideoPlayer
                 AdjustScrollBar();
             }));
             CenterMouseOverControl(currentControl);
+            //PrintGrid(); PrintControlGrid();
         }
 
         public (int x, int y) NextMainGridPoint((int x, int y) currentPoint, (int x, int y) movePoint)
@@ -427,6 +438,11 @@ namespace LocalVideoPlayer
 
             for (int i = 0; i < tvShowCount; i++)
             {
+                if (i == tvShowCount - numCartoons)
+                {
+                    count = 6;
+                }
+
                 if (count == 6)
                 {
                     rowIndex++;
@@ -482,6 +498,10 @@ namespace LocalVideoPlayer
 
             for (int i = 0; i < currentCount; i++)
             {
+                if (!movie && i == currentCount - numCartoons)
+                {
+                    count = 0;
+                }
                 if (count == 6) count = 0;
                 if (count == 0)
                 {
@@ -554,7 +574,7 @@ namespace LocalVideoPlayer
                 AdjustScrollBar();
             }));
             CenterMouseOverControl(currentControl);
-            PrintGrid(); PrintControlGrid();
+            //PrintGrid(); PrintControlGrid();
         }
 
         public (int x, int y) NextSeasonGridPoint((int x, int y) currentPoint, (int x, int y) movePoint)
@@ -659,7 +679,7 @@ namespace LocalVideoPlayer
 
         private void PrintGrid()
         {
-            foreach (int[] row in seasonFormGrid)
+            foreach (int[] row in mainFormGrid)
             {
                 Console.Write("[ ");
                 for (int i = 0; i < row.Length; i++)
@@ -677,7 +697,7 @@ namespace LocalVideoPlayer
 
         private void PrintControlGrid()
         {
-            foreach (Control[] row in seasonFormControlGrid)
+            foreach (Control[] row in mainFormControlGrid)
             {
                 Console.Write("[ ");
                 for (int i = 0; i < row.Length; i++)

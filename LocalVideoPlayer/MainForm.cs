@@ -57,6 +57,7 @@ namespace LocalVideoPlayer
         private bool mouseMoverClientKill = false;
         private CustomScrollbar customScrollbar = null;
         private Label movieLabel;
+        private Label cartoonsLabel;
         private Label tvLabel;
         private MouseWorker worker = null;
         private Panel mainFormMainPanel = null;
@@ -183,16 +184,53 @@ namespace LocalVideoPlayer
         private void HeaderLabel_Paint(object sender, PaintEventArgs e)
         {
             float fontSize = GetHeaderFontSize(e.Graphics, this.Bounds.Size, movieLabel.Font, movieLabel.Text);
+            float halfFontSize = fontSize / 2;
             Font f = new Font("Arial", fontSize, FontStyle.Bold);
+            Font halfF = new Font("Arial", halfFontSize, FontStyle.Bold);
             movieLabel.Font = f;
             tvLabel.Font = f;
+            cartoonsLabel.Font = halfF;
         }
-
+        
         public static float GetHeaderFontSize(Graphics graphics, Size size, Font font, string str)
         {
             SizeF stringSize = graphics.MeasureString(str, font);
             float ratio = (size.Height / stringSize.Height) / 10;
             return font.Size * ratio;
+        }
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Up)
+            {
+                layoutController.MovePointPosition(layoutController.up);
+                return true;
+            }
+            if (keyData == Keys.Down)
+            {
+                layoutController.MovePointPosition(layoutController.down);
+                return true;
+            }
+            if (keyData == Keys.Left)
+            {
+                layoutController.MovePointPosition(layoutController.left);
+                return true;
+            }
+            if (keyData == Keys.Right)
+            {
+                layoutController.MovePointPosition(layoutController.right);
+                return true;
+            }
+            if (keyData == Keys.Enter)
+            {
+                MouseWorker.DoMouseClick();
+                return true;
+            }
+            if (keyData == Keys.Escape)
+            {
+                layoutController.CloseCurrentForm();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
         }
 
         public static void Log(string message)
@@ -243,7 +281,6 @@ namespace LocalVideoPlayer
             layoutController.mainScrollbar = customScrollbar;
 
             List<Control> moviePanelList = new List<Control>();
-            List<Control> tvPanelList = new List<Control>();
             Panel currentPanel = null;
             int count = 0;
             int panelCount = 0;
@@ -302,12 +339,64 @@ namespace LocalVideoPlayer
                 count++;
             }
 
-            currentPanel = null;
-            count = 0;
-            panelCount = 0;
+            List<Control> tvPanelList = CreateTvBoxPanels(false);
+            List<Control> cartoolPanelList = CreateTvBoxPanels(true);
+
+            movieLabel = new Label();
+            movieLabel.Text = "Movies";
+            movieLabel.Dock = DockStyle.Top;
+            movieLabel.Paint += HeaderLabel_Paint;
+            movieLabel.AutoSize = true;
+            movieLabel.Name = "movieLabel";
+
+            tvLabel = new Label();
+            tvLabel.Text = "TV Shows";
+            tvLabel.Dock = DockStyle.Top;
+            tvLabel.Paint += HeaderLabel_Paint;
+            tvLabel.AutoSize = true;
+            tvLabel.Name = "tvLabel";
+
+            cartoonsLabel = new Label();
+            cartoonsLabel.Text = " Cartoons";
+            cartoonsLabel.Dock = DockStyle.Top;
+            cartoonsLabel.Paint += HeaderLabel_Paint;
+            cartoonsLabel.AutoSize = true;
+            cartoonsLabel.Name = "cartoonsLabel";
+
+            moviePanelList.Reverse();
+            mainFormMainPanel.Controls.AddRange(moviePanelList.ToArray());
+            mainFormMainPanel.Controls.Add(movieLabel);
+            cartoolPanelList.Reverse();
+            mainFormMainPanel.Controls.AddRange(cartoolPanelList.ToArray());
+            mainFormMainPanel.Controls.Add(cartoonsLabel);
+            tvPanelList.Reverse();
+            mainFormMainPanel.Controls.AddRange(tvPanelList.ToArray());
+            mainFormMainPanel.Controls.Add(tvLabel);
+        }
+
+        private List<Control> CreateTvBoxPanels(bool cartoons)
+        {
+            List<Control> res = new List<Control>();
+            Panel currentPanel = null;
+            int count = 0;
+            int panelCount = 0;
+            int widthValue = (int)(mainFormMainPanel.Width / 6.12);
+            int heightValue = (int)(widthValue * 1.5);
 
             for (int i = 0; i < media.TvShows.Length; i++)
             {
+                if (cartoons)
+                {
+                    if (!media.TvShows[i].Cartoon) continue;
+                } else
+                {
+                    if (media.TvShows[i].Cartoon)
+                    {
+                        layoutController.numCartoons++;
+                        continue;
+                    }
+                }
+
                 if (count == 6)
                 {
                     count = 0;
@@ -321,7 +410,7 @@ namespace LocalVideoPlayer
                     currentPanel.AutoSize = true;
                     currentPanel.Name = "tv" + panelCount;
                     panelCount++;
-                    tvPanelList.Add(currentPanel);
+                    res.Add(currentPanel);
                 }
 
                 PictureBox tvShowBox = new PictureBox();
@@ -358,29 +447,8 @@ namespace LocalVideoPlayer
                 layoutController.tvBoxes.Add(tvShowBox);
                 count++;
             }
-
-            movieLabel = new Label();
-            movieLabel.Text = "Movies";
-            movieLabel.Dock = DockStyle.Top;
-            movieLabel.Paint += HeaderLabel_Paint;
-            movieLabel.AutoSize = true;
-            movieLabel.Name = "movieLabel";
-
-            tvLabel = new Label();
-            tvLabel.Text = "TV Shows";
-            tvLabel.Dock = DockStyle.Top;
-            tvLabel.Paint += HeaderLabel_Paint;
-            tvLabel.AutoSize = true;
-            tvLabel.Name = "tvLabel";
-
-            moviePanelList.Reverse();
-            mainFormMainPanel.Controls.AddRange(moviePanelList.ToArray());
-            mainFormMainPanel.Controls.Add(movieLabel);
-            tvPanelList.Reverse();
-            mainFormMainPanel.Controls.AddRange(tvPanelList.ToArray());
-            mainFormMainPanel.Controls.Add(tvLabel);
+            return res;
         }
-
         private bool CheckForUpdates()
         {
             MediaModel prevMedia = null;

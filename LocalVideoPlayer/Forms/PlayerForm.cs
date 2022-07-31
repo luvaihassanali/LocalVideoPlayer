@@ -211,7 +211,6 @@ namespace LocalVideoPlayer
 
             mediaPlayer.Dispose();
             libVlc.Dispose();
-            MainForm.Log("Player form objects dispsed");
         }
 
         private void CloseButton_Click(object sender, EventArgs e)
