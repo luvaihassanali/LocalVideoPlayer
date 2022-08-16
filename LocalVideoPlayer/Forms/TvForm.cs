@@ -472,7 +472,6 @@ namespace LocalVideoPlayer
             else
             {
                 episodePanelList = CreateEpisodePanels(tvShow);
-                //MainForm.layout.tvFormControlList.AddRange(episodePanelList);
             }
 
             if (episodePanelList != null)
@@ -1193,5 +1192,47 @@ namespace LocalVideoPlayer
         }
 
         #endregion
+
+        internal static void PlayRandomCartoon()
+        {
+            PlayerForm.isPlaying = true;
+            for (int i = 0; i < MainForm.cartoonLimit; i++)
+            {
+
+                Episode e = GetRandomEpisode();
+                MainForm.cartoonShuffleList.Add(e);
+            }
+
+            Episode rndEpisode = MainForm.cartoonShuffleList[MainForm.cartoonIndex];
+            string path = rndEpisode.Path;
+            string[] pathSplit = path.Split('\\');
+            string episodeName;
+
+            if (pathSplit[pathSplit.Length - 1].Contains('%'))
+            {
+                episodeName = pathSplit[pathSplit.Length - 1].Split('%')[1];
+                episodeName = episodeName.Split('.')[0].Trim();
+            }
+            else
+            {
+                episodeName = pathSplit[pathSplit.Length - 1].Split('.')[0].Trim();
+            }
+
+            string showName = pathSplit[3].Split('%')[0].Trim();
+            PlayerForm.LaunchVlc(showName, episodeName, path, null);
+        }
+
+        internal static Random rnd = new Random();
+        internal static Episode GetRandomEpisode()
+        {
+            Episode rndEpisode;
+            int rndVal = rnd.Next(MainForm.cartoons.Count);
+            TvShow rndShow = MainForm.cartoons[rndVal];
+            rndVal = rnd.Next(rndShow.Seasons.Length);
+            Season rndSeason = rndShow.Seasons[rndVal];
+            rndVal = rnd.Next(rndSeason.Episodes.Length);
+            rndEpisode = rndSeason.Episodes[rndVal];
+            return rndEpisode;
+        }
     }
 }

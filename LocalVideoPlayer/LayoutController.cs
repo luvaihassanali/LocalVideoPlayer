@@ -98,6 +98,7 @@ namespace LocalVideoPlayer
 
         public void Select(string controlName)
         {
+            if (MainForm.cartoonShuffle) return;
             if (onMainForm)
             {
                 onMainForm = false;
@@ -175,85 +176,92 @@ namespace LocalVideoPlayer
 
         public void CloseCurrentForm()
         {
-            if (onMainForm)
+            try
             {
-                mainFormMainPanel.Invoke(new MethodInvoker(delegate
+                if (onMainForm)
                 {
-                    mainFormMainPanel.AutoScrollPosition = new Point(0, 0);
-                    AdjustScrollBar();
-                    mainFormClose.Visible = true;
-                }));
+                    mainFormMainPanel.Invoke(new MethodInvoker(delegate
+                    {
+                        mainFormMainPanel.AutoScrollPosition = new Point(0, 0);
+                        AdjustScrollBar();
+                        mainFormClose.Visible = true;
+                    }));
 
-                CenterMouseOverControl(mainFormClose);
-                MouseWorker.DoMouseClick();
-            }
+                    CenterMouseOverControl(mainFormClose);
+                    MouseWorker.DoMouseClick();
+                }
 
-            if (onPlayerForm)
-            {
-                onPlayerForm = false;
-                CenterMouseOverControl(playerFormClose);
-                MouseWorker.DoMouseClick();
-                System.Threading.Thread.Sleep(2000);
+                if (onPlayerForm)
+                {
+                    onPlayerForm = false;
+                    CenterMouseOverControl(playerFormClose);
+                    MouseWorker.DoMouseClick();
+                    System.Threading.Thread.Sleep(2000);
+
+                    if (onMovieForm)
+                    {
+                        onMovieForm = false;
+                        onMainForm = true;
+                        currentPoint = returnPointA;
+                        currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
+                        CenterMouseOverControl(currentControl);
+                    }
+                    else if (onTvForm)
+                    {
+                        currentPoint = returnPointB;
+                        currentControl = tvFormControlList[currentPoint.x];
+                        CenterMouseOverControl(currentControl);
+                    }
+                    return;
+                }
+
+                if (onSeasonForm)
+                {
+                    MouseWorker.DoMouseClick();
+                    onSeasonForm = false;
+                    seasonFormControlList.Clear();
+                    seasonFormGrid.Clear();
+                    seasonFormControlGrid.Clear();
+                    currentPoint = returnPointB;
+                    currentControl = tvFormControlList[currentPoint.x];
+                    CenterMouseOverControl(currentControl);
+                    return;
+                }
+
+                if (onTvForm)
+                {
+                    tvFormControlList.Clear();
+                    tvFormControlIndex = 0;
+                    onTvForm = false;
+                    onMainForm = true;
+
+                    tvFormMainPanel.Invoke(new MethodInvoker(delegate
+                    {
+                        tvFormMainPanel.AutoScrollPosition = new Point(0, 0);
+                        AdjustScrollBar();
+                        tvFormClose.Visible = true;
+                    }));
+
+                    CenterMouseOverControl(tvFormClose);
+                    MouseWorker.DoMouseClick();
+                    currentPoint = returnPointA;
+                    currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
+                    CenterMouseOverControl(currentControl);
+                }
 
                 if (onMovieForm)
                 {
                     onMovieForm = false;
                     onMainForm = true;
-                    currentPoint = returnPointA;
+                    CenterMouseOverControl(movieFormClose);
+                    MouseWorker.DoMouseClick();
                     currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
                     CenterMouseOverControl(currentControl);
                 }
-                else if (onTvForm)
-                {
-                    currentPoint = returnPointB;
-                    currentControl = tvFormControlList[currentPoint.x];
-                    CenterMouseOverControl(currentControl);
-                }
-                return;
             }
-
-            if (onSeasonForm)
+            catch (Exception ex)
             {
-                MouseWorker.DoMouseClick();
-                onSeasonForm = false;
-                seasonFormControlList.Clear();
-                seasonFormGrid.Clear();
-                seasonFormControlGrid.Clear();
-                currentPoint = returnPointB;
-                currentControl = tvFormControlList[currentPoint.x];
-                CenterMouseOverControl(currentControl);
-                return;
-            }
-
-            if (onTvForm)
-            {
-                tvFormControlList.Clear();
-                tvFormControlIndex = 0;
-                onTvForm = false;
-                onMainForm = true;
-
-                tvFormMainPanel.Invoke(new MethodInvoker(delegate
-                {
-                    tvFormMainPanel.AutoScrollPosition = new Point(0, 0);
-                    AdjustScrollBar();
-                    tvFormClose.Visible = true;
-                }));
-
-                CenterMouseOverControl(tvFormClose);
-                MouseWorker.DoMouseClick();
-                currentPoint = returnPointA;
-                currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
-                CenterMouseOverControl(currentControl);
-            }
-
-            if (onMovieForm)
-            {
-                onMovieForm = false;
-                onMainForm = true;
-                CenterMouseOverControl(movieFormClose);
-                MouseWorker.DoMouseClick();
-                currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
-                CenterMouseOverControl(currentControl);
+                MainForm.Log("CloseCurrentForm: " + ex.Message);
             }
         }
 

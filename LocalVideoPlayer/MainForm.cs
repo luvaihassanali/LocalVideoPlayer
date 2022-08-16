@@ -51,6 +51,11 @@ namespace LocalVideoPlayer
         static public MediaModel media;
         static public Point mainFormLoc;
         static public Size mainFormSize;
+        static public bool cartoonShuffle = false;
+        static public int cartoonIndex = 0;
+        static public int cartoonLimit = 5;
+        static public List<TvShow> cartoons = new List<TvShow>();
+        static public List<Episode> cartoonShuffleList = new List<Episode>();
         static private bool debugLogEnabled;
         static private string debugLogPath;
 
@@ -274,11 +279,6 @@ namespace LocalVideoPlayer
             layoutController.mainFormClose = closeButton;
 
             this.Controls.Add(mainFormMainPanel);
-            customScrollbar = CustomDialog.CreateScrollBar(mainFormMainPanel);
-            customScrollbar.Scroll += CustomScrollbar_Scroll;
-            this.Controls.Add(customScrollbar);
-            customScrollbar.BringToFront();
-            layoutController.mainScrollbar = customScrollbar;
 
             List<Control> moviePanelList = new List<Control>();
             Panel currentPanel = null;
@@ -362,6 +362,8 @@ namespace LocalVideoPlayer
             cartoonsLabel.Paint += HeaderLabel_Paint;
             cartoonsLabel.AutoSize = true;
             cartoonsLabel.Name = "cartoonsLabel";
+            cartoonsLabel.Cursor = blueHandCursor;
+            cartoonsLabel.Click += CartoonsLabel_Click;
 
             moviePanelList.Reverse();
             mainFormMainPanel.Controls.AddRange(moviePanelList.ToArray());
@@ -372,6 +374,12 @@ namespace LocalVideoPlayer
             tvPanelList.Reverse();
             mainFormMainPanel.Controls.AddRange(tvPanelList.ToArray());
             mainFormMainPanel.Controls.Add(tvLabel);
+
+            customScrollbar = CustomDialog.CreateScrollBar(mainFormMainPanel);
+            customScrollbar.Scroll += CustomScrollbar_Scroll;
+            this.Controls.Add(customScrollbar);
+            customScrollbar.BringToFront();
+            layoutController.mainScrollbar = customScrollbar;
         }
 
         private List<Control> CreateTvBoxPanels(bool cartoons)
@@ -582,6 +590,10 @@ namespace LocalVideoPlayer
             InitializeGui();
             layoutController.Initialize();
             worker.InitializeSerialPort(layoutController);
+            foreach (TvShow show in media.TvShows)
+            {
+                if (show.Cartoon) cartoons.Add(show);
+            }
             loadingCircle1.Dispose();
         }
 
@@ -616,6 +628,16 @@ namespace LocalVideoPlayer
         }
 
         #endregion
+
+        private void CartoonsLabel_Click(object sender, EventArgs e)
+        {
+            cartoonShuffle = true;
+            cartoonIndex = 0;
+            cartoonShuffleList.Clear();
+            TvForm.PlayRandomCartoon();
+            cartoonShuffle = false;
+        }
+
     }
 
     public class RoundButton : Button

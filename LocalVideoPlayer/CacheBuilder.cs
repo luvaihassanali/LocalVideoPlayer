@@ -441,7 +441,7 @@ namespace LocalVideoPlayer
                         var genres = tvObject["genres"];
                         foreach(var genre in genres)
                         {
-                            if ((int)genre["id"] == 16)
+                            if ((int)genre["id"] == 16 && !(tvShow.Name == "Family Guy" || tvShow.Name == "The Simpsons")) 
                             {
                                 tvShow.Cartoon = true;
                             }
