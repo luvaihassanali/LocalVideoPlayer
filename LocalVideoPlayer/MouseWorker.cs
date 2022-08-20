@@ -27,8 +27,8 @@ namespace LocalVideoPlayer
 
         private string serverIp = "192.168.0.174";
         private int serverPort = 3000;
-        private bool hideCursor = true;
-
+        private bool hideCursor = bool.Parse(ConfigurationManager.AppSettings["hideCursor"]);
+        private bool enableSerialPort = bool.Parse(ConfigurationManager.AppSettings["comPortEnabled"]);
         private int cursorCount = 0;
         private bool serverIsNotConnected = true;
         private bool workerThreadRunning = false;
@@ -66,15 +66,17 @@ namespace LocalVideoPlayer
             serialPort.StopBits = StopBits.One;
             serialPort.Handshake = Handshake.None;
             serialPort.DataReceived += SerialPort_DataReceived;
-
-            try
+            if (enableSerialPort)
             {
-                serialPort.Open();
-                MainForm.Log("Connected to serial port");
-            }
-            catch
-            {
-                MainForm.Log("No device connected to serial port");
+                try
+                {
+                    serialPort.Open();
+                    MainForm.Log("Connected to serial port");
+                }
+                catch
+                {
+                    MainForm.Log("No device connected to serial port");
+                }
             }
         }
 
@@ -155,18 +157,21 @@ namespace LocalVideoPlayer
 
         private void CheckSerialConnection()
         {
-            if (serialPort != null)
+            if (enableSerialPort)
             {
-                if (!serialPort.IsOpen)
+                if (serialPort != null)
                 {
-                    try
+                    if (!serialPort.IsOpen)
                     {
-                        serialPort.Open();
-                        MainForm.Log("Reconnected to serial port");
-                    }
-                    catch
-                    {
-                        Log("Serial port disconnected");
+                        try
+                        {
+                            serialPort.Open();
+                            MainForm.Log("Reconnected to serial port");
+                        }
+                        catch
+                        {
+                            Log("Serial port disconnected");
+                        }
                     }
                 }
             }

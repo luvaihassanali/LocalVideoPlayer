@@ -27,7 +27,7 @@ namespace LocalVideoPlayer
         public Control playButton = null;
         public Panel seasonFormMainPanel = null;
         public int seasonFormIndex = 0;
-
+        public int numCartoons = 0;
         private int movieCount;
         private int tvShowCount;
         private List<int[]> mainFormGrid = new List<int[]>();
@@ -53,16 +53,22 @@ namespace LocalVideoPlayer
         {
             movieCount = mediaCount.m;
             tvShowCount = mediaCount.t;
-            BuildMainGrid(false);
-            BuildMainGrid(true);
         }
 
         public void Initialize()
         {
+            BuildMainGrid(false);
+            BuildMainGrid(true);
             BuildMainControlGrid();
             Cursor.Position = new Point(10, 10);
             MouseWorker.DoMouseClick();
-            currentControl = mainFormControlGrid[0][0];
+            if (mainFormControlGrid.Count != 0)
+            {
+                currentControl = mainFormControlGrid[0][0];
+            } else
+            {
+                currentControl = mainFormClose;
+            }
             ClearTvBoxBorder();
             ClearMovieBoxBorder();
             CenterMouseOverControl(currentControl);
@@ -92,6 +98,7 @@ namespace LocalVideoPlayer
 
         public void Select(string controlName)
         {
+            if (MainForm.cartoonShuffle) return;
             if (onMainForm)
             {
                 onMainForm = false;
@@ -169,85 +176,92 @@ namespace LocalVideoPlayer
 
         public void CloseCurrentForm()
         {
-            if (onMainForm)
+            try
             {
-                mainFormMainPanel.Invoke(new MethodInvoker(delegate
+                if (onMainForm)
                 {
-                    mainFormMainPanel.AutoScrollPosition = new Point(0, 0);
-                    AdjustScrollBar();
-                    mainFormClose.Visible = true;
-                }));
+                    mainFormMainPanel.Invoke(new MethodInvoker(delegate
+                    {
+                        mainFormMainPanel.AutoScrollPosition = new Point(0, 0);
+                        AdjustScrollBar();
+                        mainFormClose.Visible = true;
+                    }));
 
-                CenterMouseOverControl(mainFormClose);
-                MouseWorker.DoMouseClick();
-            }
+                    CenterMouseOverControl(mainFormClose);
+                    MouseWorker.DoMouseClick();
+                }
 
-            if (onPlayerForm)
-            {
-                onPlayerForm = false;
-                CenterMouseOverControl(playerFormClose);
-                MouseWorker.DoMouseClick();
-                System.Threading.Thread.Sleep(2000);
+                if (onPlayerForm)
+                {
+                    onPlayerForm = false;
+                    CenterMouseOverControl(playerFormClose);
+                    MouseWorker.DoMouseClick();
+                    System.Threading.Thread.Sleep(2000);
+
+                    if (onMovieForm)
+                    {
+                        onMovieForm = false;
+                        onMainForm = true;
+                        currentPoint = returnPointA;
+                        currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
+                        CenterMouseOverControl(currentControl);
+                    }
+                    else if (onTvForm)
+                    {
+                        currentPoint = returnPointB;
+                        currentControl = tvFormControlList[currentPoint.x];
+                        CenterMouseOverControl(currentControl);
+                    }
+                    return;
+                }
+
+                if (onSeasonForm)
+                {
+                    MouseWorker.DoMouseClick();
+                    onSeasonForm = false;
+                    seasonFormControlList.Clear();
+                    seasonFormGrid.Clear();
+                    seasonFormControlGrid.Clear();
+                    currentPoint = returnPointB;
+                    currentControl = tvFormControlList[currentPoint.x];
+                    CenterMouseOverControl(currentControl);
+                    return;
+                }
+
+                if (onTvForm)
+                {
+                    tvFormControlList.Clear();
+                    tvFormControlIndex = 0;
+                    onTvForm = false;
+                    onMainForm = true;
+
+                    tvFormMainPanel.Invoke(new MethodInvoker(delegate
+                    {
+                        tvFormMainPanel.AutoScrollPosition = new Point(0, 0);
+                        AdjustScrollBar();
+                        tvFormClose.Visible = true;
+                    }));
+
+                    CenterMouseOverControl(tvFormClose);
+                    MouseWorker.DoMouseClick();
+                    currentPoint = returnPointA;
+                    currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
+                    CenterMouseOverControl(currentControl);
+                }
 
                 if (onMovieForm)
                 {
                     onMovieForm = false;
                     onMainForm = true;
-                    currentPoint = returnPointA;
+                    CenterMouseOverControl(movieFormClose);
+                    MouseWorker.DoMouseClick();
                     currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
                     CenterMouseOverControl(currentControl);
                 }
-                else if (onTvForm)
-                {
-                    currentPoint = returnPointB;
-                    currentControl = tvFormControlList[currentPoint.x];
-                    CenterMouseOverControl(currentControl);
-                }
-                return;
             }
-
-            if (onSeasonForm)
+            catch (Exception ex)
             {
-                MouseWorker.DoMouseClick();
-                onSeasonForm = false;
-                seasonFormControlList.Clear();
-                seasonFormGrid.Clear();
-                seasonFormControlGrid.Clear();
-                currentPoint = returnPointB;
-                currentControl = tvFormControlList[currentPoint.x];
-                CenterMouseOverControl(currentControl);
-                return;
-            }
-
-            if (onTvForm)
-            {
-                tvFormControlList.Clear();
-                tvFormControlIndex = 0;
-                onTvForm = false;
-                onMainForm = true;
-
-                tvFormMainPanel.Invoke(new MethodInvoker(delegate
-                {
-                    tvFormMainPanel.AutoScrollPosition = new Point(0, 0);
-                    AdjustScrollBar();
-                    tvFormClose.Visible = true;
-                }));
-
-                CenterMouseOverControl(tvFormClose);
-                MouseWorker.DoMouseClick();
-                currentPoint = returnPointA;
-                currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
-                CenterMouseOverControl(currentControl);
-            }
-
-            if (onMovieForm)
-            {
-                onMovieForm = false;
-                onMainForm = true;
-                CenterMouseOverControl(movieFormClose);
-                MouseWorker.DoMouseClick();
-                currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
-                CenterMouseOverControl(currentControl);
+                MainForm.Log("CloseCurrentForm: " + ex.Message);
             }
         }
 
@@ -333,6 +347,7 @@ namespace LocalVideoPlayer
                 AdjustScrollBar();
             }));
             CenterMouseOverControl(currentControl);
+            //PrintGrid(); PrintControlGrid();
         }
 
         #endregion
@@ -342,6 +357,15 @@ namespace LocalVideoPlayer
         public void MoveMainGridPoint((int x, int y) movePoint)
         {
             (int x, int y) newPoint = (currentPoint.x + movePoint.x, currentPoint.y + movePoint.y);
+            if (newPoint.x == -1)
+            {
+                newPoint.x = mainFormGrid.Count - 1;
+            }
+            if (newPoint.x == mainFormGrid.Count)
+            {
+                newPoint.x = 0;
+            }
+
             if (OutOfMainGridRange(newPoint)) return;
 
             if (mainFormControlGrid[newPoint.x][newPoint.y] == null)
@@ -369,6 +393,7 @@ namespace LocalVideoPlayer
                 AdjustScrollBar();
             }));
             CenterMouseOverControl(currentControl);
+            //PrintGrid(); PrintControlGrid();
         }
 
         public (int x, int y) NextMainGridPoint((int x, int y) currentPoint, (int x, int y) movePoint)
@@ -421,6 +446,11 @@ namespace LocalVideoPlayer
 
             for (int i = 0; i < tvShowCount; i++)
             {
+                if (i == tvShowCount - numCartoons)
+                {
+                    count = 6;
+                }
+
                 if (count == 6)
                 {
                     rowIndex++;
@@ -441,7 +471,10 @@ namespace LocalVideoPlayer
 
             count = 0;
             controlIndex = 0;
-            rowIndex++;
+            if (tvShowCount != 0)
+            {
+                rowIndex++;
+            }
 
             for (int i = 0; i < movieCount; i++)
             {
@@ -473,6 +506,10 @@ namespace LocalVideoPlayer
 
             for (int i = 0; i < currentCount; i++)
             {
+                if (!movie && i == currentCount - numCartoons)
+                {
+                    count = 0;
+                }
                 if (count == 6) count = 0;
                 if (count == 0)
                 {
@@ -545,7 +582,7 @@ namespace LocalVideoPlayer
                 AdjustScrollBar();
             }));
             CenterMouseOverControl(currentControl);
-            PrintGrid(); PrintControlGrid();
+            //PrintGrid(); PrintControlGrid();
         }
 
         public (int x, int y) NextSeasonGridPoint((int x, int y) currentPoint, (int x, int y) movePoint)
@@ -650,7 +687,7 @@ namespace LocalVideoPlayer
 
         private void PrintGrid()
         {
-            foreach (int[] row in seasonFormGrid)
+            foreach (int[] row in mainFormGrid)
             {
                 Console.Write("[ ");
                 for (int i = 0; i < row.Length; i++)
@@ -668,7 +705,7 @@ namespace LocalVideoPlayer
 
         private void PrintControlGrid()
         {
-            foreach (Control[] row in seasonFormControlGrid)
+            foreach (Control[] row in mainFormControlGrid)
             {
                 Console.Write("[ ");
                 for (int i = 0; i < row.Length; i++)

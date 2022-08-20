@@ -36,6 +36,7 @@ namespace LocalVideoPlayer
             }
             return false;
         }
+
         internal bool Compare(MediaModel prevMedia)
         {
             Array.Sort(this.Movies, Movie.SortMoviesAlphabetically());
@@ -72,13 +73,16 @@ namespace LocalVideoPlayer
                         this.movies[j].Id = prevMedia.movies[i].Id;
                         this.movies[j].Date = prevMedia.movies[i].Date;
                         this.movies[j].Backdrop = prevMedia.movies[i].Backdrop;
-                        this.movies[i].RunningTime = prevMedia.movies[i].RunningTime;
-                        this.movies[i].Subtitles = prevMedia.movies[i].Subtitles;
-                        this.movies[i].SubtitleTrack = prevMedia.movies[i].SubtitleTrack;
+                        this.movies[j].RunningTime = prevMedia.movies[i].RunningTime;
+                        this.movies[j].Subtitles = prevMedia.movies[i].Subtitles;
+                        this.movies[j].SubtitleTrack = prevMedia.movies[i].SubtitleTrack;
+                    }
+                    else
+                    {
+                        continue;
                     }
                 }
             }
-
             for (int i = 0; i < prevMedia.TvShows.Length; i++)
             {
                 for (int l = 0; l < this.tvShows.Length; l++)
@@ -86,6 +90,7 @@ namespace LocalVideoPlayer
                     if (String.Compare(this.tvShows[l].Name, prevMedia.tvShows[i].Name, System.Globalization.CultureInfo.CurrentCulture, System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) == 0)
                     {
                         this.tvShows[l].Name = prevMedia.tvShows[i].Name;
+                        this.tvShows[l].Cartoon = prevMedia.tvShows[i].Cartoon;
                         this.tvShows[l].Id = prevMedia.tvShows[i].Id;
                         this.tvShows[l].Overview = prevMedia.tvShows[i].Overview;
                         this.tvShows[l].Poster = prevMedia.tvShows[i].Poster;
@@ -118,6 +123,10 @@ namespace LocalVideoPlayer
                             }
 
                         }
+                    }
+                    else
+                    {
+                        continue;
                     }
                 }
             }
@@ -228,6 +237,7 @@ namespace LocalVideoPlayer
 
     public class TvShow
     {
+        private bool cartoon;
         private int id;
         private string name;
         private string overview;
@@ -244,6 +254,13 @@ namespace LocalVideoPlayer
             name = n;
             currSeason = 1;
             lastWatched = null;
+            cartoon = false;
+        }
+
+        public bool Cartoon
+        {
+            get => cartoon;
+            set => cartoon = value;
         }
 
         public int Id

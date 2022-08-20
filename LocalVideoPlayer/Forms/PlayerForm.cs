@@ -141,7 +141,12 @@ namespace LocalVideoPlayer
                 idleTimer.Dispose();
             }
 
-            if (currTvShow != null)
+            if (MainForm.cartoonShuffle)
+            {
+                //To-do something?
+            }
+
+            if (!MainForm.cartoonShuffle && currTvShow != null)
             {
                 int currSeason = 0;
                 for (int i = 0; i < currTvShow.Seasons.Length; i++)
@@ -211,7 +216,6 @@ namespace LocalVideoPlayer
 
             mediaPlayer.Dispose();
             libVlc.Dispose();
-            MainForm.Log("Player form objects dispsed");
         }
 
         private void CloseButton_Click(object sender, EventArgs e)
@@ -466,14 +470,39 @@ namespace LocalVideoPlayer
 
         private void MediaPlayer_EndReached(object sender, EventArgs e)
         {
-            if (currTvShow != null)
+            if (MainForm.cartoonShuffle)
+            {
+                //check if end of list and dispose MainForm.cartoonShuffle = false;
+                MainForm.cartoonIndex++;
+                if (MainForm.cartoonIndex == MainForm.cartoonLimit)
+                {
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new MethodInvoker(delegate { this.Dispose(); }));
+                    }
+                    else
+                    {
+                        this.Dispose();
+                    }
+                    return;
+                }
+                currEpisode = MainForm.cartoonShuffleList[MainForm.cartoonIndex];
+                mediaPath = currEpisode.Path;
+                timeline.Value = 0;
+                Media nextMedia = CreateMedia(libVlc, mediaPath, FromType.FromPath);
+                MainForm.Log("Media loaded: " + mediaPath);
+                System.Threading.ThreadPool.QueueUserWorkItem(_ => mediaPlayer.Play(nextMedia));
+                return;
+            }
+
+            if (!MainForm.cartoonShuffle && currTvShow != null)
             {
                 currEpisode.SavedTime = currEpisode.Length;
 
                 try { UpdateProgressBar(); }
                 catch (Exception ex) { MainForm.Log(ex.ToString()); };
 
-                if (currEpisode.Id == -1)
+                if (currEpisode.Id == -1) // if extra
                 {
                     if (this.InvokeRequired)
                     {
