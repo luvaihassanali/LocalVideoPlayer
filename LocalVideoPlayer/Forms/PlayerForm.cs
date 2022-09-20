@@ -627,11 +627,11 @@ namespace LocalVideoPlayer
 
         private void videoView1_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Space)
+            /*if (e.KeyCode == Keys.Space)
             {
                 MainForm.Log("Space bar pause");
                 InitiatePause();
-            }
+            }*/
         }
 
         public void InitiatePause()
@@ -739,23 +739,16 @@ namespace LocalVideoPlayer
                 {
                     return;
                 }
-
-                MainForm.LASTINPUTINFO last = new MainForm.LASTINPUTINFO();
-                last.cbSize = (uint)MainForm.LASTINPUTINFO.SizeOf;
-                last.dwTime = 0u;
-                if (MainForm.GetLastInputInfo(ref last))
+                TimeSpan t = TimeSpan.FromHours(2); //TimeSpan.FromSeconds(10);
+                if (MainForm.GetIdleTime() > t.TotalMilliseconds)
                 {
-                    TimeSpan idleTime = TimeSpan.FromMilliseconds(Environment.TickCount - last.dwTime);
-                    if (idleTime > TimeSpan.FromHours(2))
+                    MainForm.Log("Reached 2 hours of idle player time");
+                    this.Invoke(new MethodInvoker(delegate
                     {
-                        MainForm.Log("Reached 2 hours of idle player time");
-                        this.Invoke(new MethodInvoker(delegate
-                        {
-                            this.Close();
-                        }));
-                    }
+                        this.Close();
+                    }));
                 }
-            }, null, TimeSpan.FromHours(1), TimeSpan.FromHours(1));
+            }, null, TimeSpan.FromHours(1), TimeSpan.FromHours(1));  //TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
         }
     }
 }

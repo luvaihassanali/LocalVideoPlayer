@@ -29,16 +29,40 @@ namespace LocalVideoPlayer
 
         static public extern bool ShowScrollBar(System.IntPtr hWnd, int wBar, bool bShow);
 
-        [DllImport("user32.dll")]
-        public static extern bool GetLastInputInfo(ref LASTINPUTINFO info);
+        [DllImport("User32.dll")]
+        private static extern bool GetLastInputInfo(ref LASTINPUTINFO Dummy);
+        [DllImport("Kernel32.dll")]
+        private static extern uint GetLastError();
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct LASTINPUTINFO
+        public static uint GetIdleTime()
         {
-            public static readonly int SizeOf = Marshal.SizeOf(typeof(LASTINPUTINFO));
+            LASTINPUTINFO LastUserAction = new LASTINPUTINFO();
+            LastUserAction.cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(LastUserAction);
+            GetLastInputInfo(ref LastUserAction);
+            return ((uint)Environment.TickCount - LastUserAction.dwTime);
+        }
 
-            [MarshalAs(UnmanagedType.U4)] public UInt32 cbSize;
-            [MarshalAs(UnmanagedType.U4)] public UInt32 dwTime;
+        public static long GetTickCount()
+        {
+            return Environment.TickCount;
+        }
+
+        public static long GetLastInputTime()
+        {
+            LASTINPUTINFO LastUserAction = new LASTINPUTINFO();
+            LastUserAction.cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(LastUserAction);
+            if (!GetLastInputInfo(ref LastUserAction))
+            {
+                throw new Exception(GetLastError().ToString());
+            }
+
+            return LastUserAction.dwTime;
+        }
+
+        internal struct LASTINPUTINFO
+        {
+            public uint cbSize;
+            public uint dwTime;
         }
 
         #endregion
@@ -134,7 +158,7 @@ namespace LocalVideoPlayer
                     string mouseMoverPath = ConfigurationManager.AppSettings["mouseMoverPath"];
                     if (mouseMoverPath.Contains(".."))
                     {
-                         mouseMoverPath = Path.GetFullPath(mouseMoverPath);
+                        mouseMoverPath = Path.GetFullPath(mouseMoverPath);
                     }
                     Process.Start(mouseMoverPath);
                 }
@@ -196,13 +220,14 @@ namespace LocalVideoPlayer
             tvLabel.Font = f;
             cartoonsLabel.Font = halfF;
         }
-        
+
         public static float GetHeaderFontSize(Graphics graphics, Size size, Font font, string str)
         {
             SizeF stringSize = graphics.MeasureString(str, font);
             float ratio = (size.Height / stringSize.Height) / 10;
             return font.Size * ratio;
         }
+
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (keyData == Keys.Up)
@@ -396,7 +421,8 @@ namespace LocalVideoPlayer
                 if (cartoons)
                 {
                     if (!media.TvShows[i].Cartoon) continue;
-                } else
+                }
+                else
                 {
                     if (media.TvShows[i].Cartoon)
                     {
@@ -517,7 +543,7 @@ namespace LocalVideoPlayer
                 mouseMoverClientKill = true;
             }
 
-            debugLogPath =  ConfigurationManager.AppSettings["debugLogPath"] + "lvp-debug.log";
+            debugLogPath = ConfigurationManager.AppSettings["debugLogPath"] + "lvp-debug.log";
             if (debugLogPath.Contains("%USERPROFILE%"))
             {
                 debugLogPath = debugLogPath.Replace("%USERPROFILE%", Environment.GetEnvironmentVariable("USERPROFILE"));
@@ -536,23 +562,16 @@ namespace LocalVideoPlayer
                 {
                     return;
                 }
-
-                LASTINPUTINFO last = new LASTINPUTINFO();
-                last.cbSize = (uint)LASTINPUTINFO.SizeOf;
-                last.dwTime = 0u;
-                if (GetLastInputInfo(ref last))
+                TimeSpan t = TimeSpan.FromMinutes(20); //TimeSpan.FromSeconds(10); 
+                if (GetIdleTime() > t.TotalMilliseconds)
                 {
-                    TimeSpan idleTime = TimeSpan.FromMilliseconds(Environment.TickCount - last.dwTime);
-                    if (idleTime > TimeSpan.FromMinutes(20))
+                    Log("Reached 20 minutes of idle time");
+                    this.Invoke(new MethodInvoker(delegate
                     {
-                        Log("Reached 20 minutes of idle time");
-                        this.Invoke(new MethodInvoker(delegate
-                        {
-                            this.Close();
-                        }));
-                    }
+                        this.Close();
+                    }));
                 }
-            }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
+            }, null, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10)); //TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
         }
 
         #endregion
@@ -573,7 +592,7 @@ namespace LocalVideoPlayer
             }
 
             bool update = CheckForUpdates();
-            
+
             if (update)
             {
                 cacheBuilder.UpdateLoadingLabel(null);

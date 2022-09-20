@@ -35,7 +35,7 @@ namespace MouseMoverClient
 
         #endregion
 
-        static string serverIp = "192.168.0.174";
+        static string serverIp = "192.168.0.137";
         static int serverPort = 3000;
         static bool serverIsNotConnected = true;
         static int joystickX;
@@ -55,7 +55,7 @@ namespace MouseMoverClient
             SetWindowPos(MyConsole, 0, 625, 10, 0, 0, SWP_NOSIZE);
             ConsoleHelper.SetCurrentFont("Cascadia Code", 24);
 
-            pollingTimer = new System.Timers.Timer(10000);
+            pollingTimer = new System.Timers.Timer(6000);
             pollingTimer.Elapsed += OnTimedEvent;
             pollingTimer.AutoReset = false;
 
@@ -341,8 +341,8 @@ namespace MouseMoverClient
                 Log("Error. Message incorrect format: " + data);
                 return;
             }
-            joystickX = Int32.Parse(dataSplit[0]);
-            joystickY = Int32.Parse(dataSplit[1]);
+            joystickX = Int32.Parse(dataSplit[1]);
+            joystickY = Int32.Parse(dataSplit[0]);
             int buttonState = Int32.Parse(dataSplit[2]);
             int buttonTwoState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
@@ -367,7 +367,7 @@ namespace MouseMoverClient
 
         static void DoMouseMove()
         {
-            joystickX = -joystickX;
+            //joystickX = -joystickX;
             joystickY = -joystickY;
             int divisor = 20;
             if ((joystickX > 0 && joystickX < 150) || (joystickX < 0 && joystickX > -150))

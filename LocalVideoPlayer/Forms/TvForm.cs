@@ -1086,11 +1086,13 @@ namespace LocalVideoPlayer
 
         static private void MovieBackdropBox_Click(object sender, EventArgs e)
         {
+            PlayerForm.isPlaying = true;
             PictureBox p = sender as PictureBox;
             string path = p.Name;
             string[] pathSplit = path.Split('\\');
             string movieName = pathSplit[pathSplit.Length - 1].Split('.')[0];
             PlayerForm.LaunchVlc(movieName, null, path, null);
+            PlayerForm.isPlaying = false;
         }
 
         static public void MovieBox_Click(object sender, EventArgs e)
