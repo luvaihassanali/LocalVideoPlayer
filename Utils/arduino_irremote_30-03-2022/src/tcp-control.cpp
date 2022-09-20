@@ -20,7 +20,6 @@ String keepAliveOutput = "";
 String keepAliveSendLength = "";
 String tcpDataInOutput = "";
 String tcpDataInSendLength = "";
-;
 
 void InitializeEsp8266()
 {

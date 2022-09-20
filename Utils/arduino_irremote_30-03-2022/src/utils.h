@@ -25,14 +25,16 @@ extern unsigned long currentMillis;
 extern String joystickOutput;
 const unsigned long KA_TIMEOUT = 4999;
 
-const int RED_LED_PIN = 12;
-const int GREEN_LED_PIN = 10;
-const int BLUE_LED_PIN = 11;
-const int BTN1_PIN = A2;
-const int BTN2_PIN = A3;
-const int BTN3_PIN = A4;
-const int RED_BTN_PIN = 4;
-const int BLUE_BTN_PIN = 5;
+const int RED_LED_PIN = 10;
+const int GREEN_LED_PIN = 11;
+const int BLUE_LED_PIN = 12;
+// 1 9, 2 4, 3 5, 4 6, 5 A2, 6 A3
+const int BTN1_PIN = 9;
+const int BTN2_PIN = 4;
+const int BTN3_PIN = 5;
+//const int BTN4_PIN = A3;
+const int RED_BTN_PIN = 6;
+const int BLUE_BTN_PIN = A2;
 const int JS_BTN_PIN = 2;
 const int JS_RX_PIN = A0;
 const int JS_RY_PIN = A1;
