@@ -36,8 +36,8 @@ const int BTN3_PIN = 5;
 const int RED_BTN_PIN = 6;
 const int BLUE_BTN_PIN = A2;
 const int JS_BTN_PIN = 2;
-const int JS_RX_PIN = A0;
-const int JS_RY_PIN = A1;
+const int JS_RX_PIN = A1;
+const int JS_RY_PIN = A0;
 const int JS_THRESHOLD = 10;
 
 const uint16_t SAMSUNG_ADDR = 0x707;
