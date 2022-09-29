@@ -25,7 +25,7 @@ namespace LocalVideoPlayer
 
         #endregion
 
-        private string serverIp = "192.168.0.174";
+        private string serverIp = "192.168.0.137";
         private int serverPort = 3000;
         private bool hideCursor = bool.Parse(ConfigurationManager.AppSettings["hideCursor"]);
         private bool enableSerialPort = bool.Parse(ConfigurationManager.AppSettings["comPortEnabled"]);
@@ -412,7 +412,7 @@ namespace LocalVideoPlayer
 
         void DoMouseMove()
         {
-            joystickX = -joystickX;
+            //joystickX = -joystickX;
             joystickY = -joystickY;
             int divisor = 20;
             if ((joystickX > 0 && joystickX < 150) || (joystickX < 0 && joystickX > -150))

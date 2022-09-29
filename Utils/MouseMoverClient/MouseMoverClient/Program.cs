@@ -341,8 +341,8 @@ namespace MouseMoverClient
                 Log("Error. Message incorrect format: " + data);
                 return;
             }
-            joystickX = Int32.Parse(dataSplit[1]);
-            joystickY = Int32.Parse(dataSplit[0]);
+            joystickX = Int32.Parse(dataSplit[0]);
+            joystickY = Int32.Parse(dataSplit[1]);
             int buttonState = Int32.Parse(dataSplit[2]);
             int buttonTwoState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 

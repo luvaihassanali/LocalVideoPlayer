@@ -5,7 +5,6 @@ using System.Configuration;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -592,7 +591,6 @@ namespace LocalVideoPlayer
             }
 
             bool update = CheckForUpdates();
-
             if (update)
             {
                 cacheBuilder.UpdateLoadingLabel(null);
@@ -699,4 +697,5 @@ namespace LocalVideoPlayer
                 .Replace(closeSingleQuoteSymbol, targetSingleQuoteSymbol).Replace(frenchAccentAigu, "e").Replace(frenchAccentGrave, "a");
         }
     }
+
 }
