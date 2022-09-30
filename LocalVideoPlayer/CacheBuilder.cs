@@ -553,7 +553,7 @@ namespace LocalVideoPlayer
                                     if (String.Compare(currMultiEpisodeName, jCurrMultiEpisodeName.fixBrokenQuotes(), System.Globalization.CultureInfo.CurrentCulture,
                                         System.Globalization.CompareOptions.IgnoreCase | System.Globalization.CompareOptions.IgnoreSymbols) != 0)
                                     {
-                                        string message = "Multi episode name does not match retrieved data: Episode name: '" + currMultiEpisodeName + ", retrieved: " + jCurrMultiEpisodeName.fixBrokenQuotes() + " (Season " + season.Id + ").";
+                                        string message = "Multi episode name does not match retrieved data: Episode name: '" + currMultiEpisodeName + "', retrieved: '" + jCurrMultiEpisodeName.fixBrokenQuotes() + "' (Season " + season.Id + ").";
                                         CustomDialog.ShowMessage("Warning: " + tvShow.Name, message, mainForm.Width, mainForm.Height);
                                     }
                                     multiEpisodeOverview += (jCurrMultiEpisodeOverview + Environment.NewLine + Environment.NewLine);

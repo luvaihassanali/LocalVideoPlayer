@@ -380,7 +380,7 @@ namespace LocalVideoPlayer.Forms
             Form customMessageForm = new Form();
 
             customMessageForm.Width = width / 2;
-            customMessageForm.Height = height / 6;
+            customMessageForm.Height = height / 4;
             customMessageForm.MaximumSize = new Size(width, height);
             customMessageForm.ShowInTaskbar = false;
             customMessageForm.AutoScroll = true;
@@ -415,6 +415,15 @@ namespace LocalVideoPlayer.Forms
             confirm.Cursor = blueHandCursor;
             confirm.Click += (sender, e) => { customMessageForm.Close(); };
             customMessageForm.Controls.Add(confirm);
+
+            Button exit = new Button() { Text = "Exit" };
+            exit.AutoSize = true;
+            exit.Font = textFont;
+            exit.Dock = DockStyle.Bottom;
+            exit.FlatStyle = FlatStyle.Flat;
+            exit.Cursor = blueHandCursor;
+            exit.Click += (sender, e) => { Environment.Exit(1); };
+            customMessageForm.Controls.Add(exit);
 
             customMessageForm.Deactivate += (s, e) =>
             {
