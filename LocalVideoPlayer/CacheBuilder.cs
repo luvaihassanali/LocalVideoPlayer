@@ -171,8 +171,9 @@ namespace LocalVideoPlayer
 
                 Season season = new Season(i + 1);
                 string[] episodeEntries = Directory.GetFiles(seasonEntries[i]);
-                Array.Sort(episodeEntries);
+                Array.Sort(episodeEntries, CompareIndex);
                 season.Episodes = new Episode[episodeEntries.Length];
+
                 for (int j = 0; j < episodeEntries.Length; j++)
                 {
                     string[] namePath = episodeEntries[j].Split('\\');
@@ -220,6 +221,37 @@ namespace LocalVideoPlayer
             {
                 ProcessExtrasDirectory(extras, subDir);
             }
+        }
+
+        private int CompareIndex(string s1, string s2)
+        {
+            string[] s1Parts = s1.Split('%');
+            string[] s2Parts = s2.Split('%');
+            string[] s3Parts = s1Parts[s1Parts.Length - 2].Split('\\');
+            string[] s4Parts = s2Parts[s2Parts.Length - 2].Split('\\');
+            string s5Part = s3Parts[s3Parts.Length - 1];
+            string s6Part = s4Parts[s4Parts.Length - 1];
+            if (s5Part.Contains("#"))
+            {
+                s5Part = s5Part.Split('#')[0];
+            }
+            if (s6Part.Contains("#"))
+            {
+                s6Part = s6Part.Split('#')[0];
+            }
+            int indexA = Int32.Parse(s5Part);
+            int indexB = Int32.Parse(s6Part);
+            if (indexA == indexB)
+            {
+                return 0;
+            } else if (indexA > indexB)
+            {
+                return 1;
+            } else
+            {
+                return -1;
+            }
+
         }
 
         private int SeasonComparer(string seasonB, string seasonA)
@@ -523,6 +555,7 @@ namespace LocalVideoPlayer
                         JArray jEpisodes = (JArray)seasonObject["episodes"];
                         Episode[] episodes = season.Episodes;
                         int jEpIndex = 0;
+
                         for (int k = 0; k < episodes.Length; k++)
                         {
                             if (episodes[k].Id != 0)
