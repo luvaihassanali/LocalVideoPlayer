@@ -423,10 +423,17 @@ namespace LocalVideoPlayer
                 }
                 else
                 {
-                    if (media.TvShows[i].Cartoon)
+                    try
                     {
-                        layoutController.numCartoons++;
-                        continue;
+                        if (media.TvShows[i].Cartoon)
+                        {
+                            layoutController.numCartoons++;
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        CustomDialog.ShowMessage("Error", "Filename does not have correct separator", this.Width, this.Height);
                     }
                 }
 
