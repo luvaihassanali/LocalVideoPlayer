@@ -151,6 +151,7 @@ namespace LocalVideoPlayer
             string[] seasonEntries = Directory.GetDirectories(targetDir);
             Array.Sort(seasonEntries, SeasonComparer);
             show.Seasons = new Season[seasonEntries.Length];
+
             for (int i = 0; i < seasonEntries.Length; i++)
             {
                 if (seasonEntries[i].Contains("Extras"))
@@ -496,7 +497,19 @@ namespace LocalVideoPlayer
                     }
 
                     // Always check season data for new content
+                    // Some shows first season index = 1
+                    string tvIdExceptionsStr = ConfigurationManager.AppSettings["tvIdExceptions"];
+                    string[] tvIdExceptionsStrArr = tvIdExceptionsStr.Split(';');
+                    int[] tvIdExceptions = new int[tvIdExceptionsStrArr.Length];
+                    for (int idIdx = 0; idIdx < tvIdExceptionsStrArr.Length; idIdx++)
+                    {
+                        tvIdExceptions[idIdx] = int.Parse(tvIdExceptionsStrArr[idIdx]);
+                    }
                     int seasonIndex = 0;
+                    if (tvIdExceptions.Contains(tvShow.Id))
+                    {
+                        seasonIndex = 1;
+                    }
                     for (int j = 0; j < tvShow.Seasons.Length; j++)
                     {
                         Season season = tvShow.Seasons[j];
@@ -508,18 +521,6 @@ namespace LocalVideoPlayer
 
                         string seasonApiCall = tvSeasonGet.Replace("{tv_id}", tvShow.Id.ToString()).Replace("{season_number}", seasonIndex.ToString());
 
-                        // Some shows first season index = 1
-                        string tvIdExceptionsStr = ConfigurationManager.AppSettings["tvIdExceptions"];
-                        string[] tvIdExceptionsStrArr = tvIdExceptionsStr.Split(';');
-                        int[] tvIdExceptions = new int[tvIdExceptionsStrArr.Length];
-                        for(int idIdx = 0; idIdx < tvIdExceptionsStrArr.Length; idIdx++)
-                        {
-                            tvIdExceptions[idIdx] = int.Parse(tvIdExceptionsStrArr[idIdx]);
-                        }
-                        if (tvIdExceptions.Contains(tvShow.Id))
-                        {
-                            seasonApiCall = seasonApiCall.Replace("0?", "1?");
-                        }
                         string seasonString = "";
                         try
                         {
