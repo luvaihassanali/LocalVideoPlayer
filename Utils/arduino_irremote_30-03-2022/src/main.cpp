@@ -83,6 +83,7 @@ void InnerLoop()
     button3State = digitalRead(BTN3_PIN);
     redButtonState = digitalRead(RED_BTN_PIN);
     blueButtonState = digitalRead(BLUE_BTN_PIN);
+
     joystickXPos = analogRead(JS_RX_PIN);
     joystickYPos = analogRead(JS_RY_PIN);
     joystickButtonState = digitalRead(JS_BTN_PIN);

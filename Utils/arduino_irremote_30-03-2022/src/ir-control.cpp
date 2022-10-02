@@ -147,25 +147,6 @@ void TvControl()
             IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_HOME, 0);
         }
     }
-    /*else if (button3State == LOW && joystickButtonState == LOW)
-    {
-        Log("tv sound input script");
-        TvSoundInput();
-    }
-    else if (button3State == LOW && !(joystickMapY > JS_THRESHOLD || joystickMapY < -JS_THRESHOLD)) {
-        Log("tv home");
-        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_HOME, 0);
-    }
-    else if (button3State == LOW && joystickMapY > JS_THRESHOLD)
-    {
-        Log("tv vol up");
-        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_VOL_UP, 0);
-    }
-    else if (button3State == LOW && joystickMapY < -JS_THRESHOLD)
-    {
-        Log("tv vol down");
-        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_VOL_DOWN, 0);
-    }*/
     else if (joystickButtonState == LOW)
     {
         Log("tv enter");
@@ -173,13 +154,13 @@ void TvControl()
     }
     else if (joystickMapX > JS_THRESHOLD && button3State == HIGH)
     {
-        Log("tv left");
-        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_LEFT, 0);
+        Log("tv right");
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_RIGHT, 0);
     }
     else if (joystickMapX < -JS_THRESHOLD && button3State == HIGH)
     {
-        Log("tv right");
-        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_RIGHT, 0);
+        Log("tv left");
+        IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_LEFT, 0);
     }
     else if (joystickMapY > JS_THRESHOLD)
     {
