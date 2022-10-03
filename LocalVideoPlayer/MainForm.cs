@@ -81,13 +81,14 @@ namespace LocalVideoPlayer
         static public List<Episode> cartoonShuffleList = new List<Episode>();
         static private bool debugLogEnabled;
         static private string debugLogPath;
-
+        static public bool hideCursor = bool.Parse(ConfigurationManager.AppSettings["hideCursor"]);
+        static public int cursorCount = 0;
         private bool mouseMoverClientKill = false;
         private CustomScrollbar customScrollbar = null;
         private Label movieLabel;
         private Label cartoonsLabel;
         private Label tvLabel;
-        private MouseWorker worker = null;
+        public MouseWorker worker = null;
         private Panel mainFormMainPanel = null;
         private System.Threading.Timer idleMainFormTimer = null;
 
@@ -600,6 +601,7 @@ namespace LocalVideoPlayer
             bool update = CheckForUpdates();
             if (update)
             {
+                loadingCircle1.Visible = true;
                 cacheBuilder.UpdateLoadingLabel(null);
                 Task buildCache = cacheBuilder.BuildCacheAsync();
                 buildCache.Wait();
@@ -609,6 +611,19 @@ namespace LocalVideoPlayer
         private void BackgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             loadingLabel.Dispose();
+            loadingCircle1.Dispose();
+            Cursor.Current = Cursors.WaitCursor;
+            
+            if (hideCursor)
+            {
+                for (int j = 0; j < cursorCount; j++)
+                {
+                    Cursor.Show();
+                }
+                cursorCount = 0;
+            }
+            Cursor.Position = new Point(this.Width / 2 - 32, this.Height / 2 - 32);
+
             this.Padding = new Padding(5, 20, 20, 20);
             layoutController = new LayoutController(media.Count);
             InitializeGui();
@@ -618,7 +633,13 @@ namespace LocalVideoPlayer
             {
                 if (show.Cartoon) cartoons.Add(show);
             }
-            loadingCircle1.Dispose();
+
+            if (hideCursor)
+            {
+                Cursor.Hide();
+                cursorCount++;
+            }
+            Cursor.Current = Cursors.Default;
         }
 
         #endregion

@@ -122,6 +122,7 @@ namespace LocalVideoPlayer
             this.loadingCircle1.SpokeThickness = 8;
             this.loadingCircle1.StylePreset = MRG.Controls.UI.LoadingCircle.StylePresets.MacOSX;
             this.loadingCircle1.TabIndex = 0;
+            this.loadingCircle1.Visible = false;
             // 
             // loadingLabel
             // 

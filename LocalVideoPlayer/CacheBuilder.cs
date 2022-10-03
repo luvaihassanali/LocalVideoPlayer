@@ -191,6 +191,7 @@ namespace LocalVideoPlayer
                 }
                 show.Seasons[i] = season;
             }
+
             return show;
         }
 
@@ -412,6 +413,17 @@ namespace LocalVideoPlayer
                 for (int i = 0; i < MainForm.media.TvShows.Length; i++)
                 {
                     TvShow tvShow = MainForm.media.TvShows[i];
+
+                    if (tvShow.Name.Equals("Tom & Jerry"))
+                    {
+                        CustomCache.BuildTomAndJerryData(tvShow);
+                        continue;
+                    } 
+                    else if (tvShow.Name.Equals("Looney Tunes"))
+                    {
+                        CustomCache.BuildLooneyTunesData(tvShow);
+                        continue;
+                    }
 
                     // If id is not 0 then general show data initialized
                     if (tvShow.Id == 0)

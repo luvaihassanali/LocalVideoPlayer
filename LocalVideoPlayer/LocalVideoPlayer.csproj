@@ -126,6 +126,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CacheBuilder.cs" />
+    <Compile Include="CustomCache.cs" />
     <Compile Include="Forms\CustomDialog.cs" />
     <Compile Include="Forms\TvForm.cs">
       <SubType>Form</SubType>

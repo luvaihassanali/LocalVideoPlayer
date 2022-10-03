@@ -22,7 +22,7 @@ namespace LocalVideoPlayer
         public TvForm()
         {
             InitializeComponent();
-            InitializeSeasonCircle();
+            //InitializeSeasonCircle();
             InitializeImageList();
         }
 
@@ -131,13 +131,21 @@ namespace LocalVideoPlayer
 
         static public void TvShowBox_Click(object sender, EventArgs e)
         {
-            TvForm tvForm = new TvForm();
+            Cursor.Current = Cursors.WaitCursor;
+            if (MainForm.hideCursor)
+            {
+                for (int j = 0; j < MainForm.cursorCount; j++)
+                {
+                    Cursor.Show();
+                }
+                MainForm.cursorCount = 0;
+            }
+            Cursor.Position = new Point(MainForm.mainFormSize.Width / 2 - 32, MainForm.mainFormSize.Height / 2 - 32);
 
+            TvForm tvForm = new TvForm();
             PictureBox pictureBox = null;
             pictureBox = sender as PictureBox;
-
             TvShow tvShow = GetTvShow(pictureBox.Name);
-
             tvForm.Name = tvShow.Name;
             tvForm.Width = (int)(MainForm.mainFormSize.Width / 1.75);
             tvForm.Height = MainForm.mainFormSize.Height;
@@ -151,7 +159,6 @@ namespace LocalVideoPlayer
 
             List<Control> episodePanelList = null;
             Button seasonButton = null;
-
             RoundButton closeButton = null;
             foreach (Control c in tvForm.Controls)
             {
@@ -252,6 +259,7 @@ namespace LocalVideoPlayer
                     resetButton.Visible = true;
                 }
             };
+
             Label overviewLabel = new Label() { Text = tvShow.Overview };
             overviewLabel.Dock = DockStyle.Top;
             overviewLabel.Font = overviewFont;
@@ -329,6 +337,7 @@ namespace LocalVideoPlayer
                 tvFormMainPanel.Focus();
                 seasonButton.Location = new Point(overviewLabel.Location.X + 20, overviewLabel.Location.Y + overviewLabel.Height + (int)(seasonButton.Height * 1.75));
                 int newVal = -tvFormMainPanel.AutoScrollPosition.Y;
+
                 if (newVal == 0)
                 {
                     closeButton.Visible = true;
@@ -373,6 +382,13 @@ namespace LocalVideoPlayer
             MainForm.layoutController.tvFormControlList.Insert(2, seasonButton);
             tvForm.Show();
             MainForm.layoutController.Select(tvShow.Name);
+
+            if (MainForm.hideCursor)
+            {
+                Cursor.Hide();
+                MainForm.cursorCount++;
+            }
+            Cursor.Current = Cursors.Default;
         }
 
         #endregion
@@ -691,13 +707,22 @@ namespace LocalVideoPlayer
 
         static private void SeasonButton_Click(object sender, EventArgs e)
         {
+            Cursor.Current = Cursors.WaitCursor;
+            if (MainForm.hideCursor)
+            {
+                for (int j = 0; j < MainForm.cursorCount; j++)
+                {
+                    Cursor.Show();
+                }
+                MainForm.cursorCount = 0;
+            }
+            Cursor.Position = new Point(MainForm.mainFormSize.Width / 2 - 32, MainForm.mainFormSize.Height / 2 - 32);
+
             seasonFormOpen = true;
             bool indexChange = false;
-
             Button b = sender as Button;
             string showName = b.Name.Replace("seasonButton_", "");
             TvShow tvShow = GetTvShow(showName);
-
             int seasonNum;
             seasonNum = b.Text.Contains("Season") ? Int32.Parse(b.Text.Replace("Season ", "")) : seasonNum = tvShow.Seasons.Length - 1;
 
@@ -833,7 +858,7 @@ namespace LocalVideoPlayer
             MainForm.seasonDimmerForm.Size = tvForm.Size;
             Fader.FadeInCustom(MainForm.seasonDimmerForm, Fader.FadeSpeed.Normal, 0.9);
             MainForm.seasonDimmerForm.Location = tvForm.Location;
-            seasonTransitionCircle.Location = new Point(MainForm.seasonDimmerForm.Width / 2 - seasonTransitionCircle.Width / 2, MainForm.seasonDimmerForm.Height / 2 - seasonTransitionCircle.Height / 2);
+            //seasonTransitionCircle.Location = new Point(MainForm.seasonDimmerForm.Width / 2 - seasonTransitionCircle.Width / 2, MainForm.seasonDimmerForm.Height / 2 - seasonTransitionCircle.Height / 2);
 
             if (numSeasons > 6)
             {
@@ -857,13 +882,40 @@ namespace LocalVideoPlayer
                 MainForm.layoutController.seasonFormMainPanel = seasonFormMainPanel;
                 MainForm.layoutController.seasonFormIndex = currSeasonIndex;
                 MainForm.layoutController.Select("seasonButton");
-            }; 
+            };
+
+            if (MainForm.hideCursor)
+            {
+                Cursor.Hide();
+                MainForm.cursorCount++;
+            }
+            Cursor.Current = Cursors.Default;
+
             seasonForm.ShowDialog();
             seasonForm.Dispose();
             seasonFormOpen = false;
             Fader.FadeOut(MainForm.seasonDimmerForm, Fader.FadeSpeed.Normal);
 
-            if (indexChange) UpdateTvForm(tvShow);
+            if (indexChange)
+            {
+                Cursor.Current = Cursors.WaitCursor;
+                if (MainForm.hideCursor)
+                {
+                    for (int j = 0; j < MainForm.cursorCount; j++)
+                    {
+                        Cursor.Show();
+                    }
+                    MainForm.cursorCount = 0;
+                }
+                Cursor.Position = new Point(MainForm.mainFormSize.Width / 2 - 32, MainForm.mainFormSize.Height / 2 - 32);
+                UpdateTvForm(tvShow);
+                if (MainForm.hideCursor)
+                {
+                    Cursor.Hide();
+                    MainForm.cursorCount++;
+                }
+                Cursor.Current = Cursors.Default;
+            }
         }
 
         #endregion
@@ -1097,6 +1149,17 @@ namespace LocalVideoPlayer
 
         static public void MovieBox_Click(object sender, EventArgs e)
         {
+            Cursor.Current = Cursors.WaitCursor;
+            if (MainForm.hideCursor)
+            {
+                for (int j = 0; j < MainForm.cursorCount; j++)
+                {
+                    Cursor.Show();
+                }
+                MainForm.cursorCount = 0;
+            }
+            Cursor.Position = new Point(MainForm.mainFormSize.Width / 2 - 32, MainForm.mainFormSize.Height / 2 - 32);
+
             Form movieForm = new Form();
             PictureBox p = sender as PictureBox;
             Movie movie = TvForm.GetMovie(p.Name);
@@ -1177,7 +1240,7 @@ namespace LocalVideoPlayer
             movieForm.Controls.Add(overviewLabel);
             movieForm.Controls.Add(headerLabel);
             movieForm.Controls.Add(movieBackdropBox);
-            
+
             movieForm.Deactivate += (s, ev) =>
             {
                 if (PlayerForm.isPlaying) return;
@@ -1191,6 +1254,13 @@ namespace LocalVideoPlayer
             MainForm.dimmerForm.Location = MainForm.mainFormLoc;
             movieForm.Show();
             MainForm.layoutController.Select(movie.Name);
+
+            if (MainForm.hideCursor)
+            {
+                Cursor.Hide();
+                MainForm.cursorCount++;
+            }
+            Cursor.Current = Cursors.Default;
         }
 
         #endregion

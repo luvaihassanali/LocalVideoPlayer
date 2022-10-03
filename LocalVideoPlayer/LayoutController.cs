@@ -255,6 +255,7 @@ namespace LocalVideoPlayer
                     onMainForm = true;
                     CenterMouseOverControl(movieFormClose);
                     MouseWorker.DoMouseClick();
+                    currentPoint = returnPointA;
                     currentControl = mainFormControlGrid[currentPoint.x][currentPoint.y];
                     CenterMouseOverControl(currentControl);
                 }
@@ -317,6 +318,7 @@ namespace LocalVideoPlayer
             tvFormControlList.Clear();
             tvFormControlIndex = 0;
             onTvForm = false;
+            onSeasonForm = false;
             onMainForm = true;
         }
 

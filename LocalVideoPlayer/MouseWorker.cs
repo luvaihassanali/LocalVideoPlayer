@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace LocalVideoPlayer
 {
-    class MouseWorker
+    public class MouseWorker
     {
         #region Dll Import
 
@@ -27,9 +27,7 @@ namespace LocalVideoPlayer
 
         private string serverIp = "192.168.0.137";
         private int serverPort = 3000;
-        private bool hideCursor = bool.Parse(ConfigurationManager.AppSettings["hideCursor"]);
         private bool enableSerialPort = bool.Parse(ConfigurationManager.AppSettings["comPortEnabled"]);
-        private int cursorCount = 0;
         private bool serverIsNotConnected = true;
         private bool workerThreadRunning = false;
         private int joystickX;
@@ -45,10 +43,10 @@ namespace LocalVideoPlayer
         public MouseWorker(MainForm m)
         {
             mainForm = m;
-            if (hideCursor)
+            if (MainForm.hideCursor)
             {
                 Cursor.Hide();
-                cursorCount++;
+                MainForm.cursorCount++;
             }
         }
 
@@ -88,12 +86,12 @@ namespace LocalVideoPlayer
                 string msg = serialPort.ReadLine();
                 msg = msg.Replace("\r", "");
                 MainForm.Log("Serial port: " + msg);
-                if (hideCursor)
+                if (MainForm.hideCursor)
                 {
                     mainForm.Invoke(new MethodInvoker(delegate
                     {
                         Cursor.Hide();
-                        cursorCount++;
+                        MainForm.cursorCount++;
                     }));
                 }
                 switch (msg)
@@ -271,15 +269,15 @@ namespace LocalVideoPlayer
                         if (buffer.Contains("initack"))
                         {
                             Log("initack received");
-                            if (hideCursor)
+                            if (MainForm.hideCursor)
                             {
                                 mainForm.Invoke(new MethodInvoker(delegate
                                 {
-                                    for (int j = 0; j < cursorCount; j++)
+                                    for (int j = 0; j < MainForm.cursorCount; j++)
                                     {
                                         Cursor.Show();
                                     }
-                                    cursorCount = 0;
+                                    MainForm.cursorCount = 0;
                                 }));
                             }
                             StopTimer();
@@ -366,15 +364,15 @@ namespace LocalVideoPlayer
 
         private void ParseTcpDataIn(string data)
         {
-            if (cursorCount != 0)
+            if (MainForm.cursorCount != 0)
             {
                 mainForm.Invoke(new MethodInvoker(delegate
                 {
-                    for (int j = 0; j < cursorCount; j++)
+                    for (int j = 0; j < MainForm.cursorCount; j++)
                     {
                         Cursor.Show();
                     }
-                    cursorCount = 0;
+                    MainForm.cursorCount = 0;
                 }));
             }
 
