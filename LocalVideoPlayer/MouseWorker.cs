@@ -179,7 +179,7 @@ namespace LocalVideoPlayer
 
         private void DoWork()
         {
-            pollingTimer = new System.Timers.Timer(10000);
+            pollingTimer = new System.Timers.Timer(5000);
             pollingTimer.Elapsed += OnTimedEvent;
             pollingTimer.AutoReset = false;
 
@@ -355,7 +355,7 @@ namespace LocalVideoPlayer
 
                 try
                 {
-                    Thread.Sleep(3000);
+                    Thread.Sleep(1000);
                 }
                 catch
                 { }

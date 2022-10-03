@@ -15,6 +15,14 @@ namespace MouseMoverClient
     class Program
     {
         #region Dll Import 
+        [DllImport("user32.dll")]
+        static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll")]
+        static extern bool SetLayeredWindowAttributes(IntPtr hWnd, uint crKey, byte bAlpha, uint dwFlags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
         [DllImport("kernel32.dll", ExactSpelling = true)]
         private static extern IntPtr GetConsoleWindow();
@@ -32,6 +40,9 @@ namespace MouseMoverClient
         private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
         private const int MOUSEEVENTF_RIGHTUP = 0x10;
         private const int SWP_NOSIZE = 0x0001;
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_LAYERED = 0x80000;
+        private const uint LWA_ALPHA = 0x2;
 
         #endregion
 
@@ -48,12 +59,19 @@ namespace MouseMoverClient
         {
             #region Initialize
 
-            Console.Title = "Mouse Mover";
-            Console.SetWindowSize(60, 20);
-            Console.SetBufferSize(60, 20);
-            Console.ForegroundColor = ConsoleColor.Green;
+            Console.Title = "";
+            Console.SetWindowSize(60, 10);
+            Console.SetBufferSize(60, 10);
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.BackgroundColor = ConsoleColor.Blue;
+            Console.Clear();
+
             SetWindowPos(MyConsole, 0, 625, 10, 0, 0, SWP_NOSIZE);
             ConsoleHelper.SetCurrentFont("Cascadia Code", 24);
+            // https://stackoverflow.com/questions/24110600/transparent-console-dllimport
+            SetWindowLong(MyConsole, GWL_EXSTYLE, GetWindowLong(MyConsole, GWL_EXSTYLE) | WS_EX_LAYERED);
+            // Opacity = 0.5 = (255/2) = 128
+            SetLayeredWindowAttributes(MyConsole, 0, 128, LWA_ALPHA);
 
             pollingTimer = new System.Timers.Timer(6000);
             pollingTimer.Elapsed += OnTimedEvent;
@@ -88,7 +106,7 @@ namespace MouseMoverClient
 
             #endregion
 
-            Thread.Sleep(3000);
+            Thread.Sleep(1000);
         }
 
         #region Serial port
