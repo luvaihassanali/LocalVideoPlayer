@@ -316,9 +316,17 @@ namespace LocalVideoPlayer.Forms
                 };
                 controls.Add(descLabel);
             }
+            Button exit = new Button() { Text = "Exit" };
+            exit.AutoSize = true;
+            exit.Font = textFont;
+            exit.Dock = DockStyle.Bottom;
+            exit.FlatStyle = FlatStyle.Flat;
+            exit.Cursor = blueHandCursor;
+            exit.Click += (sender, e) => { Environment.Exit(1); };
 
             optionsFormMainPanel.Controls.Add(headerLabel);
             optionsFormMainPanel.Controls.Add(confirm);
+            optionsFormMainPanel.Controls.Add(exit);
 
             controls.Reverse();
             foreach (Control c in controls)

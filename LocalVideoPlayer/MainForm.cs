@@ -189,12 +189,13 @@ namespace LocalVideoPlayer
             Button closeButton = sender as Button;
             Panel mainPanel = closeButton.Parent as Panel;
             Form currentForm = mainPanel != null ? (Form)mainPanel.Parent : (Form)closeButton.Parent;
-
+            ShowLoadingCursor();
             currentForm.Close();
             if (!currentForm.Name.Equals("MainForm"))
             {
                 Fader.FadeOut(dimmerForm, Fader.FadeSpeed.Normal);
             }
+            HideLoadingCursor();
         }
 
         private void CustomScrollbar_Scroll(object sender, EventArgs e)
@@ -601,7 +602,11 @@ namespace LocalVideoPlayer
             bool update = CheckForUpdates();
             if (update)
             {
-                loadingCircle1.Visible = true;
+                this.Invoke(new MethodInvoker(delegate
+                {
+                    //To-do: make init here
+                    loadingCircle1.Visible = true;
+                }));
                 cacheBuilder.UpdateLoadingLabel(null);
                 Task buildCache = cacheBuilder.BuildCacheAsync();
                 buildCache.Wait();
@@ -612,18 +617,7 @@ namespace LocalVideoPlayer
         {
             loadingLabel.Dispose();
             loadingCircle1.Dispose();
-            Cursor.Current = Cursors.WaitCursor;
-            
-            if (hideCursor)
-            {
-                for (int j = 0; j < cursorCount; j++)
-                {
-                    Cursor.Show();
-                }
-                cursorCount = 0;
-            }
-            Cursor.Position = new Point(this.Width / 2 - 32, this.Height / 2 - 32);
-
+            ShowLoadingCursor();
             this.Padding = new Padding(5, 20, 20, 20);
             layoutController = new LayoutController(media.Count);
             InitializeGui();
@@ -633,13 +627,7 @@ namespace LocalVideoPlayer
             {
                 if (show.Cartoon) cartoons.Add(show);
             }
-
-            if (hideCursor)
-            {
-                Cursor.Hide();
-                cursorCount++;
-            }
-            Cursor.Current = Cursors.Default;
+            HideLoadingCursor();
         }
 
         #endregion
@@ -670,6 +658,30 @@ namespace LocalVideoPlayer
             SystemParametersInfo(SPI_SETCURSORS, 0, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
             uint mouseSize = uint.Parse(ConfigurationManager.AppSettings["mouseSize"]);
             SystemParametersInfo(0x2029, 0, mouseSize, 0x01);
+        }
+
+        static public void ShowLoadingCursor()
+        {
+            Cursor.Current = Cursors.WaitCursor;
+            if (hideCursor)
+            {
+                for (int j = 0; j < cursorCount; j++)
+                {
+                    Cursor.Show();
+                }
+                cursorCount = 0;
+            }
+            Cursor.Position = new Point(mainFormSize.Width / 2 - 32, mainFormSize.Height / 2 - 32);
+        }
+
+        static public void HideLoadingCursor()
+        {
+            if (hideCursor)
+            {
+                Cursor.Hide();
+                cursorCount++;
+            }
+            Cursor.Current = Cursors.Default;
         }
 
         #endregion

@@ -407,6 +407,7 @@ namespace LocalVideoPlayer
 
         static public void LaunchVlc(string mediaName, string episodeName, string path, Form tvForm)
         {
+            MainForm.ShowLoadingCursor();
             TvShow currTvShow = null;
             Episode currEpisode = null;
             Movie currMovie = null;
@@ -442,6 +443,7 @@ namespace LocalVideoPlayer
 
             Form playerForm = new PlayerForm(path, savedTime, runningTime, subtitles, subTrack, currTvShow, currEpisode, tvForm);
             MainForm.layoutController.Select("playerForm");
+            MainForm.HideLoadingCursor();
             playerForm.ShowDialog();
             playerForm.Dispose();
 

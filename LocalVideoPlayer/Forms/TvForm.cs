@@ -131,17 +131,7 @@ namespace LocalVideoPlayer
 
         static public void TvShowBox_Click(object sender, EventArgs e)
         {
-            Cursor.Current = Cursors.WaitCursor;
-            if (MainForm.hideCursor)
-            {
-                for (int j = 0; j < MainForm.cursorCount; j++)
-                {
-                    Cursor.Show();
-                }
-                MainForm.cursorCount = 0;
-            }
-            Cursor.Position = new Point(MainForm.mainFormSize.Width / 2 - 32, MainForm.mainFormSize.Height / 2 - 32);
-
+            MainForm.ShowLoadingCursor();
             TvForm tvForm = new TvForm();
             PictureBox pictureBox = null;
             pictureBox = sender as PictureBox;
@@ -382,13 +372,7 @@ namespace LocalVideoPlayer
             MainForm.layoutController.tvFormControlList.Insert(2, seasonButton);
             tvForm.Show();
             MainForm.layoutController.Select(tvShow.Name);
-
-            if (MainForm.hideCursor)
-            {
-                Cursor.Hide();
-                MainForm.cursorCount++;
-            }
-            Cursor.Current = Cursors.Default;
+            MainForm.HideLoadingCursor();
         }
 
         #endregion
@@ -707,17 +691,8 @@ namespace LocalVideoPlayer
 
         static private void SeasonButton_Click(object sender, EventArgs e)
         {
-            Cursor.Current = Cursors.WaitCursor;
-            if (MainForm.hideCursor)
-            {
-                for (int j = 0; j < MainForm.cursorCount; j++)
-                {
-                    Cursor.Show();
-                }
-                MainForm.cursorCount = 0;
-            }
-            Cursor.Position = new Point(MainForm.mainFormSize.Width / 2 - 32, MainForm.mainFormSize.Height / 2 - 32);
 
+            MainForm.ShowLoadingCursor();
             seasonFormOpen = true;
             bool indexChange = false;
             Button b = sender as Button;
@@ -883,13 +858,7 @@ namespace LocalVideoPlayer
                 MainForm.layoutController.seasonFormIndex = currSeasonIndex;
                 MainForm.layoutController.Select("seasonButton");
             };
-
-            if (MainForm.hideCursor)
-            {
-                Cursor.Hide();
-                MainForm.cursorCount++;
-            }
-            Cursor.Current = Cursors.Default;
+            MainForm.HideLoadingCursor();
 
             seasonForm.ShowDialog();
             seasonForm.Dispose();
@@ -898,23 +867,9 @@ namespace LocalVideoPlayer
 
             if (indexChange)
             {
-                Cursor.Current = Cursors.WaitCursor;
-                if (MainForm.hideCursor)
-                {
-                    for (int j = 0; j < MainForm.cursorCount; j++)
-                    {
-                        Cursor.Show();
-                    }
-                    MainForm.cursorCount = 0;
-                }
-                Cursor.Position = new Point(MainForm.mainFormSize.Width / 2 - 32, MainForm.mainFormSize.Height / 2 - 32);
+                MainForm.ShowLoadingCursor();
                 UpdateTvForm(tvShow);
-                if (MainForm.hideCursor)
-                {
-                    Cursor.Hide();
-                    MainForm.cursorCount++;
-                }
-                Cursor.Current = Cursors.Default;
+                MainForm.HideLoadingCursor();
             }
         }
 
@@ -1149,17 +1104,7 @@ namespace LocalVideoPlayer
 
         static public void MovieBox_Click(object sender, EventArgs e)
         {
-            Cursor.Current = Cursors.WaitCursor;
-            if (MainForm.hideCursor)
-            {
-                for (int j = 0; j < MainForm.cursorCount; j++)
-                {
-                    Cursor.Show();
-                }
-                MainForm.cursorCount = 0;
-            }
-            Cursor.Position = new Point(MainForm.mainFormSize.Width / 2 - 32, MainForm.mainFormSize.Height / 2 - 32);
-
+            MainForm.ShowLoadingCursor();
             Form movieForm = new Form();
             PictureBox p = sender as PictureBox;
             Movie movie = TvForm.GetMovie(p.Name);
@@ -1254,13 +1199,7 @@ namespace LocalVideoPlayer
             MainForm.dimmerForm.Location = MainForm.mainFormLoc;
             movieForm.Show();
             MainForm.layoutController.Select(movie.Name);
-
-            if (MainForm.hideCursor)
-            {
-                Cursor.Hide();
-                MainForm.cursorCount++;
-            }
-            Cursor.Current = Cursors.Default;
+            MainForm.HideLoadingCursor();
         }
 
         #endregion
