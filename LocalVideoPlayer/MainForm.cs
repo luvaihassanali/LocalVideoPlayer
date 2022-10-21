@@ -566,7 +566,7 @@ namespace LocalVideoPlayer
         {
             idleMainFormTimer = new System.Threading.Timer(mt_ =>
             {
-                if (PlayerForm.isPlaying)
+                if (PlayerForm.isPlaying || cartoonShuffle)
                 {
                     return;
                 }
