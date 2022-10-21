@@ -1,8 +1,5 @@
 #include <ir-control.h>
 
-bool soundBarPowerSwitch = false;
-bool opticalBluetoothSwitch = false;
-
 // https://github.com/Arduino-IRremote/Arduino-IRremote/tree/master/examples/SendRawDemo
 void sendRaw(const MICROSECONDS_T intro[], size_t lengthIntro, const MICROSECONDS_T repeat[], size_t lengthRepeat, FREQUENCY_T frequency, unsigned times)
 {
@@ -37,15 +34,21 @@ void PowerSoundBar()
 
 void SoundBarControl()
 {
-    if (button1State == LOW || joystickButtonState == LOW)
+    if (button4State == LOW)
+    {
+        Log("Soundbar reset");
+        sendRaw(I_RESET, 68U, R_RESET, 4U, 38400U, 1);
+    }
+
+    if (button5State == LOW || joystickButtonState == LOW)
     {
         PowerSoundBar();
     }
-    else if (button2State == LOW)
+    else if (button3State == LOW)
     {
         SoundBarInput();
     }
-    else if (button3State == LOW)
+    else if (button2State == LOW)
     {
         Log("Mute");
         sendRaw(I_MUTE, 68U, R_MUTE, 4U, 38400U, 1);
@@ -113,25 +116,24 @@ void TvSoundInput()
 
 void TvControl()
 {
-    if (button1State == LOW)
+    if (button4State == LOW)
+    {
+        Log("tv sound input script");
+        TvSoundInput();
+    }
+    else if (button5State == LOW)
     {
         Log("Power tv");
         IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_POWER, 0);
     }
-    else if (button2State == LOW)
+    else if (button3State == LOW)
     {
         Log("tv back");
         IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_BACK, 0);
     }
-    else if (button3State == LOW)
+    else if (button2State == LOW)
     {
-        delay(50);
-        if (joystickButtonState == LOW)
-        {
-            Log("tv sound input script");
-            TvSoundInput();
-        }
-        else if (joystickMapY > JS_THRESHOLD)
+        if (joystickMapY > JS_THRESHOLD)
         {
             Log("tv vol up");
             IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_VOL_UP, 0);
@@ -152,12 +154,12 @@ void TvControl()
         Log("tv enter");
         IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_ENTER, 0);
     }
-    else if (joystickMapX > JS_THRESHOLD && button3State == HIGH)
+    else if (joystickMapX > JS_THRESHOLD && button5State == HIGH)
     {
         Log("tv right");
         IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_RIGHT, 0);
     }
-    else if (joystickMapX < -JS_THRESHOLD && button3State == HIGH)
+    else if (joystickMapX < -JS_THRESHOLD && button5State == HIGH)
     {
         Log("tv left");
         IrSender.sendSamsung(SAMSUNG_ADDR, SAMSUNG_LEFT, 0);

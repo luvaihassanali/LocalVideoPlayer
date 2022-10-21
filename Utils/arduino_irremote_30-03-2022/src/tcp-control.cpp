@@ -1,26 +1,5 @@
 #include <tcp-control.h>
 
-// Replace values for TCP server
-const String WIFI_SSID = "ssid";
-const String WIFI_PASS = "password";
-const String WIFI_PORT = "3000";
-const String CONNECTION_STRING = "AT+CWJAP=\"" + WIFI_SSID + "\",\"" + WIFI_PASS + "\"\r\n";
-const String SERVER_STRING = "AT+CIPSERVER=1," + WIFI_PORT + "\r\n";
-
-bool clientConnected = false;
-bool esp8266Init = false;
-
-SoftwareSerial esp8266(8, 7);
-String dataOutResult = "";
-String dataInResponse = "";
-String dataOutResponse = "";
-String joystickOutput = "";
-String joystickSendLength = "";
-String keepAliveOutput = "";
-String keepAliveSendLength = "";
-String tcpDataInOutput = "";
-String tcpDataInSendLength = "";
-
 void InitializeEsp8266()
 {
     if (!esp8266Init)
@@ -146,7 +125,7 @@ String TcpDataOut(String command, const int timeout)
 void MouseControl()
 {
     // Data sent over tcp contains joystick x/y positions, joystick buttin pin state, and scroll button pin state
-    joystickOutput = String(joystickMapX) + "," + String(joystickMapY) + "," + String(joystickButtonState) + "," + String(button3State) + "\r\n";
+    joystickOutput = String(joystickMapX) + "," + String(joystickMapY) + "," + String(joystickButtonState) + "," + String(button2State) + "\r\n";
     joystickSendLength = "AT+CIPSEND=0," + String(joystickOutput.length()) + "\r\n";
     TcpDataOut(joystickSendLength, 10);
     TcpDataOut(joystickOutput, 100);

@@ -37,8 +37,8 @@ int currentState = 0; // 0 = TV, 1 = LVP, 2 = Audio
 int button1State = 0;
 int button2State = 0;
 int button3State = 0;
-int redButtonState = 0;
-int blueButtonState = 0;
+int button1State = 0;
+int button6State = 0;
 int joystickButtonState = 0;
 int joystickMapX = 0;
 int joystickMapY = 0;
@@ -152,10 +152,10 @@ void InnerLoop()
   // button1State = digitalRead(button1Pin);
   // button2State = digitalRead(button2Pin);
   // button3State = digitalRead(button3Pin);
-  redButtonState = digitalRead(redButtonPin);
-  blueButtonState = digitalRead(blueButtonPin);
+  button1State = digitalRead(redButtonPin);
+  button6State = digitalRead(blueButtonPin);
 
-  if (redButtonState == 0)
+  if (button1State == 0)
   {
     if (DEBUG)
       Serial.println("redButton");
@@ -176,7 +176,7 @@ void InnerLoop()
     }
   }
 
-  if (blueButtonState == 0)
+  if (button6State == 0)
   {
     if (DEBUG)
       Serial.println("blueButton");

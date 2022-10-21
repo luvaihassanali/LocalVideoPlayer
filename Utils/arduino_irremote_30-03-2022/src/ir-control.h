@@ -13,4 +13,7 @@ void PowerTv();;
 void TvSoundInput();
 void TvControl();
 
+bool soundBarPowerSwitch = false;
+bool opticalBluetoothSwitch = false;
+
 #endif
