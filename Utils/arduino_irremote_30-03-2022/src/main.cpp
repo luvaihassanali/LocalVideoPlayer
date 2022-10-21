@@ -8,14 +8,14 @@
 | Button 1  | -            | -         | -           | -                 |
 | Button 2  | Home         | Scroll    | R. Click    | Mute              |
 | Button 3  | Back         | x         | x           | Input             |
-| Button 4  | Sound script | Reset     | -           | Reset             |
-| Button 5  | Power        | x         | -           | Power             |
+| Button 4  | Sound script | Reset     | x           | Reset             |
+| Button 5  | Power        | x         | x           | Power             |
 | Button 6  | -            | -         | -           | -                 |
 | J. Button | Enter        | Click     | D. Click    | Power             |
 | J. Stick  | Direction    | Direction | Direction   | Up(+)/down(-) vol |
 +-----------+--------------+-----------+-------------+-------------------+
 - J.Stick + Button 2 = TV Volume
-- J.Button + Button 2 = Laptop Start Menu
+- J.Button + Button 2 = Laptop Taskmgr
 
 */
 

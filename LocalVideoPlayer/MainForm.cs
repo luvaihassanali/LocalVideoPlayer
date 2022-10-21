@@ -76,7 +76,7 @@ namespace LocalVideoPlayer
         static public Size mainFormSize;
         static public bool cartoonShuffle = false;
         static public int cartoonIndex = 0;
-        static public int cartoonLimit = 5;
+        static public int cartoonLimit = 20;
         static public List<TvShow> cartoons = new List<TvShow>();
         static public List<Episode> cartoonShuffleList = new List<Episode>();
         static private bool debugLogEnabled;
@@ -566,7 +566,7 @@ namespace LocalVideoPlayer
         {
             idleMainFormTimer = new System.Threading.Timer(mt_ =>
             {
-                if (PlayerForm.isPlaying || cartoonShuffle)
+                if (PlayerForm.isPlaying)
                 {
                     return;
                 }
