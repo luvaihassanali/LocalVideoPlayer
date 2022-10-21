@@ -17,9 +17,6 @@ namespace MouseMoverClient
         #region Dll Import 
 
         [DllImport("user32.dll")]
-        static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
-
-        [DllImport("user32.dll")]
         static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
         [DllImport("user32.dll")]
@@ -62,7 +59,6 @@ namespace MouseMoverClient
         static unsafe void Main(string[] args)
         {
             #region Initialize
-
             Console.Title = "";
             Console.SetWindowSize(60, 10);
             Console.SetBufferSize(60, 10);
@@ -370,7 +366,7 @@ namespace MouseMoverClient
 
             if (buttonState == 0 && buttonTwoState == 0)
             {
-                ShowStartMenu();
+                System.Diagnostics.Process.Start("taskmgr.exe");
             }
 
             if (buttonState == 0)
@@ -429,19 +425,6 @@ namespace MouseMoverClient
             mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP, X, Y, 0, 0);
         }
 
-        static void ShowStartMenu()
-        {
-            // key down event:
-            const byte keyControl = 0x11;
-            const byte keyEscape = 0x1B;
-            keybd_event(keyControl, 0, 0, UIntPtr.Zero);
-            keybd_event(keyEscape, 0, 0, UIntPtr.Zero);
-
-            // key up event:
-            const uint KEYEVENTF_KEYUP = 0x02;
-            keybd_event(keyControl, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
-            keybd_event(keyEscape, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
-        }
         #endregion
 
         static void Log(string message)
