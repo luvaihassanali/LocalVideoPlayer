@@ -387,6 +387,11 @@ namespace LocalVideoPlayer
             int buttonState = Int32.Parse(dataSplit[2]);
             int scrollState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
+            if (buttonState == 0 && scrollState == 0)
+            {
+                System.Diagnostics.Process.Start("taskmgr.exe");
+            }
+
             if (buttonState == 0)
             {
                 DoMouseClick();
