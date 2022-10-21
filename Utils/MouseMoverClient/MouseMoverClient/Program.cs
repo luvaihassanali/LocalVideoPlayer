@@ -15,6 +15,10 @@ namespace MouseMoverClient
     class Program
     {
         #region Dll Import 
+
+        [DllImport("user32.dll")]
+        static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, UIntPtr dwExtraInfo);
+
         [DllImport("user32.dll")]
         static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
 
@@ -146,7 +150,7 @@ namespace MouseMoverClient
                     case "power":
                         // Send cursor to centre of screen
                         Cursor.Position = new System.Drawing.Point(960, 540);
-                        DoMouseClick();
+                        DoMouseDoubleClick();
                         string launchMsg = @"
    ██╗      █████╗ ██╗   ██╗███╗   ██╗ ██████╗██╗  ██╗██╗
    ██║     ██╔══██╗██║   ██║████╗  ██║██╔════╝██║  ██║██║
@@ -364,9 +368,14 @@ namespace MouseMoverClient
             int buttonState = Int32.Parse(dataSplit[2]);
             int buttonTwoState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
+            if (buttonState == 0 && buttonTwoState == 0)
+            {
+                ShowStartMenu();
+            }
+
             if (buttonState == 0)
             {
-                DoMouseClick();
+                DoMouseDoubleClick();
                 return;
             }
 
@@ -404,7 +413,7 @@ namespace MouseMoverClient
             }
         }
 
-        static void DoMouseClick()
+        static void DoMouseDoubleClick()
         {
             uint X = (uint)Cursor.Position.X;
             uint Y = (uint)Cursor.Position.Y;
@@ -420,6 +429,19 @@ namespace MouseMoverClient
             mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP, X, Y, 0, 0);
         }
 
+        static void ShowStartMenu()
+        {
+            // key down event:
+            const byte keyControl = 0x11;
+            const byte keyEscape = 0x1B;
+            keybd_event(keyControl, 0, 0, UIntPtr.Zero);
+            keybd_event(keyEscape, 0, 0, UIntPtr.Zero);
+
+            // key up event:
+            const uint KEYEVENTF_KEYUP = 0x02;
+            keybd_event(keyControl, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+            keybd_event(keyEscape, 0, KEYEVENTF_KEYUP, UIntPtr.Zero);
+        }
         #endregion
 
         static void Log(string message)
