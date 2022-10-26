@@ -183,7 +183,7 @@ namespace LocalVideoPlayer
                         MainForm.Log("Missing separator: " + namePath);
                         throw new ArgumentNullException();
                     }
-                    string[] episodeNameNumber = namePath[namePath.Length - 1].Split('%');
+                    string[] episodeNameNumber = namePath[namePath.Length - 1].Split(new[] { '%' }, 2);
                     int fileSuffixIndex = episodeNameNumber[1].LastIndexOf('.');
                     string episodeName = episodeNameNumber[1].Substring(0, fileSuffixIndex).Trim();
                     Episode episode = new Episode(0, episodeName, episodeEntries[j]);
@@ -486,7 +486,7 @@ namespace LocalVideoPlayer
                         var genres = tvObject["genres"];
                         foreach(var genre in genres)
                         {
-                            if ((int)genre["id"] == 16 && !(tvShow.Name == "Family Guy" || tvShow.Name == "The Simpsons")) 
+                            if ((int)genre["id"] == 16 && !(tvShow.Name == "Family Guy" || tvShow.Name == "The Simpsons" || tvShow.Name == "Futurama" || tvShow.Name == "The Boondocks")) 
                             {
                                 tvShow.Cartoon = true;
                             }
@@ -640,7 +640,7 @@ namespace LocalVideoPlayer
                             }
                             else
                             {
-                                string message = "Local episode name for does not match retrieved data. Renaming file '" + episode.Name + "' to '" + jEpisodeName.fixBrokenQuotes() + "' (Season " + season.Id + ").";
+                                string message = "Local episode name does not match retrieved data. Renaming file '" + episode.Name + "' to '" + jEpisodeName.fixBrokenQuotes() + "' (Season " + season.Id + ").";
                                 CustomDialog.ShowMessage("Warning: " + tvShow.Name, message, mainForm.Width, mainForm.Height);
 
                                 string oldPath = episode.Path;
