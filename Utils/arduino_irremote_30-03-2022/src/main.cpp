@@ -170,7 +170,7 @@ void RemoteState()
 void ControlHandler()
 {
     // If esp8266 not initialized joystick control sends infared tv remote signals
-    if (currentState == 0 && (button4State == LOW || button2State == LOW || button3State == LOW || joystickButtonState == LOW ||
+    if (currentState == 0 && (button5State == LOW || button4State == LOW || button2State == LOW || button3State == LOW || joystickButtonState == LOW ||
       joystickMapX > JS_THRESHOLD || joystickMapX < -JS_THRESHOLD || joystickMapY > JS_THRESHOLD || joystickMapY < -JS_THRESHOLD))
     {
         TvControl();
