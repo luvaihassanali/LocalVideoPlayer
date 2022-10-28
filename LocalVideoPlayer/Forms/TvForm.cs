@@ -108,7 +108,6 @@ namespace LocalVideoPlayer
 
         static public void TvShowEpisodeBox_Click(object sender, EventArgs e)
         {
-            PlayerForm.isPlaying = true;
             PictureBox p = sender as PictureBox;
             Form tvForm = (Form)p.Parent.Parent.Parent.Parent;
             string path = p.Name;
@@ -222,10 +221,8 @@ namespace LocalVideoPlayer
 
             tvShowBackdropBox.Click += (s, e_) =>
             {
-                PlayerForm.isPlaying = true;
                 Episode currEpisode = tvShow.LastEpisode == null ? tvShow.Seasons[0].Episodes[0] : tvShow.LastEpisode;
                 PlayerForm.LaunchVlc(tvShow.Name, currEpisode.Name, currEpisode.Path, tvForm);
-                PlayerForm.isPlaying = false;
             };
 
             Panel mainPanel = new Panel();
@@ -951,7 +948,6 @@ namespace LocalVideoPlayer
                 string fullPath = item.SubItems[2].Text;
                 string[] episodeNameParts = fullPath.Split('\\');
                 string episodeName = episodeNameParts[episodeNameParts.Length - 1].Split('.')[0];
-                PlayerForm.isPlaying = true;
                 PlayerForm.LaunchVlc(null, null, fullPath, null);
             };
 
@@ -1093,13 +1089,11 @@ namespace LocalVideoPlayer
 
         static private void MovieBackdropBox_Click(object sender, EventArgs e)
         {
-            PlayerForm.isPlaying = true;
             PictureBox p = sender as PictureBox;
             string path = p.Name;
             string[] pathSplit = path.Split('\\');
             string movieName = pathSplit[pathSplit.Length - 1].Split('.')[0];
             PlayerForm.LaunchVlc(movieName, null, path, null);
-            PlayerForm.isPlaying = false;
         }
 
         static public void MovieBox_Click(object sender, EventArgs e)
@@ -1206,7 +1200,6 @@ namespace LocalVideoPlayer
 
         internal static void PlayRandomCartoon()
         {
-            PlayerForm.isPlaying = true;
             for (int i = 0; i < MainForm.cartoonLimit; i++)
             {
 
@@ -1231,7 +1224,6 @@ namespace LocalVideoPlayer
 
             string showName = pathSplit[3].Split('%')[0].Trim();
             PlayerForm.LaunchVlc(showName, episodeName, path, null);
-            PlayerForm.isPlaying = false;
         }
 
         internal static Random rnd = new Random();

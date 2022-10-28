@@ -1,22 +1,22 @@
 #include <utils.h>
 
 /*
-
 +-----------+--------------+-----------+-------------+-------------------+
 |  Control  |     1 TV     |   2 LVP   |  3 Laptop   |      4 Audio      |
 +-----------+--------------+-----------+-------------+-------------------+
 | Button 1  | -            | -         | -           | -                 |
-| Button 2  | Home         | Scroll    | R. Click    | Mute              |
-| Button 3  | Back         | x         | x           | Input             |
+| Button 2  | Enter        | Click     | D. Click    | Mute              |
+| Button 3  | Home         | Scroll    | R. Click    | Input             |
 | Button 4  | Sound script | Reset     | x           | Reset             |
 | Button 5  | Power        | x         | x           | Power             |
 | Button 6  | -            | -         | -           | -                 |
 | J. Button | Enter        | Click     | D. Click    | Power             |
 | J. Stick  | Direction    | Direction | Direction   | Up(+)/down(-) vol |
 +-----------+--------------+-----------+-------------+-------------------+
-- J.Stick + Button 2 = TV Volume
-- J.Button + Button 2 = Laptop Taskmgr
-
+- J. Stick Up/Down + Button 2 = TV Volume
+- J. Stick Left + Button 2 = TV Back
+- J. Stick Right + Button 2 = TV Play/Pause
+- Button 2 + Button 3 = Laptop Taskmgr
 */
 
 void ControlHandler();
@@ -95,7 +95,7 @@ void InnerLoop()
     joystickButtonState = digitalRead(JS_BTN_PIN);
     joystickMapX = map(joystickXPos, 0, 1023, -512, 512);
     joystickMapY = map(joystickYPos, 0, 1023, -512, 512);
-    joystickOutput = String(joystickMapX) + "," + String(joystickMapY) + "," + String(joystickButtonState) + "," + String(button2State) + "\r\n";
+    joystickOutput = String(joystickMapX) + "," + String(joystickMapY) + "," + String(joystickButtonState) + "," + String(button2State) + "," + String(button3State) + "\r\n";
     
     /*String buttonOutput = String(button1State) + " " + String(button2State) + " " + String(button3State) + " " + String(button4State) + " " + String(button5State) + " " + String(button6State);
     Serial.println(joystickOutput);
@@ -170,16 +170,14 @@ void RemoteState()
 void ControlHandler()
 {
     // If esp8266 not initialized joystick control sends infared tv remote signals
-    if (currentState == 0 && (button4State == LOW || button2State == LOW || button3State == LOW || button5State == LOW  || joystickButtonState == LOW ||
-                              (button5State == HIGH && joystickMapX > JS_THRESHOLD) || (button5State == HIGH && joystickMapX < -JS_THRESHOLD) || 
-                                joystickMapY > JS_THRESHOLD || joystickMapY < -JS_THRESHOLD))
+    if (currentState == 0 && (button4State == LOW || button2State == LOW || button3State == LOW || joystickButtonState == LOW ||
+      joystickMapX > JS_THRESHOLD || joystickMapX < -JS_THRESHOLD || joystickMapY > JS_THRESHOLD || joystickMapY < -JS_THRESHOLD))
     {
         TvControl();
     }
 
     // Reset esp8266
     if (currentState == 1 && button4State == LOW) {
-
         if (button4State == LOW) {
             Log("Reset esp8266");
             ResetEsp8266();

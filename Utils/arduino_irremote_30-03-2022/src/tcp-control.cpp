@@ -125,7 +125,6 @@ String TcpDataOut(String command, const int timeout)
 void MouseControl()
 {
     // Data sent over tcp contains joystick x/y positions, joystick buttin pin state, and scroll button pin state
-    joystickOutput = String(joystickMapX) + "," + String(joystickMapY) + "," + String(joystickButtonState) + "," + String(button2State) + "\r\n";
     joystickSendLength = "AT+CIPSEND=0," + String(joystickOutput.length()) + "\r\n";
     TcpDataOut(joystickSendLength, 10);
     TcpDataOut(joystickOutput, 100);

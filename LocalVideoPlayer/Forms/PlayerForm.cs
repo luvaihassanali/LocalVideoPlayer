@@ -407,6 +407,7 @@ namespace LocalVideoPlayer
 
         static public void LaunchVlc(string mediaName, string episodeName, string path, Form tvForm)
         {
+            isPlaying = true;
             MainForm.ShowLoadingCursor();
             TvShow currTvShow = null;
             Episode currEpisode = null;

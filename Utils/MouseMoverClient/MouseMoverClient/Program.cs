@@ -354,7 +354,7 @@ namespace MouseMoverClient
         static void ParseTcpDataIn(string data)
         {
             string[] dataSplit = data.Split(',');
-            if (dataSplit.Length > 5)
+            if (dataSplit.Length > 6)
             {
                 Log("Error. Message incorrect format: " + data);
                 return;
@@ -362,14 +362,15 @@ namespace MouseMoverClient
             joystickX = Int32.Parse(dataSplit[0]);
             joystickY = Int32.Parse(dataSplit[1]);
             int buttonState = Int32.Parse(dataSplit[2]);
-            int buttonTwoState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
+            int buttonTwoState = Int32.Parse(dataSplit[4].Replace("\r\n", ""));
+            int buttonThreeState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
-            if (buttonState == 0 && buttonTwoState == 0)
+            if (buttonTwoState == 0 && buttonThreeState == 0)
             {
                 System.Diagnostics.Process.Start("taskmgr.exe");
             }
 
-            if (buttonState == 0)
+            if (buttonState == 0 || buttonThreeState == 0)
             {
                 DoMouseDoubleClick();
                 return;

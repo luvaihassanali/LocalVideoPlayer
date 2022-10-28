@@ -377,28 +377,29 @@ namespace LocalVideoPlayer
             }
 
             string[] dataSplit = data.Split(',');
-            if (dataSplit.Length > 5)
+            if (dataSplit.Length > 6)
             {
                 Log("Error. Message incorrect format: " + data);
                 return;
             }
             joystickX = Int32.Parse(dataSplit[0]);
             joystickY = Int32.Parse(dataSplit[1]);
-            int buttonState = Int32.Parse(dataSplit[2]);
-            int scrollState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
+            int joystickBtnState = Int32.Parse(dataSplit[2]);
+            int scrollBtnState = Int32.Parse(dataSplit[4].Replace("\r\n", ""));
+            int clickBtnState = Int32.Parse(dataSplit[3].Replace("\r\n", ""));
 
-            if (buttonState == 0 && scrollState == 0)
+            if (scrollBtnState == 0 && clickBtnState == 0)
             {
                 System.Diagnostics.Process.Start("taskmgr.exe");
             }
 
-            if (buttonState == 0)
+            if (joystickBtnState == 0 || clickBtnState == 0)
             {
                 DoMouseClick();
                 return;
             }
 
-            if (scrollState == 0)
+            if (scrollBtnState == 0)
             {
                 joystickY = joystickY * 2;
                 mouse_event(MOUSEEVENTF_WHEEL, 0, 0, (uint)joystickY, 0);
