@@ -646,7 +646,7 @@ namespace LocalVideoPlayer
                                 string oldPath = episode.Path;
                                 jEpisodeName = (string)jEpisode["name"];
                                 string newPath = oldPath.Replace(episode.Name, jEpisodeName.fixBrokenQuotes());
-                                string invalid = new string(Path.GetInvalidPathChars()) + '?' + ':';
+                                string invalid = new string(Path.GetInvalidPathChars()) + '?' + ':' + '*';
                                 foreach (char c in invalid)
                                 {
                                     newPath = newPath.Replace(c.ToString(), "");
