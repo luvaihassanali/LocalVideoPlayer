@@ -269,6 +269,7 @@ namespace MouseMoverClient
                         {
                             // Send cursor to centre of screen
                             Cursor.Position = new System.Drawing.Point(960, 540);
+                            DoMouseDoubleClick();
                             StopTimer();
                             StartTimer();
                         }
