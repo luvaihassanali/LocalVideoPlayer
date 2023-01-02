@@ -47,7 +47,7 @@ namespace MouseMoverClient
 
         #endregion
 
-        static string serverIp = "192.168.0.137";
+        static string serverIp = ConfigurationManager.AppSettings["espIp"];
         static int serverPort = 3000;
         static bool serverIsNotConnected = true;
         static int joystickX;

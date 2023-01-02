@@ -25,7 +25,7 @@ namespace LocalVideoPlayer
 
         #endregion
 
-        private string serverIp = "192.168.0.137";
+        private string serverIp = ConfigurationManager.AppSettings["espIp"];
         private int serverPort = 3000;
         private bool enableSerialPort = bool.Parse(ConfigurationManager.AppSettings["comPortEnabled"]);
         private bool serverIsNotConnected = true;
